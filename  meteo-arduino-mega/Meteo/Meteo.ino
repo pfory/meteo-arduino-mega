@@ -128,6 +128,18 @@ int tempDHT = 0;
 #ifdef LCDdef
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+#define humidityPosR 0 
+#define humidityPosC 0 
+#define humidityLen 4
+#define pressPosR 0
+#define pressPosC 6 
+#define pressLen 10 
+#define temp1R 1 
+#define temp1C 0 
+#define temp1Len 7 
+#define temp2R 1 
+#define temp2C 9 
+#define temp2Len 7 
 #endif
 
 
@@ -292,12 +304,12 @@ void setup() {
 void loop() {
   #ifdef Anemodef
   int val = analogRead(anemoDirectioPin);    // read the input pin
-  lcd.setCursor(0,1);
-  lcd.print(getWindDirection(val));
+  //lcd.setCursor(0,1);
+  //lcd.print(getWindDirection(val));
   getWindDirectionStr(val);
-  lcd.print("[");
-  lcd.print(windDirection);
-  lcd.print("]");
+  //lcd.print("[");
+  //lcd.print(windDirection);
+  //lcd.print("]");
   windDirection20+=val;
   anemoCountDirectionSamples++;
   
@@ -321,10 +333,26 @@ void loop() {
 
   #ifdef DALLASdef    
   if (millis() - dsLastMeasTime > delayInMillis) {
-    float temperature = sensors.getTempCByIndex(0);
+    float temperature1 = sensors.getTempCByIndex(0);
+    float temperature2 = sensors.getTempCByIndex(2);
     #ifdef LCDdef
-    lcd.setCursor(0,0);
-    lcd.print(temperature,1);
+
+    lcd.setCursor(temp1C, temp1R);
+    for (byte i=0; i<temp1Len; i++) {
+      lcd.print(" ");
+    }
+    lcd.setCursor(temp1C, temp1R);
+    lcd.print(temperature1,1);
+    lcd.print("C");
+    
+    lcd.setCursor(temp2C, temp2R);
+    for (byte i=0; i<temp1Len; i++) {
+      lcd.print(" ");
+    }
+    lcd.setCursor(temp2C, temp2R);
+    lcd.print(temperature2,1);
+    lcd.print("C");
+
     #endif
     sensors.requestTemperatures(); 
     delayInMillis = 750 / (1 << (12 - TEMPERATURE_PRECISION));
@@ -341,10 +369,15 @@ void loop() {
   #endif
 
   #ifdef LCDdef
-  lcd.setCursor(8,0);
-  if (Pressure<100000) lcd.print(" ");
-  lcd.print(Pressure);
-  lcd.print("Pa");
+  lcd.setCursor(pressPosC, pressPosR);
+  for (byte i=0; i<pressLen; i++) {
+    lcd.print(" ");
+  }
+  lcd.setCursor(pressPosC, pressPosR);
+  lcd.print((int)(Pressure/100));
+  lcd.print(".");
+  lcd.print((int)(Pressure%100));
+  lcd.print("hPa");
   #endif
 
   #ifdef DHTdef
@@ -355,7 +388,11 @@ void loop() {
   #endif
 
   #ifdef LCDdef
-  lcd.setCursor(12,1);
+  lcd.setCursor(humidityPosC, humidityPosR);
+  for (byte i=0; i<humidityLen; i++) {
+    lcd.print(" ");
+  }
+  lcd.setCursor(humidityPosC, humidityPosR);
   lcd.print(humidity);
   lcd.print("%");
   /*lcd.setCursor(0,0);

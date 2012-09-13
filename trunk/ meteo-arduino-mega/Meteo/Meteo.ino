@@ -16,7 +16,6 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 
 */
 
-
 #define DALLASdef //1702 bytes
 #define BMP085def //3220 bytes for standard library
 #define DHTdef //1052 bytes
@@ -156,17 +155,20 @@ File myFile;
 Sd2Card card;
 SdVolume volume;
 SdFile root;
-
+bool bCardOK = false;
 #endif
 
 unsigned long dsLastPrintTime = 0;
+String versionSW("METEOv0.71"); //SW name & version
 
-/*-----------------------------------------------------------------------------------*/
+
+//-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
   // start serial port:
   Serial.begin(115200);
-  Serial.println("METEOv0.7");
+  Serial.println(versionSW);
 
+  Serial.println("SW inicialization");
   
   #ifdef LCDdef
   lcd.begin(16, 2);              // start the library
@@ -196,13 +198,13 @@ void setup() {
   */
   
   #ifdef Ethernetdef
-  Serial.println("waiting for net");
+  Serial.print("waiting for net...");
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed using DHCP");
     // DHCP failed, so use a fixed IP address:
     //Ethernet.begin(mac, ip);
   }
-  Serial.println("Ethernet OK");
+  Serial.print("Ethernet OK");
 
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
@@ -213,18 +215,23 @@ void setup() {
   lcd.print(Ethernet.localIP());
   delay(2000);
   #endif
-  Serial.print("IP:");
+  Serial.print(" IP:");
   Serial.println(Ethernet.localIP());
   #endif
   
   #ifdef UDPdef
   Udp.begin(localPort);
-  Serial.println("waiting 20s for sync");
+  Serial.print("waiting 20s for time sync...");
   setSyncProvider(getNtpTime);
 
   dsLastMeasTime=millis();
   while(timeStatus()==timeNotSet && millis()<dsLastMeasTime+20000); // wait until the time is set by the sync provider, timeout 20sec
+  Serial.println("Time sync interval is set to 3600 second.");
   setSyncInterval(3600); //sync each 1 hour
+  
+  Serial.print("Now is ");
+  printDateTime(0);
+  Serial.println(" UTC.");
 
   #ifdef LCDdef
   lcd.clear();
@@ -238,14 +245,27 @@ void setup() {
   #ifdef SDdef
   Serial.print("Initializing SD card...");
 
+  bCardOK = true;
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
-    Serial.println("Card failed, or not present");
+    Serial.println("card failed, or not present");
     // don't do anything more:
-    return;
+    bCardOK = false;
   }
-  Serial.println("card initialized.");
-  cardInfo();
+  else {
+    Serial.println("card initialized.");
+    cardInfo();
+  }
+
+  String fileName = String(year());
+  if (month()<10) fileName+="0";
+  fileName+=String(month());
+  if (day()<10) fileName+="0";
+  fileName+=String(day());
+  fileName+=".csv";
+  Serial.print("Filename:");
+  Serial.println(fileName);
+  
   #endif
   
   
@@ -262,8 +282,12 @@ void setup() {
   #endif
 
   lcd.clear();
-  
+
+  Serial.println("End of SW initialization phase, I am starting measuring.");
+ 
 }
+
+//-------------------------------------------------------------------------LOOP------------------------------------------------------------------------------
 
 void loop() {
   #ifdef Anemodef
@@ -384,6 +408,8 @@ void loop() {
   #endif
   (millis() - lastConnectionTime > postingInterval)) {
 
+    lastConnectionTime = millis();
+
     String dataString = "";
     char buffer[16];
     //temperature from DALLAS
@@ -428,10 +454,10 @@ void loop() {
   
     #ifdef Ethernetdef
     sendData(dataString);
-    Serial.println("sended");
+    Serial.println("DATA:");
+    Serial.println(dataString);
     Serial.println();
     #endif
-    Serial.println(dataString);
 
     #ifdef SDdef
     //save data to SD card
@@ -444,8 +470,16 @@ void loop() {
     if (temp<10) tDay = "0";
     tDay += String(day());
       
-    //String fileName = String(year())+tMonth+tDay+".csv";
-    String fileName="20120906.csv";
+    String fileName = String(year());
+    if (month()<10) fileName+="0";
+    fileName+=String(month());
+    if (day()<10) fileName+="0";
+    fileName+=String(day());
+    fileName+=".csv";
+    Serial.print("\nSaving data to file:");
+    Serial.print(fileName);
+    Serial.print("...");
+    
     char cFileName[13];
     fileName.toCharArray(cFileName, 13);    
     File dataFile = SD.open(cFileName, FILE_WRITE);
@@ -504,26 +538,31 @@ void loop() {
       dataFile.print("\n");
       
       dataFile.close();
-      // print to the serial port too:
-      //Serial.println(dataString);
+      Serial.println("data saved.");
     }  
     // if the file isn't open, pop up an error:
     else {
-      Serial.println("error opening datalog.txt");
+      Serial.print("error opening ");
+      Serial.println(fileName);
     } 
     #endif
 
-    lastConnectionTime = millis();
     sample=0;
   }
 }
+
+//-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
+
 
 #ifdef Ethernetdef
 void sendData(String thisData) {
   // if there's a successful connection:
   if (client.connect(server, 80)) {
     Serial.println();
-    Serial.print("connecting to COSM...");
+    printDateTime(0);
+    Serial.print(" connecting to COSM [FEEDID=");
+    Serial.print(FEEDID);
+    Serial.println("]");
     // send the HTTP PUT request:
     client.print("PUT /v2/feeds/");
     client.print(FEEDID);
@@ -561,8 +600,6 @@ unsigned long getNtpTime(void) {
 
     // wait to see if a reply is available
   delay(1000);
-//    unsigned long startMillis = millis();
-//  while( millis() - startMillis < 1000)  // wait up to one second for the response  {
   if ( Udp.parsePacket() ) {  
     // We've received a packet, read the data from it
     Udp.read(packetBuffer,NTP_PACKET_SIZE);  // read the packet into the buffer
@@ -589,7 +626,7 @@ unsigned long getNtpTime(void) {
 
 
     // print the hour, minute and second:
-    Serial.print("UTC=");       // UTC is the time at Greenwich Meridian (GMT)
+    Serial.print("UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
     Serial.print((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
     Serial.print(':');  
     if ( ((epoch % 3600) / 60) < 10 ) {
@@ -690,7 +727,7 @@ float calcDewPoint (int humidity, int temperature)
 #ifdef LCDdef
 void lcdPrintVersion() {
   lcd.setCursor(0,0);
-  lcd.print("METEO v0.6");
+  lcd.print(versionSW);
 }
 #endif
 
@@ -887,5 +924,7 @@ void cardInfo() {
   Serial.println();
   Serial.println();
 }
+
+
 #endif
 

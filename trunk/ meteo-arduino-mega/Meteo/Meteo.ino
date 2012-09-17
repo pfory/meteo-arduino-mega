@@ -96,6 +96,9 @@ int  delayInMillis = 1000;
 int numberOfDevices; // Number of temperature devices found
 unsigned long lastDisplayTempTime;
 unsigned int displayTempDelay=1000; //in ms
+#ifdef LCDdef
+byte currentTempDevice4Display=0;
+#endif
 #endif
 
 
@@ -144,14 +147,31 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #define humidityPosC 0 
 #define humidityLen 4
 #define pressPosR 1
-#define pressPosC 6 
+#define pressPosC 5 
 #define pressLen 10 
-#define temp1R 0 
-#define temp1C 0 
-#define temp1Len 7 
-#define temp2R 0 
-#define temp2C 9 
-#define temp2Len 7 
+#define tempR 0 
+#define tempC 0 
+#define tempLen 11
+#define hourC 11
+#define hourR 0
+byte deg[8] = {
+  B00100,
+  B01010,
+  B00100,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+};
+byte full[8] = {
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+};
 #endif
 
 
@@ -194,16 +214,15 @@ void setup() {
 
   Serial.println("SW inicialization");
   
-  #ifdef LCDdef
-  lcd.begin(16, 2);              // start the library
-  lcdPrintVersion();
-  #endif
-  
   Serial.print("Free mem: ");
   Serial.print(freeMemory());
   Serial.println(" bytes");
-  
+
   #ifdef LCDdef
+  lcd.createChar(1, deg);
+  lcd.createChar(2, full);
+  lcd.begin(16, 2);              // start the library
+  lcdPrintVersion();
   lcd.setCursor(0,1);
   lcd.print("Free:");
   lcd.print(freeMemory());
@@ -215,6 +234,7 @@ void setup() {
   lcdPrintVersion();
   #endif
 
+  
   /*pinMode(10, OUTPUT);
   pinMode(chipSelect, OUTPUT);
   digitalWrite(10,HIGH);
@@ -238,6 +258,7 @@ void setup() {
   lcd.print("IP:");
   lcd.print(Ethernet.localIP());
   delay(2000);
+  eraseRow(1);
   #endif
   Serial.print(" IP:");
   Serial.println(Ethernet.localIP());
@@ -258,11 +279,10 @@ void setup() {
   Serial.println(" UTC.");
 
   #ifdef LCDdef
-  lcd.clear();
-  lcdPrintVersion();
   lcd.setCursor(0,1);
   printDateTime(1);
   delay(2000);
+  eraseRow(1);
   #endif
   #endif
 
@@ -271,6 +291,7 @@ void setup() {
 
   bCardOK = true;
   // see if the card is present and can be initialized:
+  pinMode(53, OUTPUT);
   if (!SD.begin(chipSelect)) {
     Serial.println("card failed, or not present");
     // don't do anything more:
@@ -308,6 +329,8 @@ void setup() {
   lastDHTMeasTime=millis();
   dht.startMeas();
   lastDisplayDHTTime = millis();
+  #else
+  Serial.println("DHT N/A");
   #endif
 
   lcd.clear();
@@ -347,30 +370,36 @@ void loop() {
   }*/
   #endif
   
-
+  #ifdef LCDdef
+  lcd.setCursor(hourC, hourR);
+  printDigits(hour(),1);
+  lcd.print(TIME_DELIMITER);
+  printDigits(minute(),1);
+  #endif
+  
+  
   #ifdef DALLASdef    
   if (millis() - dsLastMeasTime > delayInMillis) {
-    float temperature1 = sensors.getTempCByIndex(0);
-    float temperature2 = sensors.getTempCByIndex(2);
-
+    
     #ifdef LCDdef
     if (millis() - lastDisplayTempTime > displayTempDelay) {
       lastDisplayTempTime = millis();
-      lcd.setCursor(temp1C, temp1R);
-      for (byte i=0; i<temp1Len; i++) {
+      lcd.setCursor(tempC, tempR);
+      for (byte i=0; i<tempLen; i++) {
         lcd.print(" ");
       }
-      lcd.setCursor(temp1C, temp1R);
-      lcd.print(temperature1,1);
+      lcd.setCursor(tempC, tempR);
+      if (currentTempDevice4Display<10) lcd.print(" ");
+      lcd.print(currentTempDevice4Display+1);
+      lcd.print(":");
+      lcd.print(" ");
+      lcd.print(sensors.getTempCByIndex(currentTempDevice4Display),1);
+      lcd.write(1);
       lcd.print("C");
       
-      lcd.setCursor(temp2C, temp2R);
-      for (byte i=0; i<temp1Len; i++) {
-        lcd.print(" ");
-      }
-      lcd.setCursor(temp2C, temp2R);
-      lcd.print(temperature2,1);
-      lcd.print("C");
+      currentTempDevice4Display++;
+      if (currentTempDevice4Display >= numberOfDevices)
+        currentTempDevice4Display = 0;
     }
     #endif
  
@@ -526,13 +555,6 @@ void loop() {
     windDirection20=0;
     anemoCountDirectionSamples=0;
   
-    #ifdef Ethernetdef
-    sendData(dataString);
-    Serial.println("DATA:");
-    Serial.println(dataString);
-    Serial.println();
-    #endif
-
     #ifdef SDdef
     //save data to SD card
     String tMonth = "";
@@ -621,6 +643,14 @@ void loop() {
     } 
     #endif
 
+    #ifdef Ethernetdef
+    sendData(dataString);
+    Serial.println("DATA:");
+    Serial.println(dataString);
+    Serial.println();
+    #endif
+
+    
     sample=0;
   }
 }
@@ -630,6 +660,10 @@ void loop() {
 
 #ifdef Ethernetdef
 void sendData(String thisData) {
+  /*#ifdef LCDdef
+  lcd.setCursor(15, 1);
+  lcd.write(2);
+  #endif*/
   // if there's a successful connection:
   if (client.connect(server, 80)) {
     Serial.println();
@@ -664,7 +698,11 @@ void sendData(String thisData) {
     Serial.println("disconnecting.");
     client.stop();
   }
-   // note the time that the connection was made or attempted:
+  #ifdef LCDdef
+  lcd.setCursor(15, 1);
+  lcd.print(" ");
+  #endif
+  // note the time that the connection was made or attempted:
 }
 #endif
 
@@ -803,6 +841,14 @@ void lcdPrintVersion() {
   lcd.setCursor(0,0);
   lcd.print(versionSW);
 }
+
+void eraseRow(byte r) {
+  lcd.setCursor(0, r);
+  for (byte i=0; i<16; i++) {
+    lcd.print(" ");
+  }
+  lcd.setCursor(0, r);
+}
 #endif
 
 int getWindDirection(int analogValue) {
@@ -900,8 +946,8 @@ void printTemperatureAll() {
       Serial.print("]");
 
       // It responds almost immediately. Let's print out the data
-      float tempC = sensors.getTempC(tempDeviceAddress);
-      Serial.print(tempC);
+      //float tempC = sensors.getTempC(tempDeviceAddress);
+      Serial.print(sensors.getTempC(tempDeviceAddress));
       Serial.println(" C ");
     } 
 	//else ghost device! Check your power requirements and cabling
@@ -915,14 +961,17 @@ void printTemperatureAll() {
 void bmp085Init() {
   Serial.println("\nBMP085 setup");
   Serial.print("High above sea level:");
-  Serial.println(high_above_sea);
+  Serial.print(high_above_sea);
+  Serial.println(" cm");
   bmp.begin();
   Serial.println("BMP software on PIN A4,A5 OK");
   #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("High:");
   lcd.print(high_above_sea);
-  delay(1000);
+  lcd.print(" cmasl");
+  delay(2000);
+  eraseRow(1);
   #endif
 }
 #else
@@ -937,10 +986,8 @@ long getRealPressure(long TruePressure, long _param_centimeters) {
 void dhtInit() {
   dht.begin();
   Serial.println("DHT OK");
-  #else
-  Serial.println("DHT N/A");
-  #endif
 }
+#endif
 
 
 #ifdef SDdef

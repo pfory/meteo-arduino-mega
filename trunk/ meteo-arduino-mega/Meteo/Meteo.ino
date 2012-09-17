@@ -6,6 +6,9 @@ D2 DHT sensor
 D3 DALLAS temperature
 D4-D9 display
 D10 Ethernet shield
+D11
+D12
+D13
 A0 free reserved for rain sensor
 A1 free reserved for anemometer (current sensor Holcik)
 A2 free reserved for anemometer (voltage sensor Holcik)
@@ -15,6 +18,7 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 
 
 */
+
 
 #define DALLASdef //1702 bytes
 #define BMP085def //3220 bytes for standard library
@@ -90,6 +94,8 @@ DeviceAddress tempDeviceAddress;
 //int  resolution = 12;
 int  delayInMillis = 1000;
 int numberOfDevices; // Number of temperature devices found
+unsigned long lastDisplayTempTime;
+unsigned int displayTempDelay=1000; //in ms
 #endif
 
 
@@ -104,6 +110,8 @@ int sensorReading = INT_MIN;
 swI2C_BMP085 bmp;
 //#define HIGH_ABOVE_SEA 34700 //in m
 long high_above_sea = 34700;  //in cm
+unsigned long lastDisplayBMPTime;
+unsigned int displayBMPDelay=5000; //in ms
 #endif
 long Temperature = 0, Pressure = 0;//, Altitude = 0;
 
@@ -121,6 +129,10 @@ long Temperature = 0, Pressure = 0;//, Altitude = 0;
 // Connect pin 4 (on the right) of the sensor to GROUND
 // Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
 DHT dht(DHTPIN, DHTTYPE);
+unsigned long lastDHTMeasTime = 0;
+unsigned long lastDisplayDHTTime;
+unsigned int displayDHTDelay = 4000; //in ms
+boolean isHumidity=true;
 #endif
 int humidity = 0;
 int tempDHT = 0;
@@ -128,16 +140,16 @@ int tempDHT = 0;
 #ifdef LCDdef
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
-#define humidityPosR 0 
+#define humidityPosR 1 
 #define humidityPosC 0 
 #define humidityLen 4
-#define pressPosR 0
+#define pressPosR 1
 #define pressPosC 6 
 #define pressLen 10 
-#define temp1R 1 
+#define temp1R 0 
 #define temp1C 0 
 #define temp1Len 7 
-#define temp2R 1 
+#define temp2R 0 
 #define temp2C 9 
 #define temp2Len 7 
 #endif
@@ -171,7 +183,7 @@ bool bCardOK = false;
 #endif
 
 unsigned long dsLastPrintTime = 0;
-String versionSW("METEOv0.71"); //SW name & version
+String versionSW("METEOv0.72"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -283,14 +295,19 @@ void setup() {
   
   #ifdef DALLASdef    
   dsInit();
+  lastDisplayTempTime = millis();
   #endif
   
   #ifdef BMP085def
   bmp085Init();
+  lastDisplayBMPTime = millis();
   #endif
 
   #ifdef DHTdef
   dhtInit();
+  lastDHTMeasTime=millis();
+  dht.startMeas();
+  lastDisplayDHTTime = millis();
   #endif
 
   lcd.clear();
@@ -335,25 +352,28 @@ void loop() {
   if (millis() - dsLastMeasTime > delayInMillis) {
     float temperature1 = sensors.getTempCByIndex(0);
     float temperature2 = sensors.getTempCByIndex(2);
+
     #ifdef LCDdef
-
-    lcd.setCursor(temp1C, temp1R);
-    for (byte i=0; i<temp1Len; i++) {
-      lcd.print(" ");
+    if (millis() - lastDisplayTempTime > displayTempDelay) {
+      lastDisplayTempTime = millis();
+      lcd.setCursor(temp1C, temp1R);
+      for (byte i=0; i<temp1Len; i++) {
+        lcd.print(" ");
+      }
+      lcd.setCursor(temp1C, temp1R);
+      lcd.print(temperature1,1);
+      lcd.print("C");
+      
+      lcd.setCursor(temp2C, temp2R);
+      for (byte i=0; i<temp1Len; i++) {
+        lcd.print(" ");
+      }
+      lcd.setCursor(temp2C, temp2R);
+      lcd.print(temperature2,1);
+      lcd.print("C");
     }
-    lcd.setCursor(temp1C, temp1R);
-    lcd.print(temperature1,1);
-    lcd.print("C");
-    
-    lcd.setCursor(temp2C, temp2R);
-    for (byte i=0; i<temp1Len; i++) {
-      lcd.print(" ");
-    }
-    lcd.setCursor(temp2C, temp2R);
-    lcd.print(temperature2,1);
-    lcd.print("C");
-
     #endif
+ 
     sensors.requestTemperatures(); 
     delayInMillis = 750 / (1 << (12 - TEMPERATURE_PRECISION));
     dsLastMeasTime = millis(); 
@@ -369,35 +389,52 @@ void loop() {
   #endif
 
   #ifdef LCDdef
-  lcd.setCursor(pressPosC, pressPosR);
-  for (byte i=0; i<pressLen; i++) {
-    lcd.print(" ");
+  if (millis() - lastDisplayBMPTime > displayBMPDelay) {
+    lastDisplayBMPTime = millis();
+    lcd.setCursor(pressPosC, pressPosR);
+    for (byte i=0; i<pressLen; i++) {
+      lcd.print(" ");
+    }
+    lcd.setCursor(pressPosC, pressPosR);
+    lcd.print((int)(Pressure/100));
+    lcd.print(".");
+    if (Pressure%100<10) lcd.print("0");
+    lcd.print((int)(Pressure%100));
+    lcd.print("hPa");
   }
-  lcd.setCursor(pressPosC, pressPosR);
-  lcd.print((int)(Pressure/100));
-  lcd.print(".");
-  lcd.print((int)(Pressure%100));
-  lcd.print("hPa");
   #endif
 
   #ifdef DHTdef
-  // Reading temperature or humidity takes about 250 milliseconds!
+  
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  humidity = dht.readHumidity();
-  tempDHT = dht.readTemperature();
+  if (millis() - lastDHTMeasTime > 250) {
+    if (isHumidity) {
+      humidity = dht.readHumidity();
+      isHumidity = false;
+    }
+    else {
+      tempDHT = dht.readTemperature();
+      isHumidity = true;;
+    }
+      dht.startMeas();
+    lastDHTMeasTime=millis();
+  }
   #endif
 
   #ifdef LCDdef
-  lcd.setCursor(humidityPosC, humidityPosR);
-  for (byte i=0; i<humidityLen; i++) {
-    lcd.print(" ");
+  if (millis() - lastDisplayDHTTime > displayDHTDelay) {
+    lastDisplayDHTTime = millis();
+    lcd.setCursor(humidityPosC, humidityPosR);
+    for (byte i=0; i<humidityLen; i++) {
+      lcd.print(" ");
+    }
+    lcd.setCursor(humidityPosC, humidityPosR);
+    lcd.print(humidity);
+    lcd.print("%");
+    /*lcd.setCursor(0,0);
+    lcd.print(tempDHT);
+    lcd.print("C");*/
   }
-  lcd.setCursor(humidityPosC, humidityPosR);
-  lcd.print(humidity);
-  lcd.print("%");
-  /*lcd.setCursor(0,0);
-  lcd.print(tempDHT);
-  lcd.print("C");*/
   #endif
 
   if (millis() - dsLastPrintTime > 1000) {
@@ -418,9 +455,9 @@ void loop() {
     if (isnan(tempDHT) || isnan(humidity)) {
       Serial.println("DHT fail.");
     } else {
-      Serial.print(" Humidity(%): "); 
+      Serial.print(" Humidity DHT(%): "); 
       Serial.print(humidity);
-      Serial.print(" Temp(C): "); 
+      Serial.print(" Temp DHT(C): "); 
       Serial.print(tempDHT);
     }
     
@@ -477,7 +514,7 @@ void loop() {
     dataString += humidity;
 
     //temperature from DHT11
-    dataString += "\nTempIn,";
+    dataString += "\nTempDHT,";
     dataString += tempDHT;
 
     dataString += "\nDewPoint,";
@@ -876,8 +913,17 @@ void printTemperatureAll() {
 
 #ifdef BMP085def
 void bmp085Init() {
+  Serial.println("\nBMP085 setup");
+  Serial.print("High above sea level:");
+  Serial.println(high_above_sea);
   bmp.begin();
   Serial.println("BMP software on PIN A4,A5 OK");
+  #ifdef LCDdef
+  lcd.setCursor(0,1);
+  lcd.print("High:");
+  lcd.print(high_above_sea);
+  delay(1000);
+  #endif
 }
 #else
 Serial.println("N/A");

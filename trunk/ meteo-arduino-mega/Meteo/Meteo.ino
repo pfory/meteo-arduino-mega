@@ -26,7 +26,7 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 #define UDPdef //672 bytes
 #define Ethernetdef //10614 bytes
 #define LCDdef
-#define Anemodef //1454 bytes
+//#define Anemodef //1454 bytes
 #define SDdef 
 
 #ifdef Anemodef
@@ -50,10 +50,13 @@ byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
 //IPAddress ip(192,168,1,1);
 // initialize the library instance:
 EthernetClient client;
+EthernetClient clientConfig;
 // if you don't want to use DNS (and reduce your sketch size)
 // use the numeric IP instead of the name for the server:
 //IPAddress server(216,52,233,121);      // numeric IP for api.cosm.com
 char server[] = "api.cosm.com";   // name address for cosm API
+char serverConfig[] = "datel.asp2.cz";   // name address for config API
+
 unsigned long lastSendTime;
 unsigned long sendDelay=20000; //delay between updates to Cosm.com in ms
 
@@ -64,7 +67,7 @@ IPAddress timeServer(192, 43, 244, 18); // time.nist.gov NTP server
 const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
 byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets 
 // A UDP instance to let us send and receive packets over UDP
-byte SNTP_server_IP[]    = { 192, 43, 244, 18}; // time.nist.gov
+//byte SNTP_server_IP[]    = { 192, 43, 244, 18}; // time.nist.gov
 //byte SNTP_server_IP[] = { 130,149,17,21};    // ntps1-0.cs.tu-berlin.de
 //byte SNTP_server_IP[] = { 192,53,103,108};   // ptbtime1.ptb.de
 #include <Time.h>
@@ -92,16 +95,17 @@ OneWire onewire(ONE_WIRE_BUS); // pin for onewire DALLAS bus
 DallasTemperature sensors(&onewire);
 DeviceAddress tempDeviceAddress;
 //int  resolution = 12;
-int  delayInMillis = 1000;
+int  delayInMillis;// = 1000;
 int numberOfDevices; // Number of temperature devices found
+int  resolution = 12;
 unsigned long lastDisplayTempTime;
 unsigned int displayTempDelay=1000; //in ms
 #ifdef LCDdef
 byte currentTempDevice4Display=0;
+#endif
+#endif
 long dsLastMeasTime = 0;
 unsigned int sample=0;
-#endif
-#endif
 
 
 int sensorReading = INT_MIN;
@@ -115,9 +119,11 @@ int sensorReading = INT_MIN;
 swI2C_BMP085 bmp;
 //#define HIGH_ABOVE_SEA 34700 //in m
 long high_above_sea = 34700;  //in cm
+#endif
+
 unsigned long lastDisplayBMPTime;
 unsigned int displayBMPDelay=5000; //in ms
-#endif
+
 long Temperature = 0, Pressure = 0;//, Altitude = 0;
 
 
@@ -135,10 +141,11 @@ long Temperature = 0, Pressure = 0;//, Altitude = 0;
 // Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
 DHT dht(DHTPIN, DHTTYPE);
 unsigned long lastDHTMeasTime = 0;
-unsigned long lastDisplayDHTTime;
-unsigned int displayDHTDelay = 4000; //in ms
 boolean isHumidity=true;
 #endif
+
+unsigned long lastDisplayDHTTime;
+unsigned int displayDHTDelay = 4000; //in ms
 int humidity = 0;
 int tempDHT = 0;
 
@@ -211,7 +218,7 @@ unsigned long saveDelay=60000; //in ms
 #endif
 
 unsigned long dsLastPrintTime = 0;
-String versionSW("METEOv0.73"); //SW name & version
+String versionSW("METEOv0.74"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -223,7 +230,7 @@ void setup() {
   Serial.println("SW inicialization");
 
   #ifdef SDdef
-  pinMode(10, OUTPUT);
+  pinMode(53, OUTPUT);
   digitalWrite(53, LOW);
   #endif
   
@@ -248,12 +255,6 @@ void setup() {
   lcdPrintVersion();
   #endif
 
-  
-  /*pinMode(10, OUTPUT);
-  pinMode(chipSelect, OUTPUT);
-  digitalWrite(10,HIGH);
-  digitalWrite(chipSelect,LOW);
-  */
   
   #ifdef Ethernetdef
   Serial.print("waiting for net...");
@@ -330,12 +331,20 @@ void setup() {
   #ifdef DALLASdef    
   dsInit();
   lastDisplayTempTime = millis();
+  sensors.setWaitForConversion(true);
+  sensors.requestTemperatures(); 
+  delayInMillis = 1000;//750 / (1 << (12 - resolution)); 
   dsLastMeasTime=millis();
+
+  #else
+  Serial.println("DALLAS N/A");
   #endif
   
   #ifdef BMP085def
   bmp085Init();
   lastDisplayBMPTime = millis();
+  #else
+  Serial.println("BMP085 N/A");
   #endif
 
   #ifdef DHTdef
@@ -347,10 +356,14 @@ void setup() {
   Serial.println("DHT N/A");
   #endif
 
+  #ifdef Ethernetdef
   Serial.print("Sending interval [ms]:");
   Serial.println(sendDelay);
+  #endif
+  #ifdef SDdef
   Serial.print("Saving interval [ms]:");
   Serial.println(saveDelay);
+  #endif
 
   Serial.println("End of SW initialization phase, I am starting measuring.");
 
@@ -360,7 +373,12 @@ void setup() {
 //-------------------------------------------------------------------------LOOP------------------------------------------------------------------------------
 
 void loop() {
-  sample++;
+
+  Serial.print(".");
+  // if (clientConfig.available()) {
+    // char c = clientConfig.read();
+    // Serial.print(c);
+  // }
 
   #ifdef Anemodef
   int val = analogRead(anemoDirectioPin);    // read the input pin
@@ -400,7 +418,6 @@ void loop() {
   
   #ifdef DALLASdef    
   if (millis() - dsLastMeasTime > delayInMillis) {
-    dsLastMeasTime = millis(); 
     
     #ifdef LCDdef
     if (millis() - lastDisplayTempTime > displayTempDelay) {
@@ -425,21 +442,24 @@ void loop() {
     #endif
  
     sensors.requestTemperatures(); 
-    delayInMillis = 750 / (1 << (12 - TEMPERATURE_PRECISION));
+    //delayInMillis = 750 / (1 << (12 - TEMPERATURE_PRECISION));
+    dsLastMeasTime = millis(); 
+
   }
   #endif
   
   
-  #ifdef BMP085def
-  Pressure = bmp.readPressure();
-  Pressure = getRealPressure(Pressure, high_above_sea);
-  #else
-  Pressure=101325;
-  #endif
 
-  #ifdef LCDdef
   if (millis() - lastDisplayBMPTime > displayBMPDelay) {
+    #ifdef BMP085def
+    Pressure = bmp.readPressure();
+    Pressure = getRealPressure(Pressure, high_above_sea);
+    #else
+    Pressure=101325;
+    #endif
+    
     lastDisplayBMPTime = millis();
+    #ifdef LCDdef
     lcd.setCursor(pressPosC, pressPosR);
     for (byte i=0; i<pressLen; i++) {
       lcd.print(" ");
@@ -450,9 +470,9 @@ void loop() {
     if (Pressure%100<10) lcd.print("0");
     lcd.print((int)(Pressure%100));
     lcd.print("hPa");
+    #endif
   }
-  #endif
-
+  
   #ifdef DHTdef
   
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
@@ -487,11 +507,15 @@ void loop() {
   #endif
 
   if (millis() - dsLastPrintTime > 1000) {
+    sample++;
+    dsLastPrintTime = millis(); 
 
     Serial.println();
     printDateTime(0);
     Serial.println();
+    #ifdef DALLASdef
     printTemperatureAll();
+    #endif
   
     //Serial.print(" Alt(cm):");
     //Serial.print(Altitude);
@@ -512,24 +536,25 @@ void loop() {
     Serial.print(calcDewPoint(humidity, tempDHT));
  
     Serial.println("");
-    
-    
-    dsLastPrintTime = millis(); 
   }
   
   #ifdef Ethernetdef
   if (sample==2) {
     client.stop();
+    //checkConfig();
   }
-  #endif
 
-  #ifdef Ethernetdef
+  // if (sample==5) {
+    // clientConfig.stop();
+  // }
+  
   if(!client.connected() && (millis() - lastSendTime > sendDelay)) {
     lastSendTime = millis();
     sendData();
-    checkConfig();
     sample=0;
   }
+  
+ 
   #endif
   
   #ifdef SDdef
@@ -556,6 +581,9 @@ void sendData() {
     String dataString = "";
     char buffer[16];
     //temperature from DALLAS
+    #ifdef DALLASdef
+    //while (!sensors.isConversionAvailable(0)) {}
+    
     for(byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
       if(sensors.getAddress(tempDeviceAddress, i)) {
@@ -574,6 +602,8 @@ void sendData() {
       }
       dataString += "\n";
     }
+   #endif
+
     //Pressure
     dataString += "Press,";
     dataString += Pressure;
@@ -589,12 +619,14 @@ void sendData() {
     dataString += "\nDewPoint,";
     dataString += (int)calcDewPoint(humidity, tempDHT);
 
+    #ifdef Anemodef
     dataString += "\nWindDirection,";
     dataString += (int)windDirection20/anemoCountDirectionSamples;
 
     windDirection20=0;
     anemoCountDirectionSamples=0;
-
+    #endif
+    
   // if there's a successful connection:
   if (client.connect(server, 80)) {
     Serial.println();
@@ -642,7 +674,17 @@ void sendData() {
 }
 
 void checkConfig() {
-  
+  if (clientConfig.connect(serverConfig, 80)) {
+    Serial.println("connecting to config server...");
+    // send the HTTP PUT request:
+    clientConfig.println("GET /getconfigdata.aspx?param=CHECK HTTP/1.1");
+    client.print("Host: datel.asp2.cz");
+    client.println();
+  }
+  else 
+  {
+    Serial.println("connection failed");
+  }
 }
 
 
@@ -702,6 +744,7 @@ void saveDataToSD() {
 
     dataFile.print(";");
     //temperature from DALLAS
+    #ifdef DALLASdef
     for(byte i=0;i<numberOfDevices; i++) {
       int t = (int)(sensors.getTempCByIndex(i)*10);
       dataFile.print(t/10);
@@ -709,6 +752,7 @@ void saveDataToSD() {
       dataFile.print(abs(t%10));
       dataFile.print(";");
     }
+    #endif
     
     //Pressure
     dataFile.print(Pressure);
@@ -728,10 +772,11 @@ void saveDataToSD() {
     dataFile.print(",");
     dataFile.print(abs(t%10));
 
-    
+    #ifdef Anemodef
     dataFile.print(";");
     dataFile.print(windDirection20/anemoCountDirectionSamples);
     dataFile.print("\n");
+    #endif
     
     dataFile.close();
     Serial.println("data saved.");
@@ -895,6 +940,7 @@ void eraseRow(byte r) {
 }
 #endif
 
+#ifdef Anemodef
 int getWindDirection(int analogValue) {
   return analogValue / 2.844;
 }
@@ -922,6 +968,7 @@ void getWindDirectionStr(uint16_t adcValue)
     strcpy(windDirection,"V");
   return;
 }
+#endif
 
 #ifdef DALLASdef
 
@@ -975,6 +1022,7 @@ void dsInit(void) {
   }
 }
 
+
 void printTemperatureAll() {
   // Loop through each device, print out temperature data
   for(byte i=0;i<numberOfDevices; i++) {
@@ -997,8 +1045,6 @@ void printTemperatureAll() {
 	//else ghost device! Check your power requirements and cabling
   }
 }
-
-
 #endif
 
 #ifdef BMP085def
@@ -1018,8 +1064,6 @@ void bmp085Init() {
   eraseRow(1);
   #endif
 }
-#else
-Serial.println("N/A");
 #endif
 
 long getRealPressure(long TruePressure, long _param_centimeters) {

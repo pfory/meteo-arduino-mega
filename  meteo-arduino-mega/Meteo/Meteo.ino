@@ -54,9 +54,9 @@ EthernetClient client;
 // use the numeric IP instead of the name for the server:
 //IPAddress server(216,52,233,121);      // numeric IP for api.cosm.com
 char server[] = "api.cosm.com";   // name address for cosm API
-#endif
+unsigned long lastSendTime;
+unsigned long sendDelay=20000; //delay between updates to Cosm.com in ms
 
-#ifdef Ethernetdef
 #ifdef UDPdef
 EthernetUDP Udp;
 unsigned int localPort = 8888;      // local port to listen for UDP packets
@@ -80,7 +80,7 @@ byte SNTP_server_IP[]    = { 192, 43, 244, 18}; // time.nist.gov
 //COSM
 #define APIKEY         "HyVsT65CnEPitk6vML664llGUZCSAKx0aXFocmJJVHBUVT0g" // your cosm api key
 #define FEEDID         75618 // your feed ID
-#define USERAGENT      "Solar" // user agent is the project name
+#define USERAGENT      "Solar JH" // user agent is the project name
 #endif
 
 #ifdef DALLASdef
@@ -98,6 +98,8 @@ unsigned long lastDisplayTempTime;
 unsigned int displayTempDelay=1000; //in ms
 #ifdef LCDdef
 byte currentTempDevice4Display=0;
+long dsLastMeasTime = 0;
+unsigned int sample=0;
 #endif
 #endif
 
@@ -163,22 +165,26 @@ byte deg[8] = {
   B00000,
   B00000,
 };
-byte full[8] = {
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
+byte send[8] = {
+  B00100,
+  B01110,
+  B10101,
+  B00100,
+  B00100,
   B11111,
   B11111,
 };
+byte save[8] = {
+  B11111,
+  B11111,
+  B00100,
+  B00100,
+  B10101,
+  B01110,
+  B00100,
+};
+
 #endif
-
-
-unsigned long lastConnectionTime = 0;          // last time you connected to the server, in milliseconds
-const unsigned long postingInterval = 20*1000; //delay between updates to Cosm.com
-long dsLastMeasTime = 0;
-byte sample=0;
 
 #ifdef Anemodef
 //ByteBuffer printBuffer(80);
@@ -200,10 +206,12 @@ Sd2Card card;
 SdVolume volume;
 SdFile root;
 bool bCardOK = false;
+unsigned long lastSaveTime;
+unsigned long saveDelay=60000; //in ms
 #endif
 
 unsigned long dsLastPrintTime = 0;
-String versionSW("METEOv0.72"); //SW name & version
+String versionSW("METEOv0.73"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -213,14 +221,20 @@ void setup() {
   Serial.println(versionSW);
 
   Serial.println("SW inicialization");
+
+  #ifdef SDdef
+  pinMode(10, OUTPUT);
+  digitalWrite(53, LOW);
+  #endif
   
   Serial.print("Free mem: ");
   Serial.print(freeMemory());
   Serial.println(" bytes");
 
   #ifdef LCDdef
-  lcd.createChar(1, deg);
-  lcd.createChar(2, full);
+  lcd.createChar(3, save);
+  lcd.createChar(2, deg);
+  lcd.createChar(1, send);
   lcd.begin(16, 2);              // start the library
   lcdPrintVersion();
   lcd.setCursor(0,1);
@@ -291,7 +305,6 @@ void setup() {
 
   bCardOK = true;
   // see if the card is present and can be initialized:
-  pinMode(53, OUTPUT);
   if (!SD.begin(chipSelect)) {
     Serial.println("card failed, or not present");
     // don't do anything more:
@@ -317,6 +330,7 @@ void setup() {
   #ifdef DALLASdef    
   dsInit();
   lastDisplayTempTime = millis();
+  dsLastMeasTime=millis();
   #endif
   
   #ifdef BMP085def
@@ -333,15 +347,21 @@ void setup() {
   Serial.println("DHT N/A");
   #endif
 
-  lcd.clear();
+  Serial.print("Sending interval [ms]:");
+  Serial.println(sendDelay);
+  Serial.print("Saving interval [ms]:");
+  Serial.println(saveDelay);
 
   Serial.println("End of SW initialization phase, I am starting measuring.");
- 
+
+  lcd.clear();
 }
 
 //-------------------------------------------------------------------------LOOP------------------------------------------------------------------------------
 
 void loop() {
+  sample++;
+
   #ifdef Anemodef
   int val = analogRead(anemoDirectioPin);    // read the input pin
   //lcd.setCursor(0,1);
@@ -380,6 +400,7 @@ void loop() {
   
   #ifdef DALLASdef    
   if (millis() - dsLastMeasTime > delayInMillis) {
+    dsLastMeasTime = millis(); 
     
     #ifdef LCDdef
     if (millis() - lastDisplayTempTime > displayTempDelay) {
@@ -394,7 +415,7 @@ void loop() {
       lcd.print(":");
       lcd.print(" ");
       lcd.print(sensors.getTempCByIndex(currentTempDevice4Display),1);
-      lcd.write(1);
+      lcd.write(2);
       lcd.print("C");
       
       currentTempDevice4Display++;
@@ -405,7 +426,6 @@ void loop() {
  
     sensors.requestTemperatures(); 
     delayInMillis = 750 / (1 << (12 - TEMPERATURE_PRECISION));
-    dsLastMeasTime = millis(); 
   }
   #endif
   
@@ -472,8 +492,6 @@ void loop() {
     printDateTime(0);
     Serial.println();
     printTemperatureAll();
-    sample++;
-
   
     //Serial.print(" Alt(cm):");
     //Serial.print(Altitude);
@@ -499,20 +517,42 @@ void loop() {
     dsLastPrintTime = millis(); 
   }
   
-  if (sample==5) {
-    #ifdef Ethernetdef
-    client.stop();
-    #endif
-  }
-
-  if(
   #ifdef Ethernetdef
-  !client.connected() &&
+  if (sample==2) {
+    client.stop();
+  }
   #endif
-  (millis() - lastConnectionTime > postingInterval)) {
 
-    lastConnectionTime = millis();
+  #ifdef Ethernetdef
+  if(!client.connected() && (millis() - lastSendTime > sendDelay)) {
+    lastSendTime = millis();
+    sendData();
+    checkConfig();
+    sample=0;
+  }
+  #endif
+  
+  #ifdef SDdef
+  if (millis() - lastSaveTime > saveDelay) {
+    lastSaveTime=millis();
+    saveDataToSD();
+  }
+  #endif
 
+}
+
+//-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
+
+
+#ifdef Ethernetdef
+void sendData() {
+
+    #ifdef LCDdef
+    lcd.setCursor(15, 1);
+    lcd.write(1);
+    #endif
+
+    //prepare data to send
     String dataString = "";
     char buffer[16];
     //temperature from DALLAS
@@ -554,116 +594,7 @@ void loop() {
 
     windDirection20=0;
     anemoCountDirectionSamples=0;
-  
-    #ifdef SDdef
-    //save data to SD card
-    String tMonth = "";
-    String tDay = "";
-    byte temp = month();
-    if (temp<10) tMonth = "0";
-    tMonth += String(month());
-    temp = day();
-    if (temp<10) tDay = "0";
-    tDay += String(day());
-      
-    String fileName = String(year());
-    if (month()<10) fileName+="0";
-    fileName+=String(month());
-    if (day()<10) fileName+="0";
-    fileName+=String(day());
-    fileName+=".csv";
-    Serial.print("\nSaving data to file:");
-    Serial.print(fileName);
-    Serial.print("...");
-    
-    char cFileName[13];
-    fileName.toCharArray(cFileName, 13);    
-    File dataFile = SD.open(cFileName, FILE_WRITE);
 
-    // if the file is available, write to it:
-    if (dataFile) {
-      dataFile.print(day());
-      dataFile.print(DATE_DELIMITER);
-      dataFile.print(month());
-      dataFile.print(DATE_DELIMITER);
-      dataFile.print(year());
-      dataFile.print(DATE_TIME_DELIMITER);
-      if(hour() < 10)
-        dataFile.print('0');
-      dataFile.print(hour());
-      dataFile.print(TIME_DELIMITER);
-      if(minute() < 10)
-        dataFile.print('0');
-      dataFile.print(minute());
-      dataFile.print(TIME_DELIMITER);
-      if(second() < 10)
-        dataFile.print('0');
-      dataFile.print(second());
-
-      dataFile.print(";");
-      //temperature from DALLAS
-      for(byte i=0;i<numberOfDevices; i++) {
-        int t = (int)(sensors.getTempCByIndex(i)*10);
-        dataFile.print(t/10);
-        dataFile.print(",");
-        dataFile.print(abs(t%10));
-        dataFile.print(";");
-      }
-      
-      //Pressure
-      dataFile.print(Pressure);
-
-      //Humidity
-      dataFile.print(";");
-      dataFile.print(humidity);
-
-      //temperature from DHT11
-      dataFile.print(";");
-      dataFile.print(tempDHT);
-
-      dataFile.print(";");
-      //dataFile.print(calcDewPoint(humidity, tempDHT));
-      int t = (int)(calcDewPoint(humidity, tempDHT)*10);
-      dataFile.print(t/10);
-      dataFile.print(",");
-      dataFile.print(abs(t%10));
-
-      
-      dataFile.print(";");
-      dataFile.print(windDirection20/anemoCountDirectionSamples);
-      dataFile.print("\n");
-      
-      dataFile.close();
-      Serial.println("data saved.");
-    }  
-    // if the file isn't open, pop up an error:
-    else {
-      Serial.print("error opening ");
-      Serial.println(fileName);
-    } 
-    #endif
-
-    #ifdef Ethernetdef
-    sendData(dataString);
-    Serial.println("DATA:");
-    Serial.println(dataString);
-    Serial.println();
-    #endif
-
-    
-    sample=0;
-  }
-}
-
-//-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
-
-
-#ifdef Ethernetdef
-void sendData(String thisData) {
-  /*#ifdef LCDdef
-  lcd.setCursor(15, 1);
-  lcd.write(2);
-  #endif*/
   // if there's a successful connection:
   if (client.connect(server, 80)) {
     Serial.println();
@@ -681,7 +612,7 @@ void sendData(String thisData) {
     client.print("User-Agent: ");
     client.println(USERAGENT);
     client.print("Content-Length: ");
-    client.println(thisData.length());
+    client.println(dataString.length());
 
     // last pieces of the HTTP PUT request:
     client.println("Content-Type: text/csv");
@@ -689,7 +620,7 @@ void sendData(String thisData) {
     client.println();
 
     // here's the actual content of the PUT request:
-    client.print(thisData);
+    client.print(dataString);
   } 
   else {
     // if you couldn't make a connection:
@@ -702,9 +633,122 @@ void sendData(String thisData) {
   lcd.setCursor(15, 1);
   lcd.print(" ");
   #endif
+  
+  Serial.println("\nDATA:");
+  Serial.println(dataString);
+  Serial.println();
+  
   // note the time that the connection was made or attempted:
 }
+
+void checkConfig() {
+  
+}
+
+
 #endif
+
+
+
+#ifdef SDdef
+void saveDataToSD() {
+  //save data to SD card
+  #ifdef LCDdef
+  lcd.setCursor(15, 1);
+  lcd.write(3);
+  #endif
+  String tMonth = "";
+  String tDay = "";
+  byte temp = month();
+  if (temp<10) tMonth = "0";
+  tMonth += String(month());
+  temp = day();
+  if (temp<10) tDay = "0";
+  tDay += String(day());
+    
+  String fileName = String(year());
+  if (month()<10) fileName+="0";
+  fileName+=String(month());
+  if (day()<10) fileName+="0";
+  fileName+=String(day());
+  fileName+=".csv";
+  Serial.print("\nSaving data to file:");
+  Serial.print(fileName);
+  Serial.print("...");
+  
+  char cFileName[13];
+  fileName.toCharArray(cFileName, 13);    
+  File dataFile = SD.open(cFileName, FILE_WRITE);
+
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.print(day());
+    dataFile.print(DATE_DELIMITER);
+    dataFile.print(month());
+    dataFile.print(DATE_DELIMITER);
+    dataFile.print(year());
+    dataFile.print(DATE_TIME_DELIMITER);
+    if(hour() < 10)
+      dataFile.print('0');
+    dataFile.print(hour());
+    dataFile.print(TIME_DELIMITER);
+    if(minute() < 10)
+      dataFile.print('0');
+    dataFile.print(minute());
+    dataFile.print(TIME_DELIMITER);
+    if(second() < 10)
+      dataFile.print('0');
+    dataFile.print(second());
+
+    dataFile.print(";");
+    //temperature from DALLAS
+    for(byte i=0;i<numberOfDevices; i++) {
+      int t = (int)(sensors.getTempCByIndex(i)*10);
+      dataFile.print(t/10);
+      dataFile.print(",");
+      dataFile.print(abs(t%10));
+      dataFile.print(";");
+    }
+    
+    //Pressure
+    dataFile.print(Pressure);
+
+    //Humidity
+    dataFile.print(";");
+    dataFile.print(humidity);
+
+    //temperature from DHT11
+    dataFile.print(";");
+    dataFile.print(tempDHT);
+
+    dataFile.print(";");
+    //dataFile.print(calcDewPoint(humidity, tempDHT));
+    int t = (int)(calcDewPoint(humidity, tempDHT)*10);
+    dataFile.print(t/10);
+    dataFile.print(",");
+    dataFile.print(abs(t%10));
+
+    
+    dataFile.print(";");
+    dataFile.print(windDirection20/anemoCountDirectionSamples);
+    dataFile.print("\n");
+    
+    dataFile.close();
+    Serial.println("data saved.");
+  }  
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.print("error opening ");
+    Serial.println(fileName);
+  } 
+
+  #ifdef LCDdef
+  lcd.setCursor(15, 1);
+  lcd.print(" ");
+  #endif
+}
+#endif
+
 
 #ifdef UDPdef
 unsigned long getNtpTime(void) {

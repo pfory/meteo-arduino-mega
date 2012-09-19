@@ -89,17 +89,19 @@ byte SNTP_server_IP[]    = { 192, 43, 244, 18}; // time.nist.gov
 #define ONE_WIRE_BUS 3
 #define TEMPERATURE_PRECISION 12
 OneWire onewire(ONE_WIRE_BUS); // pin for onewire DALLAS bus
-DallasTemperature sensors(&onewire);
-DeviceAddress tempDeviceAddress;
+DallasTemperature dsSensors(&onewire);
+DeviceAddress tempDeviceAddress[20];
 //int  resolution = 12;
-int  delayInMillis = 1000;
-int numberOfDevices; // Number of temperature devices found
+unsigned int measDelay = 4000;
+unsigned int numberOfDevices; // Number of temperature devices found
 unsigned long lastDisplayTempTime;
 unsigned int displayTempDelay=1000; //in ms
 #ifdef LCDdef
 byte currentTempDevice4Display=0;
-long dsLastMeasTime;
 unsigned int sample=0;
+float sensor[20];
+bool dsMeasStarted=false;
+unsigned long lastDsMeasStartTime;
 #endif
 #endif
 
@@ -114,11 +116,11 @@ int sensorReading = INT_MIN;
 //BMP085 dps = BMP085();      // Digital Pressure Sensor 
 swI2C_BMP085 bmp;
 //#define HIGH_ABOVE_SEA 34700 //in m
-long high_above_sea = 34700;  //in cm
+signed long high_above_sea = 34700;  //in cm
 unsigned long lastDisplayBMPTime;
 unsigned int displayBMPDelay=5000; //in ms
 #endif
-long Temperature = 0, Pressure = 0;//, Altitude = 0;
+signed long Temperature = 0, Pressure = 0;//, Altitude = 0;
 
 
 #ifdef DHTdef
@@ -137,7 +139,7 @@ DHT dht(DHTPIN, DHTTYPE);
 unsigned long lastDHTMeasTime;
 unsigned long lastDisplayDHTTime;
 unsigned int displayDHTDelay = 4000; //in ms
-boolean isHumidity=true;
+//boolean isHumidity=true;
 #endif
 int humidity = 0;
 int tempDHT = 0;
@@ -210,8 +212,11 @@ unsigned long lastSaveTime;
 unsigned long saveDelay=60000; //in ms
 #endif
 
+unsigned long start, stop;
+
+unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.75"); //SW name & version
+String versionSW("METEOv0.76"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -224,7 +229,7 @@ void setup() {
 
   #ifdef SDdef
   pinMode(10, OUTPUT);
-  digitalWrite(53, LOW);
+  digitalWrite(10, LOW);
   #endif
   
   Serial.print("Free mem: ");
@@ -283,8 +288,8 @@ void setup() {
   Serial.print("waiting 20s for time sync...");
   setSyncProvider(getNtpTime);
 
-  dsLastMeasTime=millis();
-  while(timeStatus()==timeNotSet && millis()<dsLastMeasTime+20000); // wait until the time is set by the sync provider, timeout 20sec
+  lastMeasTime=millis();
+  while(timeStatus()==timeNotSet && millis()<lastMeasTime+20000); // wait until the time is set by the sync provider, timeout 20sec
   Serial.println("Time sync interval is set to 3600 second.");
   setSyncInterval(3600); //sync each 1 hour
   
@@ -330,7 +335,8 @@ void setup() {
   #ifdef DALLASdef    
   dsInit();
   lastDisplayTempTime = millis();
-  dsLastMeasTime=millis();
+  dsSensors.setResolution(12);
+  dsSensors.setWaitForConversion(false);
   #endif
   
   #ifdef BMP085def
@@ -353,6 +359,7 @@ void setup() {
   Serial.println(saveDelay);
 
   lastSendTime = lastSaveTime = dsLastPrintTime = millis();
+  lastMeasTime = 0;
   
   Serial.println("End of SW initialization phase, I am starting measuring.");
 
@@ -363,7 +370,50 @@ void setup() {
 
 void loop() {
   sample++;
-
+  
+  //Serial.print(".");
+  //start sampling
+  if (millis() - lastMeasTime > measDelay) {
+    lastMeasTime = millis();
+    startTimer();
+    #ifdef DALLASdef    
+    dsSensors.requestTemperatures(); 
+    lastDsMeasStartTime=millis();
+    dsMeasStarted=true;
+    #endif
+    
+   
+    #ifdef DHTdef
+    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+    humidity = dht.readHumidity();
+    tempDHT = dht.readTemperature();
+    #endif
+    
+    #ifdef BMP085def
+    Pressure = bmp.readPressure();
+    Pressure = getRealPressure(Pressure, high_above_sea);
+    #else
+    Pressure=101325;
+    #endif
+    stopTimer();
+    printTimer("Start sampling takes:");
+  }
+  
+  
+  #ifdef DALLASdef  
+  if (dsMeasStarted) {
+    if (millis() - lastDsMeasStartTime>750) {
+      dsMeasStarted=false;
+      Serial.print("Zapis hodnot po ");
+      Serial.println(millis() - lastDsMeasStartTime);
+      //saving temperatures into variables
+      for (byte i=0;i<numberOfDevices; i++) {
+        sensor[i]=dsSensors.getTempCByIndex(i);
+      } 
+    }
+  }
+  #endif
+  
   #ifdef Anemodef
   int val = analogRead(anemoDirectioPin);    // read the input pin
   //lcd.setCursor(0,1);
@@ -397,49 +447,28 @@ void loop() {
   printDigits(hour(),1);
   lcd.print(TIME_DELIMITER);
   printDigits(minute(),1);
-  #endif
-  
-  
-  #ifdef DALLASdef    
-  if (millis() - dsLastMeasTime > delayInMillis) {
-    dsLastMeasTime = millis(); 
     
-    #ifdef LCDdef
-    if (millis() - lastDisplayTempTime > displayTempDelay) {
-      lastDisplayTempTime = millis();
-      lcd.setCursor(tempC, tempR);
-      for (byte i=0; i<tempLen; i++) {
-        lcd.print(" ");
-      }
-      lcd.setCursor(tempC, tempR);
-      if (currentTempDevice4Display<10) lcd.print(" ");
-      lcd.print(currentTempDevice4Display+1);
-      lcd.print(":");
+  if (millis() - lastDisplayTempTime > displayTempDelay) {
+    lastDisplayTempTime = millis();
+    lcd.setCursor(tempC, tempR);
+    for (byte i=0; i<tempLen; i++) {
       lcd.print(" ");
-      lcd.print(sensors.getTempCByIndex(currentTempDevice4Display),1);
-      lcd.write(2);
-      lcd.print("C");
-      
-      currentTempDevice4Display++;
-      if (currentTempDevice4Display >= numberOfDevices)
-        currentTempDevice4Display = 0;
     }
-    #endif
- 
-    sensors.requestTemperatures(); 
-    delayInMillis = 750 / (1 << (12 - TEMPERATURE_PRECISION));
+    lcd.setCursor(tempC, tempR);
+    if (currentTempDevice4Display<10) lcd.print(" ");
+    lcd.print(currentTempDevice4Display+1);
+    lcd.print(":");
+    lcd.print(" ");
+    lcd.print(sensor[currentTempDevice4Display],1);
+    lcd.write(2);
+    lcd.print("C");
+    
+    currentTempDevice4Display++;
+    if (currentTempDevice4Display >= numberOfDevices)
+      currentTempDevice4Display = 0;
   }
   #endif
-  
-  
-  #ifdef BMP085def
-  Pressure = bmp.readPressure();
-  Pressure = getRealPressure(Pressure, high_above_sea);
-  #else
-  Pressure=101325;
-  #endif
 
-  #ifdef LCDdef
   if (millis() - lastDisplayBMPTime > displayBMPDelay) {
     lastDisplayBMPTime = millis();
     lcd.setCursor(pressPosC, pressPosR);
@@ -453,26 +482,7 @@ void loop() {
     lcd.print((int)(Pressure%100));
     lcd.print("hPa");
   }
-  #endif
 
-  #ifdef DHTdef
-  
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  if (millis() - lastDHTMeasTime > 250) {
-    if (isHumidity) {
-      humidity = dht.readHumidity();
-      isHumidity = false;
-    }
-    else {
-      tempDHT = dht.readTemperature();
-      isHumidity = true;;
-    }
-      dht.startMeas();
-    lastDHTMeasTime=millis();
-  }
-  #endif
-
-  #ifdef LCDdef
   if (millis() - lastDisplayDHTTime > displayDHTDelay) {
     lastDisplayDHTTime = millis();
     lcd.setCursor(humidityPosC, humidityPosR);
@@ -486,7 +496,6 @@ void loop() {
     lcd.print(tempDHT);
     lcd.print("C");*/
   }
-  #endif
 
   if (millis() - dsLastPrintTime > 1000) {
 
@@ -512,10 +521,8 @@ void loop() {
     
     Serial.print(" Dew point: "); 
     Serial.print(calcDewPoint(humidity, tempDHT));
- 
+
     Serial.println("");
-    
-    
     dsLastPrintTime = millis(); 
   }
   
@@ -544,8 +551,6 @@ void loop() {
 }
 
 //-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
-
-
 #ifdef Ethernetdef
 void sendData() {
 
@@ -560,7 +565,7 @@ void sendData() {
     //temperature from DALLAS
     for(byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
-      if(sensors.getAddress(tempDeviceAddress, i)) {
+      if(dsSensors.getAddress(tempDeviceAddress, i)) {
         dataString += "T";
         for (byte i = 0; i < 8; i++) {
           if (tempDeviceAddress[i] < 16) dataString += "0";
@@ -568,7 +573,8 @@ void sendData() {
           dataString += buffer;
         }
         dataString += ",";
-        int t = (int)(sensors.getTempCByIndex(i)*10);
+        int t = (int)(sensor[i]*10);
+        
         dataString += t/10;
         dataString += ".";
         dataString += abs(t%10);
@@ -631,6 +637,7 @@ void sendData() {
     Serial.println("disconnecting.");
     client.stop();
   }
+  
   #ifdef LCDdef
   lcd.setCursor(15, 1);
   lcd.print(" ");
@@ -674,6 +681,9 @@ void saveDataToSD() {
   if (day()<10) fileName+="0";
   fileName+=String(day());
   fileName+=".csv";
+
+  Serial.println();
+  printDateTime(0);
   Serial.print("\nSaving data to file:");
   Serial.print(fileName);
   Serial.print("...");
@@ -705,10 +715,10 @@ void saveDataToSD() {
     dataFile.print(";");
     //temperature from DALLAS
     for(byte i=0;i<numberOfDevices; i++) {
-      int t = (int)(sensors.getTempCByIndex(i)*10);
-      dataFile.print(t/10);
+      //int t = (int)(dsSensors.getTempCByIndex(i)*10);
+      dataFile.print((int)sensor[i]/10);
       dataFile.print(",");
-      dataFile.print(abs(t%10));
+      dataFile.print(abs((int)sensor[i]%10));
       dataFile.print(";");
     }
     
@@ -928,12 +938,12 @@ void getWindDirectionStr(uint16_t adcValue)
 #ifdef DALLASdef
 
 void dsInit(void) {
-  sensors.begin();
+  dsSensors.begin();
   Serial.println();
   Serial.print("DALLAS Library version:");
   Serial.println(DALLASTEMPLIBVERSION);
   // Grab a count of devices on the wire
-  numberOfDevices = sensors.getDeviceCount();
+  numberOfDevices = dsSensors.getDeviceCount();
 
   // locate devices on the bus
   Serial.print("Locating devices...");
@@ -944,13 +954,13 @@ void dsInit(void) {
 
   // report parasite power requirements
   Serial.print("Parasite power is: "); 
-  if (sensors.isParasitePowerMode()) Serial.println("ON");
+  if (dsSensors.isParasitePowerMode()) Serial.println("ON");
   else Serial.println("OFF");
   
   // Loop through each device, print out address
   for(byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
-    if(sensors.getAddress(tempDeviceAddress, i)) {
+    if(dsSensors.getAddress(tempDeviceAddress, i)) {
       Serial.print("Found device ");
       Serial.print(i, DEC);
       Serial.print(" with address: ");
@@ -964,10 +974,10 @@ void dsInit(void) {
       Serial.println(TEMPERATURE_PRECISION, DEC);
       
       // set the resolution to TEMPERATURE_PRECISION bit (Each Dallas/Maxim device is capable of several different resolutions)
-      sensors.setResolution(tempDeviceAddress, TEMPERATURE_PRECISION);
+      dsSensors.setResolution(tempDeviceAddress, TEMPERATURE_PRECISION);
       
        Serial.print("Resolution actually set to: ");
-      Serial.print(sensors.getResolution(tempDeviceAddress), DEC); 
+      Serial.print(dsSensors.getResolution(tempDeviceAddress), DEC); 
       Serial.println();
     } else {
       Serial.print("Found ghost device at ");
@@ -981,7 +991,7 @@ void printTemperatureAll() {
   // Loop through each device, print out temperature data
   for(byte i=0;i<numberOfDevices; i++) {
     // Search the wire for address
-    if(sensors.getAddress(tempDeviceAddress, i)) {
+    if(dsSensors.getAddress(tempDeviceAddress, i)) {
       Serial.print("T");
       Serial.print(i, DEC);
       Serial.print("[");
@@ -992,8 +1002,8 @@ void printTemperatureAll() {
       Serial.print("]");
 
       // It responds almost immediately. Let's print out the data
-      //float tempC = sensors.getTempC(tempDeviceAddress);
-      Serial.print(sensors.getTempC(tempDeviceAddress));
+      //float tempC = dsSensors.getTempC(tempDeviceAddress);
+      Serial.print(sensor[i]);
       Serial.println(" C ");
     } 
 	//else ghost device! Check your power requirements and cabling
@@ -1104,3 +1114,16 @@ void cardInfo() {
 
 #endif
 
+void startTimer() {
+  start=millis();
+}
+
+void stopTimer() {
+  stop=millis();
+}
+
+void printTimer(char* message) {
+  Serial.print(message);
+  Serial.print(stop-start);
+  Serial.println(" ms");
+}

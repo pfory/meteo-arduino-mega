@@ -4,9 +4,10 @@ D0 Rx
 D1 Tx
 D2 DHT sensor 
 D3 DALLAS temperature
-D4-D9 display
+D4 SS for SD
+D5-D9 display
 D10 Ethernet shield
-D11
+D11 display
 D12
 D13
 A0 free reserved for rain sensor
@@ -26,7 +27,7 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 #define UDPdef //672 bytes
 #define Ethernetdef //10614 bytes
 #define LCDdef
-#define Anemodef //1454 bytes
+//#define Anemodef //1454 bytes
 #define SDdef 
 
 #ifdef Anemodef
@@ -90,18 +91,21 @@ byte SNTP_server_IP[]    = { 192, 43, 244, 18}; // time.nist.gov
 #define TEMPERATURE_PRECISION 12
 OneWire onewire(ONE_WIRE_BUS); // pin for onewire DALLAS bus
 DallasTemperature dsSensors(&onewire);
-DeviceAddress tempDeviceAddress[20];
+DeviceAddress tempDeviceAddress;
+#ifndef NUMBER_OF_DEVICES
+#define NUMBER_OF_DEVICES 20
+#endif
+DeviceAddress tempDeviceAddresses[NUMBER_OF_DEVICES];
 //int  resolution = 12;
 unsigned int measDelay = 4000;
 unsigned int numberOfDevices; // Number of temperature devices found
 unsigned long lastDisplayTempTime;
 unsigned int displayTempDelay=1000; //in ms
+unsigned long lastDsMeasStartTime;
+bool dsMeasStarted=false;
+float sensor[NUMBER_OF_DEVICES];
 #ifdef LCDdef
 byte currentTempDevice4Display=0;
-unsigned int sample=0;
-float sensor[20];
-bool dsMeasStarted=false;
-unsigned long lastDsMeasStartTime;
 #endif
 #endif
 
@@ -146,7 +150,7 @@ int tempDHT = 0;
 
 #ifdef LCDdef
 #include <LiquidCrystal.h>
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+LiquidCrystal lcd(8, 9, 11, 5, 6, 7);
 #define humidityPosR 1 
 #define humidityPosC 0 
 #define humidityLen 4
@@ -209,14 +213,15 @@ SdVolume volume;
 SdFile root;
 bool bCardOK = false;
 unsigned long lastSaveTime;
-unsigned long saveDelay=60000; //in ms
+unsigned long saveDelay=25000; //in ms
 #endif
 
 unsigned long start, stop;
+unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.76"); //SW name & version
+String versionSW("METEOv0.77"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -226,12 +231,6 @@ void setup() {
   Serial.println(versionSW);
 
   Serial.println("SW inicialization");
-
-  #ifdef SDdef
-  pinMode(10, OUTPUT);
-  digitalWrite(10, LOW);
-  #endif
-  
   Serial.print("Free mem: ");
   Serial.print(freeMemory());
   Serial.println(" bytes");
@@ -252,26 +251,33 @@ void setup() {
   lcd.clear();
   lcdPrintVersion();
   #endif
-
+ 
   
+  #ifdef SDdef
+  // make sure that the default chip select pin is set to
+  // output, even if you don't use it:
+  pinMode(10, OUTPUT);
+  #endif
+
+  #ifdef Ethernetdef
+  Serial.print("waiting for net connection...");
+  lcd.setCursor(0,1);
+  lcd.print("waiting for net");
+  if (Ethernet.begin(mac) == 0) {
+    Serial.println("Failed using DHCP");
+    // DHCP failed, so use a fixed IP address:
+    //Ethernet.begin(mac, ip);
+  }
+  eraseRow(1);
+  Serial.println("Ethernet OK");
+
+   
   /*pinMode(10, OUTPUT);
   pinMode(chipSelect, OUTPUT);
   digitalWrite(10,HIGH);
   digitalWrite(chipSelect,LOW);
   */
   
-  #ifdef Ethernetdef
-  Serial.print("waiting for net...");
-  if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed using DHCP");
-    // DHCP failed, so use a fixed IP address:
-    //Ethernet.begin(mac, ip);
-  }
-  Serial.print("Ethernet OK");
-
-  // make sure that the default chip select pin is set to
-  // output, even if you don't use it:
-
   #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("IP:");
@@ -353,27 +359,36 @@ void setup() {
   Serial.println("DHT N/A");
   #endif
 
+  #ifdef Ethernetdef
   Serial.print("Sending interval [ms]:");
   Serial.println(sendDelay);
+  lastSendTime = millis();
+  #endif
+  
+  #ifdef SDdef
   Serial.print("Saving interval [ms]:");
   Serial.println(saveDelay);
+  lastSaveTime = millis();
+  #endif
 
-  lastSendTime = lastSaveTime = dsLastPrintTime = millis();
+  dsLastPrintTime = millis();
   lastMeasTime = 0;
   
   Serial.println("End of SW initialization phase, I am starting measuring.");
 
+  #ifdef LCDdef
   lcd.clear();
+  #endif
 }
 
 //-------------------------------------------------------------------------LOOP------------------------------------------------------------------------------
 
 void loop() {
-  sample++;
   
-  //Serial.print(".");
+  Serial.print(".");
   //start sampling
   if (millis() - lastMeasTime > measDelay) {
+    sample++;
     lastMeasTime = millis();
     startTimer();
     #ifdef DALLASdef    
@@ -404,8 +419,8 @@ void loop() {
   if (dsMeasStarted) {
     if (millis() - lastDsMeasStartTime>750) {
       dsMeasStarted=false;
-      Serial.print("Zapis hodnot po ");
-      Serial.println(millis() - lastDsMeasStartTime);
+      //Serial.print("Zapis hodnot po ");
+      //Serial.println(millis() - lastDsMeasStartTime);
       //saving temperatures into variables
       for (byte i=0;i<numberOfDevices; i++) {
         sensor[i]=dsSensors.getTempCByIndex(i);
@@ -467,7 +482,6 @@ void loop() {
     if (currentTempDevice4Display >= numberOfDevices)
       currentTempDevice4Display = 0;
   }
-  #endif
 
   if (millis() - lastDisplayBMPTime > displayBMPDelay) {
     lastDisplayBMPTime = millis();
@@ -496,6 +510,7 @@ void loop() {
     lcd.print(tempDHT);
     lcd.print("C");*/
   }
+  #endif
 
   if (millis() - dsLastPrintTime > 1000) {
 
@@ -561,25 +576,25 @@ void sendData() {
 
     //prepare data to send
     String dataString = "";
-    char buffer[16];
+    char buffer[3];
     //temperature from DALLAS
+    
     for(byte i=0;i<numberOfDevices; i++) {
-      // Search the wire for address
-      if(dsSensors.getAddress(tempDeviceAddress, i)) {
-        dataString += "T";
-        for (byte i = 0; i < 8; i++) {
-          if (tempDeviceAddress[i] < 16) dataString += "0";
-          sprintf (buffer, "%X", tempDeviceAddress[i]);
-          dataString += buffer;
-        }
-        dataString += ",";
-        int t = (int)(sensor[i]*10);
-        
-        dataString += t/10;
-        dataString += ".";
-        dataString += abs(t%10);
-
+      dataString += "T";
+ 
+      for (byte j = 0; j < 8; j++) {
+        if (tempDeviceAddresses[i][j] < 16) 
+          dataString += "0";
+        sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
+        dataString += buffer;
       }
+      dataString += ",";
+      int t = (int)(sensor[i]*10);
+      
+      dataString += t/10;
+      dataString += ".";
+      dataString += abs(t%10);
+
       dataString += "\n";
     }
     //Pressure
@@ -596,12 +611,14 @@ void sendData() {
 
     dataString += "\nDewPoint,";
     dataString += (int)calcDewPoint(humidity, tempDHT);
-
+    
+    #ifdef Anemdef
     dataString += "\nWindDirection,";
     dataString += (int)windDirection20/anemoCountDirectionSamples;
 
     windDirection20=0;
     anemoCountDirectionSamples=0;
+    #endif
 
   // if there's a successful connection:
   if (client.connect(server, 80)) {
@@ -740,11 +757,13 @@ void saveDataToSD() {
     dataFile.print(",");
     dataFile.print(abs(t%10));
 
-    
+    #ifdef Anemodef
     dataFile.print(";");
     dataFile.print(windDirection20/anemoCountDirectionSamples);
-    dataFile.print("\n");
+    #endif
     
+    dataFile.print("\n");
+      
     dataFile.close();
     Serial.println("data saved.");
   }  
@@ -840,6 +859,7 @@ void sendNTPpacket(IPAddress& address)
 
 void printDateTime(byte toLCD) {
   if (toLCD==1) {
+    #ifdef LCDdef
     lcd.print(day());
     lcd.print(DATE_DELIMITER);
     lcd.print(month());
@@ -851,6 +871,7 @@ void printDateTime(byte toLCD) {
     printDigits(minute(),toLCD);
     //lcd.print(TIME_DELIMITER);
     //printDigits(second(),toLCD);
+    #endif
   }
   else {
     Serial.print(day());
@@ -870,14 +891,18 @@ void printDateTime(byte toLCD) {
 void printDigits(int digits, byte toLCD){
   // utility function for digital clock display: prints preceding colon and leading 0
   if(digits < 10)
+    #ifdef LCDdef
     if (toLCD==1)
       lcd.print('0');
     else
+    #endif
       Serial.print('0');
       
+  #ifdef LCDdef
   if (toLCD==1)
     lcd.print(digits);
   else
+  #endif
     Serial.print(digits);
 }
 
@@ -907,6 +932,7 @@ void eraseRow(byte r) {
 }
 #endif
 
+#ifdef Anemodef
 int getWindDirection(int analogValue) {
   return analogValue / 2.844;
 }
@@ -934,6 +960,7 @@ void getWindDirectionStr(uint16_t adcValue)
     strcpy(windDirection,"V");
   return;
 }
+#endif
 
 #ifdef DALLASdef
 
@@ -968,6 +995,7 @@ void dsInit(void) {
         if (tempDeviceAddress[i] < 16) Serial.print("0");
         Serial.print(tempDeviceAddress[i], HEX);
       }
+      memcpy(tempDeviceAddresses[i],tempDeviceAddress,16);
       Serial.println();
       
       Serial.print("Setting resolution to ");
@@ -991,7 +1019,18 @@ void printTemperatureAll() {
   // Loop through each device, print out temperature data
   for(byte i=0;i<numberOfDevices; i++) {
     // Search the wire for address
-    if(dsSensors.getAddress(tempDeviceAddress, i)) {
+      Serial.print("T");
+      Serial.print(i, DEC);
+      Serial.print("[");
+      for (byte j = 0; j < 8; j++) {
+        if (tempDeviceAddresses[i][j] < 16) Serial.print("0");
+        Serial.print(tempDeviceAddresses[i][j], HEX);
+      }
+      Serial.print("]");
+      Serial.print(sensor[i]);
+      Serial.println(" C ");
+    
+    /*if(dsSensors.getAddress(tempDeviceAddress, i)) {
       Serial.print("T");
       Serial.print(i, DEC);
       Serial.print("[");
@@ -1006,6 +1045,7 @@ void printTemperatureAll() {
       Serial.print(sensor[i]);
       Serial.println(" C ");
     } 
+    */
 	//else ghost device! Check your power requirements and cabling
   }
 }

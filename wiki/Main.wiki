@@ -1,0 +1,37 @@
+#summary Meteo station on arduino.
+
+= Meteo station on arduino =
+
+
+== Project goals ==
+Air Pressure
+Humidity
+Temperatures
+Wind direction and speed
+Voltage
+Current
+
+=== Sensors ===
+BMP085 - air pressure, air temperature
+DHT11 - humidity and temperature
+DS18B20 - temperature
+
+
+=== Pinout ===
+
+D0 Rx
+D1 Tx
+D2 DHT sensor 
+D3 DALLAS I2C
+D4 SS for SD card
+D4-D9 display
+D10 Ethernet shield
+D11
+D12
+D13
+A0 free reserved for rain sensor
+A1 free reserved for anemometer (current sensor Holcik)
+A2 free reserved for anemometer (voltage sensor Holcik)
+A3 free reserved for light sensor
+A4-SDA for BMP085 ATMEGA328  D20 for BMP085 ATMEGA2560
+A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560

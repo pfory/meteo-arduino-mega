@@ -11,6 +11,17 @@ Wind direction and speed
 Voltage
 Current
 
+=== Hardware ===
+Display - [http://www.dfrobot.com/wiki/index.php?title=Arduino_LCD_KeyPad_Shield_%28SKU:_DFR0009%29]
+
+use pin - A0,D4-D9,D10 for backlight is not used
+
+Arduino Mega 2560 - 
+Ethernet shield - [http://arduino.cc/en/Main/ArduinoEthernetShield]
+use pin - 
+
+Screw shield - http://www.robotshop.com/dfrobot-arduino-compatible-screw-shield-4.html
+
 === Sensors ===
 BMP085 - air pressure, air temperature
 DHT11 - humidity and temperature

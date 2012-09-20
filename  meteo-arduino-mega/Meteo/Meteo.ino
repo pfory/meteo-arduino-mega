@@ -221,7 +221,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.77"); //SW name & version
+String versionSW("METEOv0.78"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -474,6 +474,7 @@ void loop() {
     lcd.print(currentTempDevice4Display+1);
     lcd.print(":");
     lcd.print(" ");
+    if (abs(sensor[currentTempDevice4Display]<10)) lcd.print(" ");
     lcd.print(sensor[currentTempDevice4Display],1);
     lcd.write(2);
     lcd.print("C");

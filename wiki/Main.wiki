@@ -14,7 +14,8 @@ Current
 === Hardware ===
 ====Arduino Mega 2560====
 ====Display====
-[http://www.dfrobot.com/wiki/index.php?title=Arduino_LCD_KeyPad_Shield_%28SKU:_DFR0009%29]
+[http://www.dfrobot.com/wiki/index.php?title=Arduino_LCD_KeyPad_Shield_%28SKU:_DFR0009%29]<br>
+Schema - http://www.dfrobot.com/image/data/DFR0009/LCDKeypad%20Shield%20V1.0%20SCH.pdf
 
 use pin - A0 (for keys, not used)
 D4 - this pin is switched to pin 11 on screw board<br>

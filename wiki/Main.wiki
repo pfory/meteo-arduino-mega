@@ -14,7 +14,7 @@ Current
 === Hardware ===
 Display - [http://www.dfrobot.com/wiki/index.php?title=Arduino_LCD_KeyPad_Shield_%28SKU:_DFR0009%29]
 
-use pin - A0,D4-D9,D10 for backlight is not used
+use pin - A0 (for keys, not used),D4-D9,D10 (for backlight is not used yet)
 
 Arduino Mega 2560 - 
 Ethernet shield - [http://arduino.cc/en/Main/ArduinoEthernetShield]

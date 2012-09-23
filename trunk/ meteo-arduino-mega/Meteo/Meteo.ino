@@ -221,7 +221,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.78"); //SW name & version
+String versionSW("METEOv0.79"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -245,6 +245,7 @@ void setup() {
   lcd.print("Free:");
   lcd.print(freeMemory());
   lcd.print(" bytes");
+  analogWrite(12,100);
   
   delay(2000);
   
@@ -385,7 +386,7 @@ void setup() {
 
 void loop() {
   
-  Serial.print(".");
+  //Serial.print(".");
   //start sampling
   if (millis() - lastMeasTime > measDelay) {
     sample++;

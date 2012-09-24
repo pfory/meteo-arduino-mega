@@ -51,10 +51,14 @@ byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
 //IPAddress ip(192,168,1,1);
 // initialize the library instance:
 EthernetClient client;
+EthernetClient clientConfig;
 // if you don't want to use DNS (and reduce your sketch size)
 // use the numeric IP instead of the name for the server:
 //IPAddress server(216,52,233,121);      // numeric IP for api.cosm.com
 char server[] = "api.cosm.com";   // name address for cosm API
+char serverConfig[] = "datel.asp2.cz"; //config server
+bool checkConfigFlag = false;
+
 unsigned long lastSendTime;
 unsigned long sendDelay=20000; //delay between updates to Cosm.com in ms
 
@@ -189,7 +193,7 @@ byte save[8] = {
   B01110,
   B00100,
 };
-
+#define DISPLAY_BACKLIGHT 150
 #endif
 
 #ifdef Anemodef
@@ -221,7 +225,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.79"); //SW name & version
+String versionSW("METEOv0.80"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -245,7 +249,7 @@ void setup() {
   lcd.print("Free:");
   lcd.print(freeMemory());
   lcd.print(" bytes");
-  analogWrite(12,100);
+  analogWrite(12,DISPLAY_BACKLIGHT);
   
   delay(2000);
   
@@ -286,8 +290,15 @@ void setup() {
   delay(2000);
   eraseRow(1);
   #endif
-  Serial.print(" IP:");
+  Serial.print("\nIP:");
   Serial.println(Ethernet.localIP());
+  Serial.print("Mask:");
+  Serial.println(Ethernet.subnetMask());
+  Serial.print("Gateway:");
+  Serial.println(Ethernet.gatewayIP());
+  Serial.print("DNS:");
+  Serial.println(Ethernet.dnsServerIP());
+  Serial.println();
   #endif
   
   #ifdef UDPdef
@@ -385,6 +396,14 @@ void setup() {
 //-------------------------------------------------------------------------LOOP------------------------------------------------------------------------------
 
 void loop() {
+
+  while (clientConfig.connected()) {
+   if (clientConfig.available()) {
+     char c = clientConfig.read();
+     Serial.write(c);
+    }
+  }
+
   
   //Serial.print(".");
   //start sampling
@@ -547,13 +566,22 @@ void loop() {
   if (sample==2) {
     client.stop();
   }
-  #endif
 
+  if (sample==5 && checkConfigFlag == false) {
+    checkConfig();
+  }
+
+  if (sample==8) {
+    clientConfig.stop();
+    checkConfigFlag = false;
+  }
+
+  #endif
+  
   #ifdef Ethernetdef
   if(!client.connected() && (millis() - lastSendTime > sendDelay)) {
     lastSendTime = millis();
     sendData();
-    checkConfig();
     sample=0;
   }
   #endif
@@ -670,7 +698,18 @@ void sendData() {
 }
 
 void checkConfig() {
-  
+  checkConfigFlag = true;
+  if (clientConfig.connect(serverConfig, 80)) {
+    Serial.println("Connected to config server.");
+    // Make a HTTP request:
+    clientConfig.println("GET /getConfigData.aspx HTTP/1.0");
+    clientConfig.println();
+  } 
+  else
+  {
+    // kf you didn't get a connection to the server:
+    Serial.println("Connection to config server failed.");
+  }
 }
 
 

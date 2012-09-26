@@ -225,7 +225,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.80"); //SW name & version
+String versionSW("METEOv0.81"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -511,6 +511,7 @@ void loop() {
       lcd.print(" ");
     }
     lcd.setCursor(pressPosC, pressPosR);
+    if (Pressure<100000) lcd.print(" ");
     lcd.print((int)(Pressure/100));
     lcd.print(".");
     if (Pressure%100<10) lcd.print("0");

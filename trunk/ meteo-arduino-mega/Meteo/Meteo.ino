@@ -23,7 +23,8 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 
 #define DALLASdef //1702 bytes
 #define BMP085def //3220 bytes for standard library
-#define DHTdef //1052 bytes
+#define DHTdef1 //1052 bytes
+#define DHTdef2 //1052 bytes
 #define UDPdef //672 bytes
 #define Ethernetdef //10614 bytes
 #define LCDdef
@@ -131,11 +132,11 @@ unsigned int displayBMPDelay=5000; //in ms
 signed long Temperature = 0, Pressure = 0;//, Altitude = 0;
 
 
-#ifdef DHTdef
+#ifdef DHTdef1
 #include "DHT.h"
-#define DHTPIN 2     // what pin we're connected to
+#define DHTPIN1 2     // what pin we're connected to
 // Uncomment whatever type you're using!
-#define DHTTYPE DHT11   // DHT 11 
+#define DHTTYPE1 DHT11   // DHT 11 
 //#define DHTTYPE DHT22   // DHT 22  (AM2302)
 //#define DHTTYPE DHT21   // DHT 21 (AM2301)
 
@@ -143,14 +144,38 @@ signed long Temperature = 0, Pressure = 0;//, Altitude = 0;
 // Connect pin 2 of the sensor to whatever your DHTPIN is
 // Connect pin 4 (on the right) of the sensor to GROUND
 // Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
-DHT dht(DHTPIN, DHTTYPE);
+DHT dht1(DHTPIN1, DHTTYPE1);
 unsigned long lastDHTMeasTime;
 unsigned long lastDisplayDHTTime;
 unsigned int displayDHTDelay = 4000; //in ms
 //boolean isHumidity=true;
 #endif
-int humidity = 0;
-int tempDHT = 0;
+
+#ifdef DHTdef2
+#include "DHT.h"
+#define DHTPIN2 12     // what pin we're connected to
+// Uncomment whatever type you're using!
+#define DHTTYPE2 DHT11   // DHT 11 
+//#define DHTTYPE DHT22   // DHT 22  (AM2302)
+//#define DHTTYPE DHT21   // DHT 21 (AM2301)
+
+// Connect pin 1 (on the left) of the sensor to +5V
+// Connect pin 2 of the sensor to whatever your DHTPIN is
+// Connect pin 4 (on the right) of the sensor to GROUND
+// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
+DHT dht2(DHTPIN2, DHTTYPE2);
+//unsigned long lastDHTMeasTime;
+//unsigned long lastDisplayDHTTime;
+//unsigned int displayDHTDelay = 4000; //in ms
+//boolean isHumidity=true;
+#endif
+
+
+int humidity1 = 0;
+int tempDHT1 = 0;
+int humidity2 = 0;
+int tempDHT2 = 0;
+byte lastDHTShows=0;
 
 #ifdef LCDdef
 #include <LiquidCrystal.h>
@@ -225,7 +250,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.81"); //SW name & version
+String versionSW("METEOv0.82"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -362,15 +387,23 @@ void setup() {
   lastDisplayBMPTime = millis();
   #endif
 
-  #ifdef DHTdef
-  dhtInit();
+  #ifdef DHTdef1
+  dhtInit(1);
   lastDHTMeasTime=millis();
-  dht.startMeas();
+  dht1.startMeas();
   lastDisplayDHTTime = millis();
   #else
-  Serial.println("DHT N/A");
+  Serial.println("DHT1 N/A");
   #endif
 
+  #ifdef DHTdef2
+  dhtInit(2);
+  dht2.startMeas();
+  #else
+  Serial.println("DHT2 N/A");
+  #endif
+
+  
   #ifdef Ethernetdef
   Serial.print("Sending interval [ms]:");
   Serial.println(sendDelay);
@@ -410,7 +443,7 @@ void loop() {
   if (millis() - lastMeasTime > measDelay) {
     sample++;
     lastMeasTime = millis();
-    startTimer();
+    //startTimer();
     #ifdef DALLASdef    
     dsSensors.requestTemperatures(); 
     lastDsMeasStartTime=millis();
@@ -418,11 +451,18 @@ void loop() {
     #endif
     
    
-    #ifdef DHTdef
+    #ifdef DHTdef1
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-    humidity = dht.readHumidity();
-    tempDHT = dht.readTemperature();
+    humidity1 = dht1.readHumidity();
+    tempDHT1 = dht1.readTemperature();
     #endif
+
+    #ifdef DHTdef2
+    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+    humidity2 = dht2.readHumidity();
+    tempDHT2 = dht2.readTemperature();
+    #endif
+
     
     #ifdef BMP085def
     Pressure = bmp.readPressure();
@@ -430,8 +470,8 @@ void loop() {
     #else
     Pressure=101325;
     #endif
-    stopTimer();
-    printTimer("Start sampling takes:");
+    //stopTimer();
+    //printTimer("Start sampling takes:");
   }
   
   
@@ -480,7 +520,10 @@ void loop() {
   #ifdef LCDdef
   lcd.setCursor(hourC, hourR);
   printDigits(hour(),1);
-  lcd.print(TIME_DELIMITER);
+  if((millis()/1000)%2)
+    lcd.print(TIME_DELIMITER);
+  else
+    lcd.print(" ");
   printDigits(minute(),1);
     
   if (millis() - lastDisplayTempTime > displayTempDelay) {
@@ -525,12 +568,21 @@ void loop() {
     for (byte i=0; i<humidityLen; i++) {
       lcd.print(" ");
     }
+    
+    byte tempHum;
     lcd.setCursor(humidityPosC, humidityPosR);
-    lcd.print(humidity);
+    if (lastDHTShows==0) {
+      tempHum=humidity1;
+      lastDHTShows=1;
+    }
+    else {
+      tempHum=humidity2;
+      lastDHTShows=0;
+    }
+   
+    if (tempHum<10) lcd.print(" ");
+    lcd.print(tempHum);
     lcd.print("%");
-    /*lcd.setCursor(0,0);
-    lcd.print(tempDHT);
-    lcd.print("C");*/
   }
   #endif
 
@@ -547,18 +599,32 @@ void loop() {
     Serial.print(Pressure);
 
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
-    if (isnan(tempDHT) || isnan(humidity)) {
-      Serial.println("DHT fail.");
+    if (isnan(tempDHT1) || isnan(humidity1)) {
+      Serial.println("DHT1 fail.");
     } else {
-      Serial.print(" Humidity DHT(%): "); 
-      Serial.print(humidity);
-      Serial.print(" Temp DHT(C): "); 
-      Serial.print(tempDHT);
+      Serial.print(" Humidity DHT1(%): "); 
+      Serial.print(humidity1);
+      Serial.print(" Temp DHT1(C): "); 
+      Serial.print(tempDHT1);
+    }
+
+    // check if returns are valid, if they are NaN (not a number) then something went wrong!
+    if (isnan(tempDHT2) || isnan(humidity2)) {
+      Serial.println("DHT2 fail.");
+    } else {
+      Serial.print(" Humidity DHT2(%): "); 
+      Serial.print(humidity2);
+      Serial.print(" Temp DHT2(C): "); 
+      Serial.print(tempDHT2);
     }
     
-    Serial.print(" Dew point: "); 
-    Serial.print(calcDewPoint(humidity, tempDHT));
+    Serial.print(" Dew point DHT1: "); 
+    Serial.print(calcDewPoint(humidity1, tempDHT1));
 
+    Serial.print(" Dew point DHT2: "); 
+    Serial.print(calcDewPoint(humidity2, tempDHT2));
+
+   
     Serial.println("");
     dsLastPrintTime = millis(); 
   }
@@ -569,7 +635,7 @@ void loop() {
   }
 
   if (sample==5 && checkConfigFlag == false) {
-    checkConfig();
+    //checkConfig();
   }
 
   if (sample==8) {
@@ -614,11 +680,17 @@ void sendData() {
       dataString += "T";
  
       for (byte j = 0; j < 8; j++) {
-        if (tempDeviceAddresses[i][j] < 16) 
-          dataString += "0";
         sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
-        dataString += buffer;
+        if (tempDeviceAddresses[i][j] < 16) {
+          dataString += "0";
+          dataString += buffer[0];
+        }
+        else {
+          dataString += buffer[0];
+          dataString += buffer[1];
+        }
       }
+ 
       dataString += ",";
       int t = (int)(sensor[i]*10);
       
@@ -628,20 +700,34 @@ void sendData() {
 
       dataString += "\n";
     }
+    
     //Pressure
     dataString += "Press,";
     dataString += Pressure;
 
+    //DHT1
     //Humidity
-    dataString += "\nHumidity,";
-    dataString += humidity;
+    dataString += "\nHumidity1,";
+    dataString += humidity1;
 
     //temperature from DHT11
-    dataString += "\nTempDHT,";
-    dataString += tempDHT;
+    dataString += "\nTempDHT1,";
+    dataString += tempDHT1;
+   
+    dataString += "\nDewPoint1,";
+    dataString += (int)calcDewPoint(humidity1, tempDHT1);
 
-    dataString += "\nDewPoint,";
-    dataString += (int)calcDewPoint(humidity, tempDHT);
+    //DHT2
+    //Humidity
+    dataString += "\nHumidity2,";
+    dataString += humidity2;
+
+    //temperature from DHT11
+    dataString += "\nTempDHT2,";
+    dataString += tempDHT2;
+   
+    dataString += "\nDewPoint2,";
+    dataString += (int)calcDewPoint(humidity2, tempDHT2);
     
     #ifdef Anemdef
     dataString += "\nWindDirection,";
@@ -784,21 +870,37 @@ void saveDataToSD() {
     //Pressure
     dataFile.print(Pressure);
 
-    //Humidity
+    //DHT1
+    //Humidity from DHT
     dataFile.print(";");
-    dataFile.print(humidity);
+    dataFile.print(humidity1);
 
-    //temperature from DHT11
+    //temperature from DHT
     dataFile.print(";");
-    dataFile.print(tempDHT);
+    dataFile.print(tempDHT1);
 
     dataFile.print(";");
-    //dataFile.print(calcDewPoint(humidity, tempDHT));
-    int t = (int)(calcDewPoint(humidity, tempDHT)*10);
+    int t = (int)(calcDewPoint(humidity1, tempDHT1)*10);
     dataFile.print(t/10);
     dataFile.print(",");
     dataFile.print(abs(t%10));
 
+    //DHT2
+    //Humidity from DHT
+    dataFile.print(";");
+    dataFile.print(humidity2);
+
+    //temperature from DHT
+    dataFile.print(";");
+    dataFile.print(tempDHT2);
+
+    dataFile.print(";");
+    t = (int)(calcDewPoint(humidity2, tempDHT2)*10);
+    dataFile.print(t/10);
+    dataFile.print(",");
+    dataFile.print(abs(t%10));
+
+    
     #ifdef Anemodef
     dataFile.print(";");
     dataFile.print(windDirection20/anemoCountDirectionSamples);
@@ -1069,6 +1171,7 @@ void printTemperatureAll() {
         Serial.print(tempDeviceAddresses[i][j], HEX);
       }
       Serial.print("]");
+
       Serial.print(sensor[i]);
       Serial.println(" C ");
     
@@ -1106,8 +1209,8 @@ void bmp085Init() {
   #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("High:");
-  lcd.print(high_above_sea);
-  lcd.print(" cmasl");
+  lcd.print(high_above_sea/100);
+  lcd.print(" masl");
   delay(2000);
   eraseRow(1);
   #endif
@@ -1120,13 +1223,18 @@ long getRealPressure(long TruePressure, long _param_centimeters) {
   return TruePressure / pow((1 - (float)_param_centimeters / 4433000), 5.255); // + 101325;
 }
 
-#ifdef DHTdef
-void dhtInit() {
-  dht.begin();
-  Serial.println("DHT OK");
+#ifdef DHTdef1 || #ifdef DHTdef2
+void dhtInit(byte sensor) {
+  if (sensor==1) {
+    dht1.begin();
+    Serial.println("DHT1 OK");
+  }
+  else if (sensor==2) {
+    dht2.begin();
+    Serial.println("DHT2 OK");
+  }
 }
 #endif
-
 
 #ifdef SDdef
 void cardInfo() {

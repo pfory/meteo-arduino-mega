@@ -251,7 +251,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.82"); //SW name & version
+String versionSW("METEOv0.83"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -287,7 +287,32 @@ void setup() {
   #ifdef SDdef
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
-  pinMode(10, OUTPUT);
+  pinMode(53, OUTPUT);
+  digitalWrite(53,HIGH);
+
+  Serial.print("Initializing SD card...");
+
+  bCardOK = true;
+  // see if the card is present and can be initialized:
+  if (!SD.begin(chipSelect)) {
+    Serial.println("card failed, or not present");
+    // don't do anything more:
+    bCardOK = false;
+  }
+  else {
+    Serial.println("card initialized.");
+    cardInfo();
+  }
+
+  String fileName = String(year());
+  if (month()<10) fileName+="0";
+  fileName+=String(month());
+  if (day()<10) fileName+="0";
+  fileName+=String(day());
+  fileName+=".csv";
+  Serial.print("Filename:");
+  Serial.println(fileName);
+
   #endif
 
   #ifdef Ethernetdef
@@ -299,6 +324,8 @@ void setup() {
     // DHCP failed, so use a fixed IP address:
     //Ethernet.begin(mac, ip);
   }
+  digitalWrite(53,HIGH);
+
   eraseRow(1);
   Serial.println("Ethernet OK");
 
@@ -349,31 +376,6 @@ void setup() {
   #endif
   #endif
 
-  #ifdef SDdef
-  Serial.print("Initializing SD card...");
-
-  bCardOK = true;
-  // see if the card is present and can be initialized:
-  if (!SD.begin(chipSelect)) {
-    Serial.println("card failed, or not present");
-    // don't do anything more:
-    bCardOK = false;
-  }
-  else {
-    Serial.println("card initialized.");
-    cardInfo();
-  }
-
-  String fileName = String(year());
-  if (month()<10) fileName+="0";
-  fileName+=String(month());
-  if (day()<10) fileName+="0";
-  fileName+=String(day());
-  fileName+=".csv";
-  Serial.print("Filename:");
-  Serial.println(fileName);
-  
-  #endif
   
   
   #ifdef DALLASdef    
@@ -418,7 +420,8 @@ void setup() {
   #endif
 
   dsLastPrintTime = millis();
-  lastMeasTime = 0;
+  lastMeasTime = millis();
+  dsSensors.requestTemperatures(); 
   
   Serial.println("End of SW initialization phase, I am starting measuring.");
 

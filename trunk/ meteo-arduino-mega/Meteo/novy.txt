@@ -1,5 +1,8 @@
 neco
 
+zmena1
+<<<<<<< .mine
 uprava1
-smazal jsem vse
-dalsi uprava
+
+=======smazal jsem vse
+dalsi uprava>>>>>>> .theirs

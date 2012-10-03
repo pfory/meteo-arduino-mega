@@ -1,7 +1,3 @@
-<<<<<<< .mine
 neco
 
-neco jsem pripsal=======
-neco
-
-take jsem neco pripsal>>>>>>> .r29
+uprava1

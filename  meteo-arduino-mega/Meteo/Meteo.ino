@@ -21,6 +21,8 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 */
 
 
+kajhsdkjahk dhkasdkhak dhkahsd
+
 #define DALLASdef //1702 bytes
 #define BMP085def //3220 bytes for standard library
 #define DHTdef1 //1052 bytes

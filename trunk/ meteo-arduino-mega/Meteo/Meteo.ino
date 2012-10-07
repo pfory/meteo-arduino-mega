@@ -251,7 +251,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.83"); //SW name & version
+String versionSW("METEOv0.85"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -296,7 +296,6 @@ void setup() {
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
     Serial.println("card failed, or not present");
-    // don't do anything more:
     bCardOK = false;
   }
   else {
@@ -660,7 +659,7 @@ void loop() {
   #ifdef SDdef
   if (millis() - lastSaveTime > saveDelay) {
     lastSaveTime=millis();
-    saveDataToSD();
+    saveDataToSD(false);
   }
   #endif
 
@@ -809,7 +808,7 @@ void checkConfig() {
 
 
 #ifdef SDdef
-void saveDataToSD() {
+void saveDataToSD(bool rep) {
   //save data to SD card
   #ifdef LCDdef
   lcd.setCursor(15, 1);
@@ -865,9 +864,10 @@ void saveDataToSD() {
     //temperature from DALLAS
     for(byte i=0;i<numberOfDevices; i++) {
       //int t = (int)(dsSensors.getTempCByIndex(i)*10);
-      dataFile.print((int)sensor[i]/10);
-      dataFile.print(",");
-      dataFile.print(abs((int)sensor[i]%10));
+      int t = (int)(sensor[i]*10);
+      dataFile.print(t/10);
+      dataFile.print(".");
+      dataFile.print(abs(t%10));
       dataFile.print(";");
     }
     
@@ -919,6 +919,11 @@ void saveDataToSD() {
   else {
     Serial.print("error opening ");
     Serial.println(fileName);
+    Serial.println("Try SD card reinit.");
+    SD.begin(chipSelect);
+    if (!rep) {
+      saveDataToSD(true);
+    }
   } 
 
   #ifdef LCDdef

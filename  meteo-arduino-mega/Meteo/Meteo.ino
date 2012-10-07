@@ -866,7 +866,7 @@ void saveDataToSD(bool rep) {
       //int t = (int)(dsSensors.getTempCByIndex(i)*10);
       int t = (int)(sensor[i]*10);
       dataFile.print(t/10);
-      dataFile.print(".");
+      dataFile.print(",");
       dataFile.print(abs(t%10));
       dataFile.print(";");
     }

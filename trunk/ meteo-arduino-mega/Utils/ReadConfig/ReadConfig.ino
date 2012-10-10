@@ -29,7 +29,7 @@ byte mac[] = {
 char remoteServer[] = "datel.asp2.cz";
 EthernetClient localClient;
 
-bool isConnected=false;
+bool isDownloaded = false;
 char buff[64];
 int pointer = 0;
 boolean found_status_200 = false;
@@ -41,6 +41,12 @@ String param="";
 String data;
 unsigned int stampOld=0;
 unsigned int stamp=INT_MAX;
+
+int high_above_sea; //in cm
+unsigned int savingInterval; //in sec
+unsigned int postingInterval; //in sec
+
+String nextAction="";
 
 void setup()
 {
@@ -60,97 +66,112 @@ void setup()
   Serial.print("DNS:");
   Serial.println(Ethernet.dnsServerIP());
   Serial.println();
+  nextAction = "stamp";
 }
 
 void loop()
 {
-    checkConfig("STAMP");
-    
-    char this_char[data.length() + 1];
-    data.toCharArray(this_char, sizeof(this_char));
-    stamp = atoi(this_char);
-    if (stamp<INT_MAX && stamp!=0 && stamp!=stampOld) {
-      stampOld=stamp;
-      Serial.print("Stamp set/change STAMP=");
-      Serial.println(data);
-    }
-    
+  checkConfig();
 }
 
-void checkConfig(String param) {
-  if (isConnected) {
-    while (localClient.available()) {
-      char c = localClient.read();
-      //Serial.print(c);
-      buff[pointer] = c;
-      if (pointer < 64) pointer++;
-      if (c == '\n') {
-        found = strstr(buff, "200 OK");
-        if (found != 0){
-          found_status_200 = true; 
-          #ifdef VERBOSE
-          Serial.println("Status 200 found");
-          #endif
+void checkConfig() {
+  if (nextAction!="") {
+    if (isDownloaded) {
+      while (localClient.available()) {
+        char c = localClient.read();
+        //Serial.print(c);
+        buff[pointer] = c;
+        if (pointer < 64) pointer++;
+        if (c == '\n') {
+          found = strstr(buff, "200 OK");
+          if (found != 0){
+            found_status_200 = true; 
+            #ifdef VERBOSE
+            Serial.println("Status 200 found");
+            #endif
+          }
+          buff[pointer]=0;
+          //found_content = true;
+          clean_buffer();    
         }
-        buff[pointer]=0;
-        //found_content = true;
-        clean_buffer();    
-      }
-      
-      if (found_status_200) {
-        found = strstr(buff, "id=\"Data\">");
-        if (found != 0) {
-          #ifdef VERBOSE
-          Serial.println("Data was found.");
-          #endif
-          clean_buffer();
-          found_data_id = true; 
+        
+        if (found_status_200) {
+          found = strstr(buff, "id=\"Data\">");
+          if (found != 0) {
+            #ifdef VERBOSE
+            Serial.println("Data was found.");
+            #endif
+            clean_buffer();
+            found_data_id = true; 
+          }
         }
-      }
-      
-      if (found_data_id) {
-        found = strstr(buff, "</span>");
-        if (found != 0) {
-          found_data_id = false;
-          #ifdef VERBOSE
-          Serial.print("Data:");
-          #endif
-          buff[strlen(buff)-7]='\0';
-          //Serial.println(buff);
-          data=buff;
-          clean_buffer();
-          localClient.stop();
-          isConnected=false;
+        
+        if (found_data_id) {
+          found = strstr(buff, "</span>");
+          if (found != 0) {
+            found_data_id = false;
+            #ifdef VERBOSE
+            Serial.print("Data:");
+            #endif
+            buff[strlen(buff)-7]='\0';
+            data=buff;
+            clean_buffer();
+            localClient.stop();
+            isDownloaded=false;
+            
+            if (nextAction=="stamp") {
+              stamp = string2Int(data);
+              
+              if (stamp<INT_MAX && stamp!=0 && stamp!=stampOld) {
+                stampOld=stamp;
+                Serial.print("Stamp set/change STAMP=");
+                Serial.println(data);
+                nextAction = "high_above_sea";
+              }
+            }
+            else if (nextAction=="high_above_sea") {
+              high_above_sea = string2Int(data);
+              nextAction = "savingInterval";
+            }
+            else if (nextAction=="savingInterval") {
+              savingInterval = string2Int(data);
+              nextAction = "postingInterval";
+            }
+            else if (nextAction=="postingInterval") {
+              postingInterval = string2Int(data);
+              nextAction = "";
+            }
+          }
         }
       }
     }
-  }
-  else {
-    #ifdef VERBOSE
-    Serial.println("Connecting...");
-    #endif
-    if (localClient.connect(remoteServer, 80)) {
+    else {
       #ifdef VERBOSE
-      Serial.println("GET request to retrieve");
+      Serial.println("Connecting...");
       #endif
-      localClient.print("GET /getconfigdata.aspx?param=");
-      localClient.print(param);
-      localClient.println(" HTTP/1.1");
-      localClient.print("Host: ");
-      localClient.println(remoteServer);
-      localClient.println("User-Agent: Arduino (Solar)");
-      localClient.println("Connection: close");
-      localClient.println();
-      found_status_200 = false;
-      found_data_id = false;
-      
-      isConnected=true;
+      if (localClient.connect(remoteServer, 80)) {
+        #ifdef VERBOSE
+        Serial.println("GET request to retrieve");
+        #endif
+        localClient.print("GET /getconfigdata.aspx?param=");
+        localClient.print(param);
+        localClient.println(" HTTP/1.1");
+        localClient.print("Host: ");
+        localClient.println(remoteServer);
+        localClient.println("User-Agent: Arduino (Solar)");
+        localClient.println("Connection: close");
+        localClient.println();
+        found_status_200 = false;
+        found_data_id = false;
+        
+        isDownloaded=true;
 
 
-    }
-    else
-    {
-      Serial.println("Connecting error.");
+      }
+      else
+      {
+        Serial.println("Connecting error.");
+      }
     }
   }
 }
@@ -160,3 +181,11 @@ void clean_buffer() {
   pointer = 0;
   memset(buff,0,sizeof(buff)); 
 }
+
+
+int string2Int(String d) {
+  char this_char[d.length() + 1];
+  d.toCharArray(this_char, sizeof(this_char));
+  return atoi(this_char);
+ }
+  

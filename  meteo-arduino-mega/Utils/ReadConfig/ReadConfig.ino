@@ -14,7 +14,7 @@
  *
  * =============================== */
 
-//#define VERBOSE
+#define VERBOSE
 
 #include <Ethernet.h>
 #include <string.h>
@@ -37,7 +37,6 @@ boolean found_data_id = false;
 char *found;
 //String param="STATIONNAME";
 //String param="CHECK";
-String param="";
 String data;
 unsigned int stampOld=0;
 unsigned int stamp=INT_MAX;
@@ -50,7 +49,7 @@ String nextAction="";
 
 void setup()
 {
-  Serial.begin(57600); 
+  Serial.begin(115200); 
   
   pinMode(53, OUTPUT);
   digitalWrite(53,HIGH);
@@ -110,17 +109,25 @@ void checkConfig() {
           found = strstr(buff, "</span>");
           if (found != 0) {
             found_data_id = false;
-            #ifdef VERBOSE
-            Serial.print("Data:");
-            #endif
             buff[strlen(buff)-7]='\0';
             data=buff;
+            #ifdef VERBOSE
+            Serial.print("Data:");
+            Serial.println(data);
+            Serial.print("Next action:");
+            Serial.println(nextAction);
+            #endif
             clean_buffer();
             localClient.stop();
             isDownloaded=false;
             
             if (nextAction=="stamp") {
               stamp = string2Int(data);
+              #ifdef VERBOSE
+              Serial.println("STAMP action");
+              Serial.print("Stamp=");
+              Serial.println(stamp);
+              #endif
               
               if (stamp<INT_MAX && stamp!=0 && stamp!=stampOld) {
                 stampOld=stamp;
@@ -154,7 +161,7 @@ void checkConfig() {
         Serial.println("GET request to retrieve");
         #endif
         localClient.print("GET /getconfigdata.aspx?param=");
-        localClient.print(param);
+        localClient.print(nextAction);
         localClient.println(" HTTP/1.1");
         localClient.print("Host: ");
         localClient.println(remoteServer);
@@ -184,8 +191,11 @@ void clean_buffer() {
 
 
 int string2Int(String d) {
+  Serial.println("fce string2Int");
+  Serial.println(d);
   char this_char[d.length() + 1];
   d.toCharArray(this_char, sizeof(this_char));
+  Serial.println(this_char);
   return atoi(this_char);
  }
   

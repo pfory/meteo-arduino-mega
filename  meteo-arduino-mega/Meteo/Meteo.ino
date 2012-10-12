@@ -20,7 +20,8 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 
 */
 
-
+// Contains EEPROM.read() and EEPROM.write()
+#include <EEPROM.h>
 
 #define DALLASdef //1702 bytes
 #define BMP085def //3220 bytes for standard library
@@ -62,7 +63,6 @@ char serverConfig[] = "datel.asp2.cz"; //config server
 bool checkConfigFlag = false;
 
 unsigned long lastSendTime;
-unsigned long sendDelay=20000; //delay between updates to Cosm.com in ms
 
 #ifdef UDPdef
 EthernetUDP Udp;
@@ -103,10 +103,8 @@ DeviceAddress tempDeviceAddress;
 #endif
 DeviceAddress tempDeviceAddresses[NUMBER_OF_DEVICES];
 //int  resolution = 12;
-unsigned int measDelay = 4000;
 unsigned int numberOfDevices; // Number of temperature devices found
 unsigned long lastDisplayTempTime;
-unsigned int displayTempDelay=1000; //in ms
 unsigned long lastDsMeasStartTime;
 bool dsMeasStarted=false;
 float sensor[NUMBER_OF_DEVICES];
@@ -125,10 +123,7 @@ int sensorReading = INT_MIN;
 #include <I2cMaster.h>
 //BMP085 dps = BMP085();      // Digital Pressure Sensor 
 swI2C_BMP085 bmp;
-//#define HIGH_ABOVE_SEA 34700 //in m
-signed long high_above_sea = 34700;  //in cm
 unsigned long lastDisplayBMPTime;
-unsigned int displayBMPDelay=5000; //in ms
 #endif
 signed long Temperature = 0, Pressure = 0;//, Altitude = 0;
 
@@ -148,7 +143,6 @@ signed long Temperature = 0, Pressure = 0;//, Altitude = 0;
 DHT dht1(DHTPIN1, DHTTYPE1);
 unsigned long lastDHTMeasTime;
 unsigned long lastDisplayDHTTime;
-unsigned int displayDHTDelay = 4000; //in ms
 //boolean isHumidity=true;
 #endif
 
@@ -165,10 +159,6 @@ unsigned int displayDHTDelay = 4000; //in ms
 // Connect pin 4 (on the right) of the sensor to GROUND
 // Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
 DHT dht2(DHTPIN2, DHTTYPE2);
-//unsigned long lastDHTMeasTime;
-//unsigned long lastDisplayDHTTime;
-//unsigned int displayDHTDelay = 4000; //in ms
-//boolean isHumidity=true;
 #endif
 
 
@@ -243,7 +233,6 @@ SdVolume volume;
 SdFile root;
 bool bCardOK = false;
 unsigned long lastSaveTime;
-unsigned long saveDelay=25000; //in ms
 #endif
 
 unsigned long start, stop;
@@ -251,7 +240,39 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.85"); //SW name & version
+String versionSW("METEOv0.86"); //SW name & version
+
+// ID of the settings block
+#define CONFIG_VERSION "ls2"
+
+// Tell it where to store your config data in EEPROM
+#define CONFIG_START 32
+
+struct StoreStruct {
+  // This is for mere detection if they are your settings
+  char                version[4];
+  // The variables of your settings
+  unsigned int        stamp;
+  signed long         high_above_sea;
+  unsigned int        measDelay;
+  unsigned int        displayTempDelay;
+  unsigned int        displayBMPDelay;
+  unsigned int        displayDHTDelay;
+  unsigned long       saveDelay;
+  unsigned long       sendDelay;
+}
+storage = {
+  CONFIG_VERSION,
+  // The default values
+  0,                  //last configuration stamp
+  34700,              //high_above_sea in cm
+  4000,               //measDelay im ms;
+  1000,               //displayTempDelay in ms
+  5000,               //displayBMPDelay ms
+  4000,               //displayDHTDelay in ms
+  25000,              //saveDelay in ms
+  20000               //delay between updates to Cosm.com in ms    
+};
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -260,6 +281,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println(versionSW);
 
+  loadConfig(); //load values from EEPROM
+  
   Serial.println("SW inicialization");
   Serial.print("Free mem: ");
   Serial.print(freeMemory());
@@ -327,13 +350,6 @@ void setup() {
 
   eraseRow(1);
   Serial.println("Ethernet OK");
-
-   
-  /*pinMode(10, OUTPUT);
-  pinMode(chipSelect, OUTPUT);
-  digitalWrite(10,HIGH);
-  digitalWrite(chipSelect,LOW);
-  */
   
   #ifdef LCDdef
   lcd.setCursor(0,1);
@@ -352,6 +368,11 @@ void setup() {
   Serial.println(Ethernet.dnsServerIP());
   Serial.println();
   #endif
+
+  if (storage.stamp==0) {
+    //load config from web
+  }
+
   
   #ifdef UDPdef
   Udp.begin(localPort);
@@ -408,13 +429,13 @@ void setup() {
   
   #ifdef Ethernetdef
   Serial.print("Sending interval [ms]:");
-  Serial.println(sendDelay);
+  Serial.println(storage.sendDelay);
   lastSendTime = millis();
   #endif
   
   #ifdef SDdef
   Serial.print("Saving interval [ms]:");
-  Serial.println(saveDelay);
+  Serial.println(storage.saveDelay);
   lastSaveTime = millis();
   #endif
 
@@ -443,7 +464,7 @@ void loop() {
   
   //Serial.print(".");
   //start sampling
-  if (millis() - lastMeasTime > measDelay) {
+  if (millis() - lastMeasTime > storage.measDelay) {
     sample++;
     lastMeasTime = millis();
     //startTimer();
@@ -469,7 +490,7 @@ void loop() {
     
     #ifdef BMP085def
     Pressure = bmp.readPressure();
-    Pressure = getRealPressure(Pressure, high_above_sea);
+    Pressure = getRealPressure(Pressure, storage.high_above_sea);
     #else
     Pressure=101325;
     #endif
@@ -529,7 +550,7 @@ void loop() {
     lcd.print(" ");
   printDigits(minute(),1);
     
-  if (millis() - lastDisplayTempTime > displayTempDelay) {
+  if (millis() - lastDisplayTempTime > storage.displayTempDelay) {
     lastDisplayTempTime = millis();
     lcd.setCursor(tempC, tempR);
     for (byte i=0; i<tempLen; i++) {
@@ -550,7 +571,7 @@ void loop() {
       currentTempDevice4Display = 0;
   }
 
-  if (millis() - lastDisplayBMPTime > displayBMPDelay) {
+  if (millis() - lastDisplayBMPTime > storage.displayBMPDelay) {
     lastDisplayBMPTime = millis();
     lcd.setCursor(pressPosC, pressPosR);
     for (byte i=0; i<pressLen; i++) {
@@ -565,7 +586,7 @@ void loop() {
     lcd.print("hPa");
   }
 
-  if (millis() - lastDisplayDHTTime > displayDHTDelay) {
+  if (millis() - lastDisplayDHTTime > storage.displayDHTDelay) {
     lastDisplayDHTTime = millis();
     lcd.setCursor(humidityPosC, humidityPosR);
     for (byte i=0; i<humidityLen; i++) {
@@ -649,7 +670,7 @@ void loop() {
   #endif
   
   #ifdef Ethernetdef
-  if(!client.connected() && (millis() - lastSendTime > sendDelay)) {
+  if(!client.connected() && (millis() - lastSendTime > storage.sendDelay)) {
     lastSendTime = millis();
     sendData();
     sample=0;
@@ -657,7 +678,7 @@ void loop() {
   #endif
   
   #ifdef SDdef
-  if (millis() - lastSaveTime > saveDelay) {
+  if (millis() - lastSaveTime > storage.saveDelay) {
     lastSaveTime=millis();
     saveDataToSD(false);
   }
@@ -1117,6 +1138,26 @@ void getWindDirectionStr(uint16_t adcValue)
 
 #ifdef DALLASdef
 
+void printTemperatureAll() {
+  // Loop through each device, print out temperature data
+  for(byte i=0;i<numberOfDevices; i++) {
+    // Search the wire for address
+      Serial.print("T");
+      Serial.print(i, DEC);
+      Serial.print("[");
+      for (byte j = 0; j < 8; j++) {
+        if (tempDeviceAddresses[i][j] < 16) Serial.print("0");
+        Serial.print(tempDeviceAddresses[i][j], HEX);
+      }
+      Serial.print("]");
+
+      Serial.print(sensor[i]);
+      Serial.println(" C ");
+  }
+}
+
+
+
 void dsInit(void) {
   dsSensors.begin();
   Serial.println();
@@ -1166,61 +1207,31 @@ void dsInit(void) {
       Serial.print(" but could not detect address. Check power and cabling");
     }
   }
+  
+  Serial.print("DALLAS on pin D");
+  Serial.print(ONE_WIRE_BUS);
+  Serial.println(" OK");
 }
-
-void printTemperatureAll() {
-  // Loop through each device, print out temperature data
-  for(byte i=0;i<numberOfDevices; i++) {
-    // Search the wire for address
-      Serial.print("T");
-      Serial.print(i, DEC);
-      Serial.print("[");
-      for (byte j = 0; j < 8; j++) {
-        if (tempDeviceAddresses[i][j] < 16) Serial.print("0");
-        Serial.print(tempDeviceAddresses[i][j], HEX);
-      }
-      Serial.print("]");
-
-      Serial.print(sensor[i]);
-      Serial.println(" C ");
-    
-    /*if(dsSensors.getAddress(tempDeviceAddress, i)) {
-      Serial.print("T");
-      Serial.print(i, DEC);
-      Serial.print("[");
-      for (byte i = 0; i < 8; i++) {
-        if (tempDeviceAddress[i] < 16) Serial.print("0");
-        Serial.print(tempDeviceAddress[i], HEX);
-      }
-      Serial.print("]");
-
-      // It responds almost immediately. Let's print out the data
-      //float tempC = dsSensors.getTempC(tempDeviceAddress);
-      Serial.print(sensor[i]);
-      Serial.println(" C ");
-    } 
-    */
-	//else ghost device! Check your power requirements and cabling
-  }
-}
-
-
 #endif
 
 #ifdef BMP085def
 void bmp085Init() {
   Serial.println("\nBMP085 setup");
   Serial.print("High above sea level:");
-  Serial.print(high_above_sea);
-  Serial.println(" cm");
+  Serial.print(storage.high_above_sea/100);
+  Serial.print(".");
+  Serial.print(storage.high_above_sea%100);
+  Serial.println(" m");
   bmp.begin();
   Serial.println("BMP software on PIN A4,A5 OK");
   #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("High:");
-  lcd.print(high_above_sea/100);
+  lcd.print(storage.high_above_sea/100);
+  lcd.print(".");
+  lcd.print(storage.high_above_sea%100);
   lcd.print(" masl");
-  delay(2000);
+  delay(1000);
   eraseRow(1);
   #endif
 }
@@ -1234,13 +1245,18 @@ long getRealPressure(long TruePressure, long _param_centimeters) {
 
 #ifdef DHTdef1 || #ifdef DHTdef2
 void dhtInit(byte sensor) {
+  Serial.println("\nDHT setup");
   if (sensor==1) {
     dht1.begin();
-    Serial.println("DHT1 OK");
+    Serial.print("DHT1 software on PIN D");
+    Serial.print(DHTPIN1);
+    Serial.println(" OK");
   }
   else if (sensor==2) {
     dht2.begin();
-    Serial.println("DHT2 OK");
+    Serial.print("DHT2 software on PIN D");
+    Serial.print(DHTPIN2);
+    Serial.println(" OK");
   }
 }
 #endif
@@ -1325,4 +1341,22 @@ void printTimer(char* message) {
   Serial.print(message);
   Serial.print(stop-start);
   Serial.println(" ms");
+}
+
+///////EEPROM functions
+void loadConfig() {
+  // To make sure there are settings, and they are YOURS!
+  // If nothing is found it will use the default settings.
+  if (EEPROM.read(CONFIG_START + 0) == CONFIG_VERSION[0] &&
+      EEPROM.read(CONFIG_START + 1) == CONFIG_VERSION[1] &&
+      EEPROM.read(CONFIG_START + 2) == CONFIG_VERSION[2]) {
+    for (unsigned int t=0; t<sizeof(storage); t++) {
+      *((char*)&storage + t) = EEPROM.read(CONFIG_START + t);
+    }
+  }
+}
+
+void saveConfig() {
+  for (unsigned int t=0; t<sizeof(storage); t++)
+    EEPROM.write(CONFIG_START + t, *((char*)&storage + t));
 }

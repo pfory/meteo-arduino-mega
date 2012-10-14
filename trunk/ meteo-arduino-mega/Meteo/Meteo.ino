@@ -240,7 +240,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.86"); //SW name & version
+String versionSW("METEOv0.87"); //SW name & version
 
 // ID of the settings block
 #define CONFIG_VERSION "ls2"
@@ -320,9 +320,22 @@ void setup() {
   if (!SD.begin(chipSelect)) {
     Serial.println("card failed, or not present");
     bCardOK = false;
+    #ifdef LCDdef
+    lcd.setCursor(0,1);
+    lcd.print("SD card failed.");
+    delay(1000);
+    eraseRow(1);
+    #endif
   }
   else {
     Serial.println("card initialized.");
+    #ifdef LCDdef
+    lcd.setCursor(0,1);
+    lcd.print("SD card OK.");
+    delay(1000);
+    eraseRow(1);
+    #endif
+
     cardInfo();
   }
 
@@ -1207,6 +1220,15 @@ void dsInit(void) {
       Serial.print(" but could not detect address. Check power and cabling");
     }
   }
+
+  #ifdef LCDdef
+  lcd.setCursor(0,1);
+  lcd.print("#DALLAS sens:");
+  lcd.print(numberOfDevices, DEC);
+  delay(1000);
+  eraseRow(1);
+  #endif
+
   
   Serial.print("DALLAS on pin D");
   Serial.print(ONE_WIRE_BUS);
@@ -1251,12 +1273,25 @@ void dhtInit(byte sensor) {
     Serial.print("DHT1 software on PIN D");
     Serial.print(DHTPIN1);
     Serial.println(" OK");
+    #ifdef LCDdef
+    lcd.setCursor(0,1);
+    lcd.print("DHT1");
+    delay(1000);
+    eraseRow(1);
+    #endif
+
   }
   else if (sensor==2) {
     dht2.begin();
     Serial.print("DHT2 software on PIN D");
     Serial.print(DHTPIN2);
     Serial.println(" OK");
+    #ifdef LCDdef
+    lcd.setCursor(0,1);
+    lcd.print("DHT2");
+    delay(1000);
+    eraseRow(1);
+    #endif
   }
 }
 #endif

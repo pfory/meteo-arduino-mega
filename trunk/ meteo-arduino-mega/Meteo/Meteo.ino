@@ -124,8 +124,15 @@ int sensorReading = INT_MIN;
 //BMP085 dps = BMP085();      // Digital Pressure Sensor 
 swI2C_BMP085 bmp;
 unsigned long lastDisplayBMPTime;
+unsigned long lastPressure;
+unsigned long lastPressureTime;
+#define PRESSNOCHANGE 0
+#define PRESSUP       1
+#define PRESSDOWN     2
+byte pressureChange=0;
 #endif
-signed long Temperature = 0, Pressure = 0;//, Altitude = 0;
+signed long Temperature = 0;
+unsigned long Pressure = 0;//, Altitude = 0;
 
 
 #ifdef DHTdef1
@@ -175,7 +182,7 @@ LiquidCrystal lcd(8, 9, 11, 5, 6, 7);
 #define humidityPosC 0 
 #define humidityLen 4
 #define pressPosR 1
-#define pressPosC 5 
+#define pressPosC 4 
 #define pressLen 10 
 #define tempR 0 
 #define tempC 0 
@@ -240,7 +247,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.87"); //SW name & version
+String versionSW("METEOv0.88"); //SW name & version
 
 // ID of the settings block
 #define CONFIG_VERSION "ls2"
@@ -258,8 +265,9 @@ struct StoreStruct {
   unsigned int        displayTempDelay;
   unsigned int        displayBMPDelay;
   unsigned int        displayDHTDelay;
-  unsigned long       saveDelay;
-  unsigned long       sendDelay;
+  unsigned long       saveInterval;
+  unsigned long       sendInterval;
+  unsigned int        BMPPressInterval;
 }
 storage = {
   CONFIG_VERSION,
@@ -270,8 +278,9 @@ storage = {
   1000,               //displayTempDelay in ms
   5000,               //displayBMPDelay ms
   4000,               //displayDHTDelay in ms
-  25000,              //saveDelay in ms
-  20000               //delay between updates to Cosm.com in ms    
+  25000,              //saveInterval in ms
+  20000,              //interval between updates to Cosm.com in ms    
+  60000              //interval for check press trend in ms
 };
 
 
@@ -322,7 +331,7 @@ void setup() {
     bCardOK = false;
     #ifdef LCDdef
     lcd.setCursor(0,1);
-    lcd.print("SD card failed.");
+    lcd.print("SD card failed");
     delay(1000);
     eraseRow(1);
     #endif
@@ -331,7 +340,7 @@ void setup() {
     Serial.println("card initialized.");
     #ifdef LCDdef
     lcd.setCursor(0,1);
-    lcd.print("SD card OK.");
+    lcd.print("SD card OK");
     delay(1000);
     eraseRow(1);
     #endif
@@ -442,13 +451,13 @@ void setup() {
   
   #ifdef Ethernetdef
   Serial.print("Sending interval [ms]:");
-  Serial.println(storage.sendDelay);
+  Serial.println(storage.sendInterval);
   lastSendTime = millis();
   #endif
   
   #ifdef SDdef
   Serial.print("Saving interval [ms]:");
-  Serial.println(storage.saveDelay);
+  Serial.println(storage.saveInterval);
   lastSaveTime = millis();
   #endif
 
@@ -502,11 +511,17 @@ void loop() {
 
     
     #ifdef BMP085def
+    unsigned long oldPress=Pressure;
     Pressure = bmp.readPressure();
     Pressure = getRealPressure(Pressure, storage.high_above_sea);
+    if (oldPress==0) {
+      lastPressureTime=millis();
+      lastPressure=Pressure;
+    }
     #else
     Pressure=101325;
     #endif
+    
     //stopTimer();
     //printTimer("Start sampling takes:");
   }
@@ -591,7 +606,34 @@ void loop() {
       lcd.print(" ");
     }
     lcd.setCursor(pressPosC, pressPosR);
+    
+    
     if (Pressure<100000) lcd.print(" ");
+    if (millis() - lastPressureTime > storage.BMPPressInterval) {
+      lastPressureTime = millis();
+      lastPressure=Pressure;
+    
+      if (abs(lastPressure-Pressure)<100) { //difference is small than 100Pa
+        pressureChange=PRESSNOCHANGE;
+      }
+      else if (lastPressure<Pressure) {
+        pressureChange=PRESSDOWN;
+      }
+      else {
+        pressureChange=PRESSUP;
+      }
+    }
+
+    if (pressureChange==PRESSNOCHANGE) { //no press change
+      lcd.print(" ");
+    }
+    else if (pressureChange==PRESSUP) {  //press increasing
+      lcd.write(1);
+    }
+    else if (pressureChange==PRESSDOWN) { //press decreasing  
+      lcd.write(3);
+    }
+    
     lcd.print((int)(Pressure/100));
     lcd.print(".");
     if (Pressure%100<10) lcd.print("0");
@@ -683,7 +725,7 @@ void loop() {
   #endif
   
   #ifdef Ethernetdef
-  if(!client.connected() && (millis() - lastSendTime > storage.sendDelay)) {
+  if(!client.connected() && (millis() - lastSendTime > storage.sendInterval)) {
     lastSendTime = millis();
     sendData();
     sample=0;
@@ -691,7 +733,7 @@ void loop() {
   #endif
   
   #ifdef SDdef
-  if (millis() - lastSaveTime > storage.saveDelay) {
+  if (millis() - lastSaveTime > storage.saveInterval) {
     lastSaveTime=millis();
     saveDataToSD(false);
   }

@@ -124,12 +124,14 @@ int sensorReading = INT_MIN;
 //BMP085 dps = BMP085();      // Digital Pressure Sensor 
 swI2C_BMP085 bmp;
 unsigned long lastDisplayBMPTime;
-unsigned long lastPressure;
-unsigned long lastPressureTime;
+unsigned long avgPressure=0;
+unsigned long lastAvgPressure=0;
+unsigned int numberOfSamples=0;
+unsigned long lastPressureTime=0;
 #define PRESSNOCHANGE 0
 #define PRESSUP       1
 #define PRESSDOWN     2
-byte pressureChange=0;
+byte pressureChange=PRESSNOCHANGE;
 #endif
 signed long Temperature = 0;
 unsigned long Pressure = 0;//, Altitude = 0;
@@ -204,12 +206,12 @@ byte send[8] = {
   B10101,
   B00100,
   B00100,
-  B11111,
+  B01110,
   B11111,
 };
 byte save[8] = {
   B11111,
-  B11111,
+  B01110,
   B00100,
   B00100,
   B10101,
@@ -267,7 +269,10 @@ struct StoreStruct {
   unsigned int        displayDHTDelay;
   unsigned long       saveInterval;
   unsigned long       sendInterval;
-  unsigned int        BMPPressInterval;
+  unsigned long       BMPPressInterval;
+  char                apiKey[50];
+  unsigned long       feedId;
+  char                userAgent[50];
 }
 storage = {
   CONFIG_VERSION,
@@ -280,9 +285,11 @@ storage = {
   4000,               //displayDHTDelay in ms
   25000,              //saveInterval in ms
   20000,              //interval between updates to Cosm.com in ms    
-  60000              //interval for check press trend in ms
+  1800000,            //interval for check press trend in ms
+  "HyVsT65CnEPitk6vML664llGUZCSAKx0aXFocmJJVHBUVT0g",
+  75618,
+  "Solar JH"
 };
-
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
@@ -514,10 +521,6 @@ void loop() {
     unsigned long oldPress=Pressure;
     Pressure = bmp.readPressure();
     Pressure = getRealPressure(Pressure, storage.high_above_sea);
-    if (oldPress==0) {
-      lastPressureTime=millis();
-      lastPressure=Pressure;
-    }
     #else
     Pressure=101325;
     #endif
@@ -609,20 +612,43 @@ void loop() {
     
     
     if (Pressure<100000) lcd.print(" ");
+
+    if (Pressure>0) {
+      numberOfSamples++;
+      avgPressure+=Pressure;
+      Serial.print("Average pressure ");
+      Serial.println(avgPressure/numberOfSamples);
+    }
+    
     if (millis() - lastPressureTime > storage.BMPPressInterval) {
       lastPressureTime = millis();
-      lastPressure=Pressure;
     
-      if (abs(lastPressure-Pressure)<100) { //difference is small than 100Pa
-        pressureChange=PRESSNOCHANGE;
+      avgPressure=avgPressure/numberOfSamples;
+
+      Serial.print("Last average pressure=");
+      Serial.println(lastAvgPressure);
+      
+      if (lastAvgPressure>0) {
+        if (avgPressure>lastAvgPressure) {
+          pressureChange=PRESSUP;
+          Serial.println("Pressure change UP.");
+        }
+        else if (avgPressure<lastAvgPressure) {
+          pressureChange=PRESSDOWN;
+          Serial.println("Pressure change DOWN.");
+        }
+        else {
+          pressureChange=PRESSNOCHANGE;
+          Serial.println("No pressure change.");
+        }
       }
-      else if (lastPressure<Pressure) {
-        pressureChange=PRESSDOWN;
-      }
-      else {
-        pressureChange=PRESSUP;
-      }
+      
+      lastAvgPressure=avgPressure;
+      avgPressure=0;
+      numberOfSamples=0;
     }
+    
+    
 
     if (pressureChange==PRESSNOCHANGE) { //no press change
       lcd.print(" ");
@@ -634,11 +660,13 @@ void loop() {
       lcd.write(3);
     }
     
-    lcd.print((int)(Pressure/100));
-    lcd.print(".");
-    if (Pressure%100<10) lcd.print("0");
-    lcd.print((int)(Pressure%100));
-    lcd.print("hPa");
+    if (Pressure>0) {
+      lcd.print((int)(Pressure/100));
+      lcd.print(".");
+      if (Pressure%100<10) lcd.print("0");
+      lcd.print((int)(Pressure%100));
+      lcd.print("hPa");
+    }
   }
 
   if (millis() - lastDisplayDHTTime > storage.displayDHTDelay) {
@@ -825,13 +853,13 @@ void sendData() {
     Serial.println("]");
     // send the HTTP PUT request:
     client.print("PUT /v2/feeds/");
-    client.print(FEEDID);
+    client.print(storage.feedId);
     client.println(".csv HTTP/1.1");
     client.println("Host: api.cosm.com");
     client.print("X-ApiKey: ");
-    client.println(APIKEY);
+    client.println(storage.apiKey);
     client.print("User-Agent: ");
-    client.println(USERAGENT);
+    client.println(storage.userAgent);
     client.print("Content-Length: ");
     client.println(dataString.length());
 

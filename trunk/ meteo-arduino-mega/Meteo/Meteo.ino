@@ -249,7 +249,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.88"); //SW name & version
+String versionSW("METEOv0.90"); //SW name & version
 
 // ID of the settings block
 #define CONFIG_VERSION "ls2"
@@ -278,7 +278,7 @@ storage = {
   CONFIG_VERSION,
   // The default values
   0,                  //last configuration stamp
-  34700,              //high_above_sea in cm
+  53500,              //high_above_sea in cm
   4000,               //measDelay im ms;
   1000,               //displayTempDelay in ms
   5000,               //displayBMPDelay ms

@@ -249,7 +249,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.90"); //SW name & version
+String versionSW("METEOv0.91"); //SW name & version
 
 // ID of the settings block
 #define CONFIG_VERSION "ls2"
@@ -529,16 +529,20 @@ void loop() {
     //printTimer("Start sampling takes:");
   }
   
-  
   #ifdef DALLASdef  
   if (dsMeasStarted) {
     if (millis() - lastDsMeasStartTime>750) {
       dsMeasStarted=false;
-      //Serial.print("Zapis hodnot po ");
-      //Serial.println(millis() - lastDsMeasStartTime);
       //saving temperatures into variables
       for (byte i=0;i<numberOfDevices; i++) {
-        sensor[i]=dsSensors.getTempCByIndex(i);
+        float tempTemp=-126;
+        for (byte j=0;j<10;j++) { //try to read temperature ten times
+          tempTemp = dsSensors.getTempCByIndex(i);
+          if (tempTemp>=-55) {
+            break;
+          }
+        }
+        sensor[i]=tempTemp;
       } 
     }
   }

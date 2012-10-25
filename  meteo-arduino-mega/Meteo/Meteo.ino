@@ -844,7 +844,7 @@ void sendData() {
     dataString += "\nDewPoint2,";
     dataString += (int)calcDewPoint(humidity2, tempDHT2);
     
-    #ifdef Anemdef
+    #ifdef Anemodef
     dataString += "\nWindDirection,";
     dataString += (int)windDirection20/anemoCountDirectionSamples;
 
@@ -1276,11 +1276,11 @@ void dsInit(void) {
       Serial.print("Found device ");
       Serial.print(i, DEC);
       Serial.print(" with address: ");
-      for (byte i = 0; i < 8; i++) {
-        if (tempDeviceAddress[i] < 16) Serial.print("0");
-        Serial.print(tempDeviceAddress[i], HEX);
+      for (byte j=0; j<8;j++) {
+        if (tempDeviceAddress[j] < 16) Serial.print("0");
+        Serial.print(tempDeviceAddress[j], HEX);
       }
-      memcpy(tempDeviceAddresses[i],tempDeviceAddress,16);
+      memcpy(tempDeviceAddresses[i],tempDeviceAddress,8);
       Serial.println();
       
       Serial.print("Setting resolution to ");

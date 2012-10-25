@@ -368,8 +368,10 @@ void setup() {
 
   #ifdef Ethernetdef
   Serial.print("waiting for net connection...");
+  #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("waiting for net");
+  #endif
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed using DHCP");
     // DHCP failed, so use a fixed IP address:
@@ -377,7 +379,9 @@ void setup() {
   }
   digitalWrite(53,HIGH);
 
+  #ifdef LCDdef
   eraseRow(1);
+  #endif
   Serial.println("Ethernet OK");
   
   #ifdef LCDdef
@@ -1331,13 +1335,11 @@ void bmp085Init() {
   eraseRow(1);
   #endif
 }
-#else
-Serial.println("N/A");
-#endif
 
 long getRealPressure(long TruePressure, long _param_centimeters) {
   return TruePressure / pow((1 - (float)_param_centimeters / 4433000), 5.255); // + 101325;
 }
+#endif
 
 #ifdef DHTdef1 || #ifdef DHTdef2
 void dhtInit(byte sensor) {

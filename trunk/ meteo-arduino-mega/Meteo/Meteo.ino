@@ -249,7 +249,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.91"); //SW name & version
+String versionSW("METEOv0.92"); //SW name & version
 
 // ID of the settings block
 #define CONFIG_VERSION "ls2"
@@ -809,6 +809,9 @@ void sendData() {
       dataString += ",";
       int t = (int)(sensor[i]*10);
       
+      if (t<0&&t>-10) {
+        dataString += "-";
+      }
       dataString += t/10;
       dataString += ".";
       dataString += abs(t%10);
@@ -977,6 +980,9 @@ void saveDataToSD(bool rep) {
     for(byte i=0;i<numberOfDevices; i++) {
       //int t = (int)(dsSensors.getTempCByIndex(i)*10);
       int t = (int)(sensor[i]*10);
+      if (t<0&&t>-10) {
+        dataString += "-";
+      }
       dataFile.print(t/10);
       dataFile.print(",");
       dataFile.print(abs(t%10));

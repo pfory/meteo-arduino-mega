@@ -981,7 +981,7 @@ void saveDataToSD(bool rep) {
       //int t = (int)(dsSensors.getTempCByIndex(i)*10);
       int t = (int)(sensor[i]*10);
       if (t<0&&t>-10) {
-        dataString += "-";
+        dataFile += "-";
       }
       dataFile.print(t/10);
       dataFile.print(",");

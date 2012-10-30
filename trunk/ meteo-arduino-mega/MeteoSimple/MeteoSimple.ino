@@ -74,7 +74,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEO Simple v0.1"); //SW name & version
+String versionSW("METEO Simple v0.2"); //SW name & version
 
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -208,6 +208,9 @@ void sendData() {
     dataString += ",";
     int t = (int)(sensor[i]*10);
     
+    if (t<0&&t>-10) {
+      dataString += "-";
+    }
     dataString += t/10;
     dataString += ".";
     dataString += abs(t%10);

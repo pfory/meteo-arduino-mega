@@ -19,7 +19,7 @@ Schema - http://www.dfrobot.com/image/data/DFR0009/LCDKeypad%20Shield%20V1.0%20S
 
 use pin - A0 (for keys, not used)
 D4 - this pin is switched to pin 11 on screw board<br>
-D5-D9,D10 (for backlight is not used yet)
+D5-D9,D10 (for backlight is not used yet). Backlight is driven by potentiometer. Pin 10 is not connected to Arduino board.
 
 ====Ethernet shield====
 [http://arduino.cc/en/Main/ArduinoEthernetShield]<br>

@@ -139,7 +139,8 @@ void loop() {
       for (byte i=0;i<numberOfDevices; i++) {
         float tempTemp=-126;
         for (byte j=0;j<10;j++) { //try to read temperature ten times
-          tempTemp = dsSensors.getTempCByIndex(i);
+          //tempTemp = dsSensors.getTempCByIndex(i);
+          tempTemp = dsSensors.getTempC(tempDeviceAddresses[i]);
           if (tempTemp>=-55) {
             break;
           }

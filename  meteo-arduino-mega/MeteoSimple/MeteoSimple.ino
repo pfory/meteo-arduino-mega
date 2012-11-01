@@ -20,11 +20,19 @@ A5 free
 
 */
 
+//#define Ethernetdef
+//#define DALLASdef 
 
+
+// Definition of interrupt names
+#include < avr/io.h >
+// ISR interrupt service routine
+#include < avr/interrupt.h >
 
 #include <limits.h>
 #include "Arduino.h"
 
+#ifdef Ethernetdef
 #include <Ethernet.h>
 // assign a MAC address for the ethernet controller.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -47,7 +55,9 @@ unsigned long lastSendTime;
 #define APIKEY         "q1PY6QqB9jvSHGKhmCQNBRdCofeSAKxpKzliaHJGWUc5UT0g" // your cosm api key
 #define FEEDID         63310 // your feed ID
 #define USERAGENT      "Meteo Arduino" // user agent is the project name
+#endif
 
+#ifdef DALLASdef
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #define ONE_WIRE_BUS A0
@@ -66,16 +76,57 @@ unsigned long lastDsMeasStartTime;
 bool dsMeasStarted=false;
 float sensor[NUMBER_OF_DEVICES];
 
-
 int sensorReading = INT_MIN;
 
-unsigned long start, stop;
 unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
+#endif
+
+byte counterOverflow=0;
+unsigned int old_value=0;
+byte counter=0;
+
+
 String versionSW("METEO Simple v0.2"); //SW name & version
 
+
+ISR(TIMER1_COMPA_vect)
+{
+  Serial.println("COMPA");
+  counterOverflow++;
+  if (counterOverflow>1) 
+  {
+    Serial.println("bezvetri");
+  }
+}
+
+ ISR(TIMER1_CAPT_vect)
+ {
+   Serial.println("CAPT");
+	// uint16_t value, result;
+	// value = ICR1L;
+	// value += (ICR1H<<8);
+
+  // if (counterOverflow==1)
+    // result=(0xFFFF-old_value)+value;
+  // else if (counterOverflow==0)
+   	// result=value-old_value;
+  // else
+    // result=0;
+	
+	// if (result>65500)
+	  // result = 0;
+
+ 	// old_value=value;
+
+  // Serial.print(216000/result);
+  // Serial.println("/min");
+
+
+  // counterOverflow=0;
+ }
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
@@ -86,6 +137,7 @@ void setup() {
 
   Serial.println("SW inicialization");
 
+  #ifdef Ethernetdef
   Serial.print("waiting for net connection...");
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed using DHCP");
@@ -103,7 +155,9 @@ void setup() {
   Serial.print("DNS:");
   Serial.println(Ethernet.dnsServerIP());
   Serial.println();
-
+  #endif
+  
+  #ifdef DALLASdef
   dsInit();
   lastDisplayTempTime = millis();
   dsSensors.setResolution(12);
@@ -113,6 +167,17 @@ void setup() {
   dsLastPrintTime = millis();
   lastMeasTime = millis();
   dsSensors.requestTemperatures(); 
+  #endif
+  
+  OCR1A=0xE100;     //57600   
+  TCCR1B |= 1<<WGM12;
+  TIMSK1|=1<<ICIE1; //input capture interrupt enable
+	TCCR1B|=1<<ICES1; //input capture edge select
+	TIMSK1|=1<<OCIE1A;	//output compareA match interrupt enable
+
+	TCCR1B|=1<<CS12;  //prescaler clk/256
+
+  pinMode(8, INPUT);
   
   Serial.println("End of SW initialization phase, I am starting measuring.");
 
@@ -123,6 +188,7 @@ void setup() {
 void loop() {
 
   //start sampling
+  #ifdef DALLASdef
   if (millis() - lastMeasTime > 4000) {
     sample++;
     lastMeasTime = millis();
@@ -160,7 +226,9 @@ void loop() {
     Serial.println("");
     dsLastPrintTime = millis(); 
   }
+  #endif
   
+  #ifdef Ethernetdef
   if (sample==2) {
     client.stop();
   }
@@ -178,8 +246,10 @@ void loop() {
     sendData();
     sample=0;
   }
+  #endif
 }
 
+#ifdef Ethernetdef
 //-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
 void sendData() {
 
@@ -262,9 +332,10 @@ void sendData() {
   
   // note the time that the connection was made or attempted:
 }
+#endif
 
 
-
+#ifdef DALLASdef
 void printTemperatureAll() {
   // Loop through each device, print out temperature data
   for(byte i=0;i<numberOfDevices; i++) {
@@ -338,4 +409,4 @@ void dsInit(void) {
   Serial.print(ONE_WIRE_BUS);
   Serial.println(" OK");
 }
-
+#endif

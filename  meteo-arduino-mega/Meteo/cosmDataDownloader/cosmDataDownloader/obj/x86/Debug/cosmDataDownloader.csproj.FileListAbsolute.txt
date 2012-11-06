@@ -1,0 +1,10 @@
+C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\bin\Debug\cosmDataDownloader.exe
+C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\bin\Debug\cosmDataDownloader.pdb
+C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Debug\cosmDataDownloader.Form1.resources
+C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Debug\cosmDataDownloader.Properties.Resources.resources
+C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Debug\GenerateResource.read.1.tlog
+C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Debug\GenerateResource.write.1.tlog
+C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Debug\cosmDataDownloader.exe
+C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Debug\cosmDataDownloader.pdb
+C:\Users\pfory\documents\visual studio 2010\Projects\cosmDataDownloader\cosmDataDownloader\obj\x86\Debug\cosmDataDownloader.exe

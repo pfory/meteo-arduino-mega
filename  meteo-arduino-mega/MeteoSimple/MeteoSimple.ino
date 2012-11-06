@@ -20,14 +20,18 @@ A5 free
 
 */
 
-//#define Ethernetdef
-//#define DALLASdef 
+#define Ethernetdef
+#define DALLASdef 
+//#define Anemodef
+#define BMP085def
 
 
+#ifdef Anemodef
 // Definition of interrupt names
 #include < avr/io.h >
 // ISR interrupt service routine
 #include < avr/interrupt.h >
+#endif
 
 #include <limits.h>
 #include "Arduino.h"
@@ -84,14 +88,30 @@ unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
 #endif
 
-byte counterOverflow=0;
-unsigned int old_value=0;
-byte counter=0;
+#ifdef BMP085def
+#include <Wire.h>
+//#include <BMP085.h> //558 bytes +
+#include <swI2C_BMP085.h>
+#include <I2cMaster.h>
+//BMP085 dps = BMP085();      // Digital Pressure Sensor 
+swI2C_BMP085 bmp;
+unsigned long lastDisplayBMPTime;
+unsigned long avgPressure=0;
+unsigned long lastAvgPressure=0;
+unsigned int numberOfSamples=0;
+unsigned long lastPressureTime=0;
+#define PRESSNOCHANGE 0
+#define PRESSUP       1
+#define PRESSDOWN     2
+byte pressureChange=PRESSNOCHANGE;
+signed long         high_above_sea=34700;
+signed long Temperature = 0;
+unsigned long Pressure = 0;//, Altitude = 0;
+
+#endif
 
 
-String versionSW("METEO Simple v0.2"); //SW name & version
-
-
+#ifdef Anemodef 
 ISR(TIMER1_COMPA_vect)
 {
   Serial.println("COMPA");
@@ -102,8 +122,8 @@ ISR(TIMER1_COMPA_vect)
   }
 }
 
- ISR(TIMER1_CAPT_vect)
- {
+ISR(TIMER1_CAPT_vect)
+{
    Serial.println("CAPT");
 	// uint16_t value, result;
 	// value = ICR1L;
@@ -126,7 +146,15 @@ ISR(TIMER1_COMPA_vect)
 
 
   // counterOverflow=0;
- }
+}
+#endif 
+
+byte counterOverflow=0;
+unsigned int old_value=0;
+byte counter=0;
+
+
+String versionSW("METEO Simple v0.3"); //SW name & version
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
@@ -169,6 +197,7 @@ void setup() {
   dsSensors.requestTemperatures(); 
   #endif
   
+  #ifdef Anemodef 
   OCR1A=0xE100;     //57600   
   TCCR1B |= 1<<WGM12;
   TIMSK1|=1<<ICIE1; //input capture interrupt enable
@@ -178,6 +207,13 @@ void setup() {
 	TCCR1B|=1<<CS12;  //prescaler clk/256
 
   pinMode(8, INPUT);
+  #endif
+
+  #ifdef BMP085def
+  bmp085Init();
+  lastDisplayBMPTime = millis();
+  #endif
+
   
   Serial.println("End of SW initialization phase, I am starting measuring.");
 
@@ -188,16 +224,25 @@ void setup() {
 void loop() {
 
   //start sampling
-  #ifdef DALLASdef
   if (millis() - lastMeasTime > 4000) {
     sample++;
     lastMeasTime = millis();
     //startTimer();
+    #ifdef DALLASdef
     dsSensors.requestTemperatures(); 
     lastDsMeasStartTime=millis();
     dsMeasStarted=true;
+    #endif
+    
+    #ifdef BMP085def
+    unsigned long oldPress=Pressure;
+    Pressure = bmp.readPressure();
+    Pressure = getRealPressure(Pressure, high_above_sea);
+    #endif
+
   }
   
+  #ifdef DALLASdef
   if (dsMeasStarted) {
     if (millis() - lastDsMeasStartTime>750) {
       dsMeasStarted=false;
@@ -215,18 +260,20 @@ void loop() {
       } 
     }
   }
+  #endif
   
     
   if (millis() - dsLastPrintTime > 1000) {
 
     Serial.println();
     printTemperatureAll();
-  
-  
+
+    Serial.print("Press(Pa):");
+    Serial.print(Pressure);
+
     Serial.println("");
     dsLastPrintTime = millis(); 
   }
-  #endif
   
   #ifdef Ethernetdef
   if (sample==2) {
@@ -285,6 +332,10 @@ void sendData() {
     dataString += t/10;
     dataString += ".";
     dataString += abs(t%10);
+    
+    //Pressure
+    dataString += "Press,";
+    dataString += Pressure;
 
     dataString += "\n";
   }
@@ -357,56 +408,31 @@ void printTemperatureAll() {
 
 void dsInit(void) {
   dsSensors.begin();
-  Serial.println();
-  Serial.print("DALLAS Library version:");
-  Serial.println(DALLASTEMPLIBVERSION);
-  // Grab a count of devices on the wire
   numberOfDevices = dsSensors.getDeviceCount();
 
-  // locate devices on the bus
-  Serial.print("Locating devices...");
-  
-  Serial.print("Found ");
-  Serial.print(numberOfDevices, DEC);
-  Serial.println(" devices.");
-
-  // report parasite power requirements
-  Serial.print("Parasite power is: "); 
-  if (dsSensors.isParasitePowerMode()) Serial.println("ON");
-  else Serial.println("OFF");
-  
   // Loop through each device, print out address
   for(byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
     if(dsSensors.getAddress(tempDeviceAddress, i)) {
-      Serial.print("Found device ");
-      Serial.print(i, DEC);
-      Serial.print(" with address: ");
       for (byte j=0; j<8; j++) {
         if (tempDeviceAddress[j] < 16) Serial.print("0");
-        Serial.print(tempDeviceAddress[j], HEX);
       }
       memcpy(tempDeviceAddresses[i],tempDeviceAddress,8);
-      Serial.println();
-      
-      Serial.print("Setting resolution to ");
-      Serial.println(TEMPERATURE_PRECISION, DEC);
       
       // set the resolution to TEMPERATURE_PRECISION bit (Each Dallas/Maxim device is capable of several different resolutions)
       dsSensors.setResolution(tempDeviceAddress, TEMPERATURE_PRECISION);
-      
-       Serial.print("Resolution actually set to: ");
-      Serial.print(dsSensors.getResolution(tempDeviceAddress), DEC); 
-      Serial.println();
-    } else {
-      Serial.print("Found ghost device at ");
-      Serial.print(i, DEC);
-      Serial.print(" but could not detect address. Check power and cabling");
     }
   }
-
-  Serial.print("DALLAS on pin D");
-  Serial.print(ONE_WIRE_BUS);
-  Serial.println(" OK");
 }
+#endif
+
+#ifdef BMP085def
+void bmp085Init() {
+  bmp.begin();
+}
+
+long getRealPressure(long TruePressure, long _param_centimeters) {
+  return TruePressure / pow((1 - (float)_param_centimeters / 4433000), 5.255); // + 101325;
+}
+
 #endif

@@ -3,3 +3,8 @@ C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Relea
 C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Release\cosmDataDownloader.Properties.Resources.resources
 C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Release\GenerateResource.read.1.tlog
 C:\Users\pfory\AppData\Local\Temporary Projects\cosmDataDownloader\obj\x86\Release\GenerateResource.write.1.tlog
+C:\Dokumenty\Elektro\Konstrukce\MeteoStanice\Meteo\cosmDataDownloader\cosmDataDownloader\obj\x86\Release\ResolveAssemblyReference.cache
+C:\Dokumenty\Elektro\Konstrukce\MeteoStanice\Meteo\cosmDataDownloader\cosmDataDownloader\obj\x86\Release\cosmDataDownloader.Form1.resources
+C:\Dokumenty\Elektro\Konstrukce\MeteoStanice\Meteo\cosmDataDownloader\cosmDataDownloader\obj\x86\Release\cosmDataDownloader.Properties.Resources.resources
+C:\Dokumenty\Elektro\Konstrukce\MeteoStanice\Meteo\cosmDataDownloader\cosmDataDownloader\obj\x86\Release\GenerateResource.read.1.tlog
+C:\Dokumenty\Elektro\Konstrukce\MeteoStanice\Meteo\cosmDataDownloader\cosmDataDownloader\obj\x86\Release\GenerateResource.write.1.tlog

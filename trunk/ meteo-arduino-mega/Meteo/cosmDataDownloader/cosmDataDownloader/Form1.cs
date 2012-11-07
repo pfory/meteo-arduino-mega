@@ -31,16 +31,20 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
 
     private void button1_Click(object sender, EventArgs e)
     {
-      DateTime start = new DateTime(dateTimePickerEnd.Value.Year, dateTimePickerEnd.Value.Month, dateTimePickerEnd.Value.Day, 0,0,0);
+      DateTime start = new DateTime(dateTimePickerStart.Value.Year, dateTimePickerStart.Value.Month, dateTimePickerStart.Value.Day, 0,0,0);
       DateTime startOld = new DateTime();
+      tbResult.Text = String.Empty;
 
       if (checkBoxVytvaretSoubor.Checked)
       {
+        writeHeader = true;
         sw = new StreamWriter("data.csv", false, Encoding.Default);
       }
 
       while (true) {
-        start = nactiDavku(start, tbFeedId.Text);
+        bool chyba = false;
+        start = nactiDavku(start, tbFeedId.Text, ref chyba);
+        if (chyba) continue;
         if (startOld == start)
           break;
         else
@@ -48,11 +52,12 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
           start = start.AddSeconds(1);
           startOld = start;
         }
-      } 
+      }
+      sw.Close();
 
     }
 
-    private DateTime nactiDavku(DateTime start, string feedId)
+    private DateTime nactiDavku(DateTime start, string feedId, ref bool chyba)
     {
       string url = getUrlString(start, feedId);
 
@@ -76,7 +81,8 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
       }
       catch (WebException ex)
       {
-        MessageBox.Show(ex.ToString());
+        //MessageBox.Show(ex.ToString());
+        chyba = true;
       }
 
       string[] rozsekany = htmlCode.Split(new Char[] { '\n' });
@@ -84,20 +90,33 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
         return start;
 
       StringBuilder sb = new StringBuilder();
-      StringBuilder header = new StringBuilder();
+      StringBuilder header = new StringBuilder("Datum");
       StringBuilder data = new StringBuilder();
       string lastDateTime = string.Empty;
       int i = 0;
+      string[] dateAndTime;
+      string[] date;
+      string[] time;
       foreach (String s in rozsekany)
       {
         string[] radka = s.Split(new Char[] { ',' });
-        if (i<numericUpDown1.Value) {
+
+        dateAndTime = radka[1].Split(new Char[] { 'T' });
+        date = dateAndTime[0].Split(new Char[] { '-' });
+        time = dateAndTime[1].Split(new Char[] { ':' });
+
+        DateTime dateTime = new DateTime(Convert.ToInt16(date[0]), Convert.ToInt16(date[1]), Convert.ToInt16(date[2]), Convert.ToInt16(time[0]), Convert.ToInt16(time[1]), Convert.ToInt16(time[2].Substring(0, time[2].IndexOf('.'))));
+        if (i < numericUpDown1.Value)
+        {
           if (writeHeader)
           {
-            if (i > 0) header.Append(",");
+            header.Append(",");
             header.Append(radka[0]);
           }
-          if (i > 0) data.Append(",");
+
+          if (i == 0)
+            data.Append(dateTime.ToShortDateString()+" "+dateTime.ToLongTimeString());
+          data.Append(",");
           data.Append(radka[2]);
         }
         i++;
@@ -108,8 +127,10 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
           {
             writeHeader = false;
             sw.WriteLine(header);
+            header.Clear();
           }
           sw.WriteLine(data);
+          data.Clear();
         }
 
         lastDateTime = radka[1];
@@ -118,9 +139,9 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
       sb.AppendLine("----------------------------------");
       tbResult.Text += sb;
       //2012-11-06T01:23:09.315392Z
-      string[] dateAndTime = lastDateTime.Split(new Char[] { 'T' });
-      string[] date = dateAndTime[0].Split(new Char[] { '-' });
-      string[] time = dateAndTime[1].Split(new Char[] { ':' });
+      dateAndTime = lastDateTime.Split(new Char[] { 'T' });
+      date = dateAndTime[0].Split(new Char[] { '-' });
+      time = dateAndTime[1].Split(new Char[] { ':' });
 
       DateTime retDateTime = new DateTime(Convert.ToInt16(date[0]), Convert.ToInt16(date[1]), Convert.ToInt16(date[2]), Convert.ToInt16(time[0]), Convert.ToInt16(time[1]), Convert.ToInt16(time[2].Substring(0, time[2].IndexOf('.'))));
       return retDateTime;

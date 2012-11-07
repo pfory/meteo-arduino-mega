@@ -19,16 +19,25 @@ namespace cosmDataDownloader
       InitializeComponent();
     }
 
+    private bool writeHeader = true;
+    StreamWriter sw;
+
     /*T28A6B0410400004E,2012-11-06T10:47:59.200814Z,11.7
 T28CEB0410400002C,2012-11-06T10:47:59.200814Z,6.3
 T28C9B84104000097,2012-11-06T10:47:59.200814Z,8.5
 T28E8B84104000016,2012-11-06T10:48:19.189317Z,6.3
 T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
     */
+
     private void button1_Click(object sender, EventArgs e)
     {
       DateTime start = new DateTime(dateTimePickerEnd.Value.Year, dateTimePickerEnd.Value.Month, dateTimePickerEnd.Value.Day, 0,0,0);
       DateTime startOld = new DateTime();
+
+      if (checkBoxVytvaretSoubor.Checked)
+      {
+        sw = new StreamWriter("data.csv", false, Encoding.Default);
+      }
 
       while (true) {
         start = nactiDavku(start, tbFeedId.Text);
@@ -75,14 +84,38 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
         return start;
 
       StringBuilder sb = new StringBuilder();
+      StringBuilder header = new StringBuilder();
+      StringBuilder data = new StringBuilder();
       string lastDateTime = string.Empty;
+      int i = 0;
       foreach (String s in rozsekany)
       {
         string[] radka = s.Split(new Char[] { ',' });
+        if (i<numericUpDown1.Value) {
+          if (writeHeader)
+          {
+            if (i > 0) header.Append(",");
+            header.Append(radka[0]);
+          }
+          if (i > 0) data.Append(",");
+          data.Append(radka[2]);
+        }
+        i++;
+        if (i == numericUpDown1.Value)
+        {
+          i = 0;
+          if (writeHeader)
+          {
+            writeHeader = false;
+            sw.WriteLine(header);
+          }
+          sw.WriteLine(data);
+        }
+
         lastDateTime = radka[1];
         sb.AppendLine(s);
       }
-      sb.Append("\n----------------------------------\n");
+      sb.AppendLine("----------------------------------");
       tbResult.Text += sb;
       //2012-11-06T01:23:09.315392Z
       string[] dateAndTime = lastDateTime.Split(new Char[] { 'T' });
@@ -112,5 +145,11 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
       url += "&interval=0&limit=1000";
       return url;
     }
+
+    private void button2_Click(object sender, EventArgs e)
+    {
+
+    }
+
   }
 }

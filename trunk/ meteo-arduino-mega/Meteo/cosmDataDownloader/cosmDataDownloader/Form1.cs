@@ -116,6 +116,10 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
         {
           if (i < numericUpDown1.Value)
           {
+<<<<<<< .mine
+            header.Append(";");
+            header.Append(radka[0]);
+=======
             if (writeHeader)
             {
               header.Append(ODDELOVAC);
@@ -126,9 +130,24 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
               data.Append(dateTime.ToShortDateString() + " " + dateTime.ToLongTimeString());
             data.Append(ODDELOVAC);
             data.Append(radka[2].Replace('.', ','));
+>>>>>>> .r76
           }
+<<<<<<< .mine
+
+          if (i == 0)
+            data.Append(dateTime.ToShortDateString()+" "+dateTime.ToLongTimeString());
+          data.Append(";");
+          data.Append(radka[2]);
+        }
+        i++;
+        if (i == numericUpDown1.Value)
+        {
+          i = 0;
+          if (writeHeader)
+=======
           i++;
           if (i == numericUpDown1.Value)
+>>>>>>> .r76
           {
             i = 0;
             if (writeHeader)

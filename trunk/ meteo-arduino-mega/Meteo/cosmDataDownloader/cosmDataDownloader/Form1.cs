@@ -21,8 +21,9 @@ namespace cosmDataDownloader
     }
 
     private bool writeHeader = true;
-    StreamWriter sw;
+    StreamWriter swCSV, swRaw;
     char ODDELOVAC = ';';
+    const string swVersion = "v0.1";
 
     /*T28A6B0410400004E,2012-11-06T10:47:59.200814Z,11.7
 T28CEB0410400002C,2012-11-06T10:47:59.200814Z,6.3
@@ -33,25 +34,29 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
 
     private void button1_Click(object sender, EventArgs e)
     {
-      DateTime start = new DateTime(dateTimePickerStart.Value.Year, dateTimePickerStart.Value.Month, dateTimePickerStart.Value.Day, 0,0,0);
+      DateTime start = new DateTime(dateTimePickerStart.Value.Year, dateTimePickerStart.Value.Month, dateTimePickerStart.Value.Day, 0, 0, 0);
       DateTime startOld = new DateTime();
-      DateTime end = new DateTime(dateTimePickerEnd.Value.Year, dateTimePickerEnd.Value.Month, dateTimePickerEnd.Value.Day, 0, 0, 0);
+      DateTime end = new DateTime(dateTimePickerEnd.Value.Year, dateTimePickerEnd.Value.Month, dateTimePickerEnd.Value.Day, 23, 59, 59);
 
       tbResult.Text = String.Empty;
-      String fileName = start.Year.ToString("D4") + start.Month.ToString("D2") + start.Day.ToString("D2") + ".csv";
+      String fileNameCSV = start.Year.ToString("D4") + start.Month.ToString("D2") + start.Day.ToString("D2") + ".csv";
+      String fileNameRaw = start.Year.ToString("D4") + start.Month.ToString("D2") + start.Day.ToString("D2") + "_rawData.txt";
 
       if (checkBoxVytvaretSoubor.Checked)
       {
         writeHeader = true;
-        sw = new StreamWriter(fileName, false, Encoding.Default);
+        swCSV = new StreamWriter(fileNameCSV, false, Encoding.Default);
+        swRaw = new StreamWriter(fileNameRaw, false, Encoding.Default);
+
       }
 
-      while (true) {
+      while (true)
+      {
         bool chyba = false;
         start = nactiDavku(start, end, tbFeedId.Text, ref chyba);
         if (start >= end)
           break;
-        if (chyba) 
+        if (chyba)
           continue;
         if (startOld == start)
           break;
@@ -60,9 +65,10 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
           start = start.AddSeconds(1);
           startOld = start;
         }
-        sw.Flush();
+        swCSV.Flush();
       }
-      sw.Close();
+      swCSV.Close();
+      swRaw.Close();
 
     }
 
@@ -93,6 +99,9 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
         //MessageBox.Show(ex.ToString());
         chyba = true;
       }
+      swRaw.WriteLine(htmlCode);
+      swRaw.Flush();
+
 
       string[] rozsekany = htmlCode.Split(new Char[] { '\n' });
       if (htmlCode == String.Empty)
@@ -153,10 +162,10 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
             if (writeHeader)
             {
               writeHeader = false;
-              sw.WriteLine(header);
+              swCSV.WriteLine(header);
               header.Clear();
             }
-            sw.WriteLine(data);
+            swCSV.WriteLine(data);
             data.Clear();
           }
 
@@ -202,6 +211,11 @@ T28A6B0410400004E,2012-11-06T10:48:19.189317Z,11.7
 
       return new DateTime(Convert.ToInt16(date[0]), Convert.ToInt16(date[1]), Convert.ToInt16(date[2]), Convert.ToInt16(time[0]), Convert.ToInt16(time[1]), Convert.ToInt16(time[2].Substring(0, time[2].IndexOf('.'))));
 
+    }
+
+    private void Form1_Load(object sender, EventArgs e)
+    {
+      this.Text = "COSM Data Downloader " + swVersion;
     }
   }
 }

@@ -23,7 +23,7 @@ A5 free
 #define Ethernetdef
 #define DALLASdef 
 //#define Anemodef
-#define BMP085def
+//#define BMP085def
 
 
 #ifdef Anemodef
@@ -154,7 +154,7 @@ unsigned int old_value=0;
 byte counter=0;
 
 
-String versionSW("METEO Simple v0.3"); //SW name & version
+String versionSW("METEO Simple v0.4"); //SW name & version
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
@@ -268,8 +268,10 @@ void loop() {
     Serial.println();
     printTemperatureAll();
 
+    #ifdef BMP085def
     Serial.print("Press(Pa):");
     Serial.print(Pressure);
+    #endif
 
     Serial.println("");
     dsLastPrintTime = millis(); 
@@ -299,6 +301,8 @@ void loop() {
 #ifdef Ethernetdef
 //-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
 void sendData() {
+
+  Serial.println("sending data");
 
   //prepare data to send
   String dataString = "";
@@ -332,13 +336,15 @@ void sendData() {
     dataString += t/10;
     dataString += ".";
     dataString += abs(t%10);
-    
-    //Pressure
-    dataString += "Press,";
-    dataString += Pressure;
-
     dataString += "\n";
   }
+
+  #ifdef BMP085def
+  //Pressure
+  dataString += "Press,";
+  dataString += Pressure;
+  #endif
+  //dataString += "\n";
   
    
 
@@ -414,9 +420,10 @@ void dsInit(void) {
   for(byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
     if(dsSensors.getAddress(tempDeviceAddress, i)) {
-      for (byte j=0; j<8; j++) {
+      /*for (byte j=0; j<8; j++) {
         if (tempDeviceAddress[j] < 16) Serial.print("0");
       }
+      */
       memcpy(tempDeviceAddresses[i],tempDeviceAddress,8);
       
       // set the resolution to TEMPERATURE_PRECISION bit (Each Dallas/Maxim device is capable of several different resolutions)

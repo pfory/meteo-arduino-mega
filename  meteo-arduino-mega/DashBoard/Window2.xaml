@@ -1,0 +1,102 @@
+﻿<Window x:Class="WindowTransparency.Window2"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Window2" Height="535" Width="608">
+
+  <!--<Button Content="tlačítko" Width="50" Height="50">
+    <Button.Triggers>
+      <EventTrigger RoutedEvent="Button.MouseEnter">
+        <EventTrigger.Actions>
+          <BeginStoryboard>
+            <Storyboard>
+              <DoubleAnimation Storyboard.TargetProperty="Width"
+                               To="100" Duration="0:0:0.1" />
+              <DoubleAnimation Storyboard.TargetProperty="Height"
+                               To="100" Duration="0:0:0.1" />
+            </Storyboard>
+          </BeginStoryboard>
+        </EventTrigger.Actions>
+      </EventTrigger>
+
+    <EventTrigger RoutedEvent="Button.MouseLeave">
+      <EventTrigger.Actions>
+        <BeginStoryboard>
+          <Storyboard>
+            <DoubleAnimation Storyboard.TargetProperty="Width"
+                               To="50" Duration="0:0:1" />
+            <DoubleAnimation Storyboard.TargetProperty="Height"
+                               To="50" Duration="0:0:1" />
+          </Storyboard>
+        </BeginStoryboard>
+      </EventTrigger.Actions>
+    </EventTrigger>
+    </Button.Triggers>
+  </Button>-->
+
+  <Grid>
+    <Grid.Resources>
+      <Style TargetType="Button">
+        <Setter Property="Height" Value="25" />
+        <Setter Property="Margin" Value="10" />
+        <Style.Triggers>
+          <!-- Spustit animaci hned po startu -->
+          <EventTrigger RoutedEvent="Button.Loaded">
+            <EventTrigger.Actions>
+              <BeginStoryboard x:Name="ButtonAnimation">
+                <Storyboard>
+                  <DoubleAnimation From="25" To="80"
+                                   AutoReverse="True"
+                                   RepeatBehavior="Forever"
+                                   Storyboard.TargetProperty="Height"
+                                   Duration="0:0:1" />
+                </Storyboard>
+              </BeginStoryboard>
+            </EventTrigger.Actions>
+          </EventTrigger>
+          <!-- Pozastavit animaci -->
+          <EventTrigger RoutedEvent="Button.MouseEnter">
+            <EventTrigger.Actions>
+              <PauseStoryboard BeginStoryboardName="ButtonAnimation" />
+            </EventTrigger.Actions>
+          </EventTrigger>
+          <!-- Pokracovat v animaci -->
+          <EventTrigger RoutedEvent="Button.MouseLeave">
+            <EventTrigger.Actions>
+              <ResumeStoryboard BeginStoryboardName="ButtonAnimation" />
+            </EventTrigger.Actions>
+          </EventTrigger>
+        </Style.Triggers>
+      </Style>
+    </Grid.Resources>
+    <Rectangle Height="400" HorizontalAlignment="Left" Margin="207,12,0,0" Name="teplomer" Stroke="Black" VerticalAlignment="Top" Width="118">
+      <Rectangle.Fill>
+        <ImageBrush ImageSource="/WindowTransparency;component/thermometer.jpg" Stretch="None" TileMode="None" />
+      </Rectangle.Fill>
+    </Rectangle>
+    <Rectangle Height="50" HorizontalAlignment="Left" Margin="260,0,0,136" Name="rectangle1" Stroke="#00000000" VerticalAlignment="Bottom" Width="10" Fill="#FFD14B4C" OpacityMask="Black" SnapsToDevicePixels="True" StrokeThickness="0" MouseEnter="rectangle1_MouseEnter" MouseLeave="rectangle1_MouseLeave">
+      <Rectangle.Triggers>
+        <!--<EventTrigger RoutedEvent="Rectangle.MouseEnter">
+          <EventTrigger.Actions>
+            <BeginStoryboard>
+              <Storyboard>
+                <DoubleAnimation Storyboard.TargetProperty="Height"
+                               To="100" Duration="0:0:1" />
+              </Storyboard>
+            </BeginStoryboard>
+          </EventTrigger.Actions>
+        </EventTrigger>-->
+        <!--<EventTrigger RoutedEvent="Rectangle.MouseLeave">
+          <EventTrigger.Actions>
+            <BeginStoryboard>
+              <Storyboard>
+                <DoubleAnimation Storyboard.TargetProperty="Height"
+                               To="50" Duration="0:0:1" />
+              </Storyboard>
+            </BeginStoryboard>
+          </EventTrigger.Actions>
+        </EventTrigger>-->
+      </Rectangle.Triggers>
+    </Rectangle>
+  </Grid>
+
+</Window>

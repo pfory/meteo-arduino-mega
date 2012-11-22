@@ -1,0 +1,15 @@
+C:\Temp\GadgetDemo\bin\Debug\WindowTransparency.exe
+C:\Temp\GadgetDemo\bin\Debug\WindowTransparency.pdb
+C:\Temp\GadgetDemo\obj\Debug\ResolveAssemblyReference.cache
+C:\Temp\GadgetDemo\obj\Debug\Window1.baml
+C:\Temp\GadgetDemo\obj\Debug\Window1.g.cs
+C:\Temp\GadgetDemo\obj\Debug\App.g.cs
+C:\Temp\GadgetDemo\obj\Debug\WindowTransparency_MarkupCompile.cache
+C:\Temp\GadgetDemo\obj\Debug\WindowTransparency.g.resources
+C:\Temp\GadgetDemo\obj\Debug\WindowTransparency.Properties.Resources.resources
+C:\Temp\GadgetDemo\obj\Debug\GenerateResource.read.1.tlog
+C:\Temp\GadgetDemo\obj\Debug\GenerateResource.write.1.tlog
+C:\Temp\GadgetDemo\obj\Debug\WindowTransparency.exe
+C:\Temp\GadgetDemo\obj\Debug\WindowTransparency.pdb
+C:\Temp\GadgetDemo\obj\Debug\Window2.baml
+C:\Temp\GadgetDemo\obj\Debug\Window2.g.cs

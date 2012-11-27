@@ -1,0 +1,19 @@
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\bin\Debug\SolarSystem.exe.config
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\bin\Debug\SolarSystem.exe
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\bin\Debug\SolarSystem.pdb
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\MainWindow.baml
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\MainWindow.g.cs
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\App.g.cs
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\SolarSystem_MarkupCompile.cache
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\SolarSystem.g.resources
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\SolarSystem.exe
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\SolarSystem.pdb
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\test.baml
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\test.g.cs
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\Window1.baml
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\Window1.g.cs
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\Setup.baml
+C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj\Debug\Setup.g.cs
+C:\Users\pfory\Arduino\Meteo\SolarSystem\bin\Debug\SolarSystem.exe.config
+C:\Users\pfory\Arduino\Meteo\SolarSystem\obj\Debug\SolarSystem.exe
+C:\Users\pfory\Arduino\Meteo\SolarSystem\obj\Debug\SolarSystem.pdb

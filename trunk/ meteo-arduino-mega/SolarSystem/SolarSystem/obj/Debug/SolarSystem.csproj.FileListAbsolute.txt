@@ -17,3 +17,6 @@ C:\Users\pfory\Documents\Visual Studio 2012\Projects\SolarSystem\SolarSystem\obj
 C:\Users\pfory\Arduino\Meteo\SolarSystem\bin\Debug\SolarSystem.exe.config
 C:\Users\pfory\Arduino\Meteo\SolarSystem\obj\Debug\SolarSystem.exe
 C:\Users\pfory\Arduino\Meteo\SolarSystem\obj\Debug\SolarSystem.pdb
+C:\Users\pfory\Arduino\Meteo\SolarSystem\SolarSystem\bin\Debug\SolarSystem.exe.config
+C:\Users\pfory\Arduino\Meteo\SolarSystem\SolarSystem\obj\Debug\SolarSystem.exe
+C:\Users\pfory\Arduino\Meteo\SolarSystem\SolarSystem\obj\Debug\SolarSystem.pdb

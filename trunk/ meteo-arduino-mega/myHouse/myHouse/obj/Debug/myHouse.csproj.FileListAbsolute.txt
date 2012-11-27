@@ -12,3 +12,6 @@ C:\Users\pfory\Arduino\Meteo\myHouse\myHouse\obj\Debug\myHouse.Properties.Resour
 C:\Users\pfory\Arduino\Meteo\myHouse\myHouse\obj\Debug\myHouse.csproj.GenerateResource.Cache
 C:\Users\pfory\Arduino\Meteo\myHouse\myHouse\obj\Debug\myHouse.exe
 C:\Users\pfory\Arduino\Meteo\myHouse\myHouse\obj\Debug\myHouse.pdb
+C:\Dokumenty\Elektro\Konstrukce\MeteoStanice\myHouse\myHouse\bin\Debug\myHouse.exe.config
+C:\Dokumenty\Elektro\Konstrukce\MeteoStanice\myHouse\myHouse\obj\Debug\myHouse.exe
+C:\Dokumenty\Elektro\Konstrukce\MeteoStanice\myHouse\myHouse\obj\Debug\myHouse.pdb

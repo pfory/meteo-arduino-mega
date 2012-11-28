@@ -11,11 +11,12 @@
                     <Rectangle x:Name="livingRoomRect" HorizontalAlignment="Left" Height="400" Margin="155,18,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=livingRoomColor}"/>
                     <Rectangle x:Name="corridorRect" HorizontalAlignment="Left" Height="400" Margin="50,18,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=corridorColor}"/>
                     <Rectangle x:Name="workRoomRect" HorizontalAlignment="Left" Height="250" Margin="50,423,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=workRoomColor}"/>
-                    <Label x:Name="lblWorkroomTemp" HorizontalAlignment="Left" Margin="90,434,0,0" VerticalAlignment="Top" Width="45" Content="{Binding Path=workRoomTemp}"/>
-                    <Label x:Name="lblHallTemp" HorizontalAlignment="Left" Margin="331,434,0,0" VerticalAlignment="Top" Width="45" Content="{Binding Path=hallTemp}"/>
-                    <Label x:Name="lblLivingRoomTemp" HorizontalAlignment="Left" Margin="250,380,0,0" VerticalAlignment="Top" Content="{Binding Path=livingRoomTemp}" Width="45"/>
-                    <Label x:Name="lblCorridorTemp" HorizontalAlignment="Left" Margin="90,380,0,0" VerticalAlignment="Top" Width="45" Content="{Binding Path=corridorTemp}"/>
+                    <TextBlock x:Name="lblWorkroomTemp" HorizontalAlignment="Left" Margin="90,434,0,0" VerticalAlignment="Top" Width="45" Text="{Binding workRoomTemp, StringFormat=\{0:F1\}}"/>
+                    <TextBlock x:Name="lblHallTemp" HorizontalAlignment="Left" Margin="331,434,0,0" VerticalAlignment="Top" Width="45" Text="{Binding hallTemp, StringFormat=\{0:F1\}}"/>
+                    <TextBlock x:Name="lblLivingRoomTemp" HorizontalAlignment="Left" Margin="250,380,0,0" VerticalAlignment="Top" Text="{Binding livingRoomTemp, StringFormat=\{0:F1\}}" Width="45"/>
+                    <TextBlock x:Name="lblCorridorTemp" HorizontalAlignment="Left" Margin="90,380,0,0" VerticalAlignment="Top" Width="45" Text="{Binding corridorTemp, StringFormat=\{0:F1\}}"/>
                     <Ellipse x:Name="status" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="10,10,0,0" Fill="{Binding Path=statusLEDColor}"/>
+                    <TextBlock x:Name="lblBedRoom" HorizontalAlignment="Left" Margin="331,453,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTemp, StringFormat=\{0:F1\}}"/>
                 </Grid>
             </TabItem>
             <TabItem Header="2nd floor">

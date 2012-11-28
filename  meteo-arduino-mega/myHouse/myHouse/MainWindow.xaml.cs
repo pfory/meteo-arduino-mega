@@ -12,7 +12,7 @@ namespace myHouse
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static int downloadInterval = 5000; //in ms
+        private static int downloadInterval = 20000; //in ms
         private Timer timer = new Timer(downloadInterval);
         HouseData hd = new HouseData();
 
@@ -93,6 +93,11 @@ namespace myHouse
                     hd.workRoomTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
                     hd.workRoomColor = getRoomColor(hd.workRoomTemp);
                 }
+                if (column[0] == "T28E8B84104000016")
+                {
+                    hd.bedRoomTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    hd.bedRoomColor = getRoomColor(hd.workRoomTemp);
+                }
                 //lastUpdate = getDateTimeFromCosmString(column[1] + column[2]);
             }
         }
@@ -124,10 +129,12 @@ namespace myHouse
         private float _hallTemp;
         private float _livingRoomTemp;
         private float _workRoomTemp;
+        private float _bedRoomTemp;
         private string _corridorColor;
         private string _hallColor;
         private string _livingRoomColor;
         private string _workRoomColor;
+        private string _bedRoomColor;
         private string _statusLEDColor;
 
         public HouseData()
@@ -138,11 +145,13 @@ namespace myHouse
         public float hallTemp { get { return _hallTemp; } set { _hallTemp = value; NotifyPropertyChanged("hallTemp"); } }
         public float livingRoomTemp { get { return _livingRoomTemp; } set { _livingRoomTemp = value; NotifyPropertyChanged("livingRoomTemp"); } }
         public float workRoomTemp { get { return _workRoomTemp; } set { _workRoomTemp = value; NotifyPropertyChanged("workRoomTemp"); } }
+        public float bedRoomTemp { get { return _bedRoomTemp; } set { _bedRoomTemp = value; NotifyPropertyChanged("bedRoomTemp"); } }
 
         public string corridorColor { get { return _corridorColor.ToString(); } set { _corridorColor = value; NotifyPropertyChanged("corridorColor"); } }
         public string hallColor { get { return _hallColor.ToString(); } set { _hallColor = value; NotifyPropertyChanged("hallColor"); } }
         public string livingRoomColor { get { return _livingRoomColor.ToString(); } set { _livingRoomColor = value; NotifyPropertyChanged("livingRoomColor"); } }
         public string workRoomColor { get { return _workRoomColor.ToString(); } set { _workRoomColor = value; NotifyPropertyChanged("workRoomColor"); } }
+        public string bedRoomColor { get { return _bedRoomColor.ToString(); } set { _bedRoomColor = value; NotifyPropertyChanged("bedRoomColor"); } }
 
         public string statusLEDColor { get { return _statusLEDColor; } set { _statusLEDColor = value; NotifyPropertyChanged("statusLEDColor");}}
     }

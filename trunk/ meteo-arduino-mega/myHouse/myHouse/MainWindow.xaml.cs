@@ -1,20 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Timers;
-using System.Globalization;
+using System.ComponentModel;
+using System.Windows.Media;
 
 namespace myHouse
 {
@@ -23,15 +12,14 @@ namespace myHouse
     /// </summary>
     public partial class MainWindow : Window
     {
-        private float corridorTemp;
-        private float hallTemp;
-        private float livingRoomTemp;
-        private float workRoomTemp;
-        private Timer timer = new Timer(5000);
+        private static int downloadInterval = 5000; //in ms
+        private Timer timer = new Timer(downloadInterval);
+        HouseData hd = new HouseData();
 
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = hd;
             timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             timer.Enabled = true;
             showData();
@@ -44,47 +32,11 @@ namespace myHouse
 
         private void showData()
         {
-            /*corridorTemp = 10.5F;
-            hallTemp = 20.8F;
-            livingRoomTemp = 35.8F;
-            workRoomTemp = -5.6F;
-            */
-            /*lblCorridorTemp.Content = corridorTemp;
-            lblHallTemp.Content = hallTemp;
-            lblLivingRoomTemp.Content = livingRoomTemp;
-            lblWorkroomTemp.Content = workRoomTemp;
-            */
-            status.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { status.Fill = new SolidColorBrush(Colors.Yellow); }));
+            hd.statusLEDColor = Colors.Yellow.ToString();
             parseData(getData());
-
-
-            lblCorridorTemp.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { lblCorridorTemp.Content = corridorTemp.ToString("F1", CultureInfo.CurrentCulture); }));
-            lblHallTemp.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { lblHallTemp.Content = hallTemp.ToString("F1", CultureInfo.CurrentCulture); }));
-            lblLivingRoomTemp.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { lblLivingRoomTemp.Content = livingRoomTemp.ToString("F1", CultureInfo.CurrentCulture); }));
-            lblWorkroomTemp.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { lblWorkroomTemp.Content = workRoomTemp.ToString("F1", CultureInfo.CurrentCulture); }));
-
-            corridorRect.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { corridorRect.Fill = getRoomColor(corridorTemp) ; corridorRect.Opacity = 0.1; }));
-            hallRect.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { hallRect.Fill = getRoomColor(hallTemp); hallRect.Opacity = 0.1; }));
-            livingRoomRect.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { livingRoomRect.Fill = getRoomColor(livingRoomTemp); livingRoomRect.Opacity = 0.1; }));
-            workRoomRect.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { workRoomRect.Fill = getRoomColor(workRoomTemp); workRoomRect.Opacity = 0.1; }));
-
-            status.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { status.Fill = new SolidColorBrush(Colors.Green); }));
+            hd.statusLEDColor = Colors.Green.ToString();
         }
 
-        private Brush getRoomColor(float temperature) {
-            SolidColorBrush brush = new SolidColorBrush();
-
-            if (temperature < 8)
-            {
-                brush.Color = Colors.Blue;
-            }
-            else if (temperature > 25)
-            {
-                brush.Color = Colors.Red;
-            }
-
-            return brush;
-        }
 
         static private String getData()
         {
@@ -122,16 +74,76 @@ namespace myHouse
             {
                 string[] column = s.Split(new Char[] { ',' });
                 if (column[0] == "T28C9B84104000097")
-                    corridorTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                {
+                    hd.corridorTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    hd.corridorColor = getRoomColor(hd.corridorTemp);
+                }
                 if (column[0] == "T28AEC04104000082")
-                    hallTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                {
+                    hd.hallTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    hd.hallColor = getRoomColor(hd.hallTemp);
+                }
                 if (column[0] == "T28A6B0410400004E")
-                    livingRoomTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                {
+                    hd.livingRoomTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    hd.livingRoomColor = getRoomColor(hd.livingRoomTemp);
+                }
                 if (column[0] == "T28CEB0410400002C")
-                    workRoomTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
-
+                {
+                    hd.workRoomTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    hd.workRoomColor = getRoomColor(hd.workRoomTemp);
+                }
                 //lastUpdate = getDateTimeFromCosmString(column[1] + column[2]);
             }
         }
+
+        private string getRoomColor(float temperature)
+        {
+            if (temperature>25)
+                return Colors.Red.ToString();
+            else if (temperature>10)
+                return Colors.Green.ToString();
+            else if (temperature>0)
+                return Colors.AliceBlue.ToString();
+            else
+                return Colors.Blue.ToString();
+        }
+    }
+
+
+    public class HouseData : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void NotifyPropertyChanged(string info)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(info));
+        }
+
+        private float _corridorTemp;
+        private float _hallTemp;
+        private float _livingRoomTemp;
+        private float _workRoomTemp;
+        private string _corridorColor;
+        private string _hallColor;
+        private string _livingRoomColor;
+        private string _workRoomColor;
+        private string _statusLEDColor;
+
+        public HouseData()
+        {
+        }
+
+        public float corridorTemp { get { return _corridorTemp; } set { _corridorTemp = value; NotifyPropertyChanged("corridorTemp");}}
+        public float hallTemp { get { return _hallTemp; } set { _hallTemp = value; NotifyPropertyChanged("hallTemp"); } }
+        public float livingRoomTemp { get { return _livingRoomTemp; } set { _livingRoomTemp = value; NotifyPropertyChanged("livingRoomTemp"); } }
+        public float workRoomTemp { get { return _workRoomTemp; } set { _workRoomTemp = value; NotifyPropertyChanged("workRoomTemp"); } }
+
+        public string corridorColor { get { return _corridorColor.ToString(); } set { _corridorColor = value; NotifyPropertyChanged("corridorColor"); } }
+        public string hallColor { get { return _hallColor.ToString(); } set { _hallColor = value; NotifyPropertyChanged("hallColor"); } }
+        public string livingRoomColor { get { return _livingRoomColor.ToString(); } set { _livingRoomColor = value; NotifyPropertyChanged("livingRoomColor"); } }
+        public string workRoomColor { get { return _workRoomColor.ToString(); } set { _workRoomColor = value; NotifyPropertyChanged("workRoomColor"); } }
+
+        public string statusLEDColor { get { return _statusLEDColor; } set { _statusLEDColor = value; NotifyPropertyChanged("statusLEDColor");}}
     }
 }

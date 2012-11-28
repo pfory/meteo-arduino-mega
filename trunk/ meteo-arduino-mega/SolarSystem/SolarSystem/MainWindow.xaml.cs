@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Globalization;
 using System.Net;
 using System.Timers;
@@ -13,18 +14,14 @@ namespace SolarSystem
     public partial class MainWindow : Window
     {
         private Timer timer = new Timer(5000);
-        //private static String data;
-        private float solarInput;
-        private float solarOutput;
-        private float bojler;
-        private float outTemp;
-        private float intTemp;
         private SetupData setupData;
-        private DateTime lastUpdate;
+        SolarData sd = new SolarData();
+
 
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = sd;
             timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             timer.Enabled = true;
         }
@@ -42,45 +39,23 @@ namespace SolarSystem
 
         private void showData(SetupData setupData)
         {
-            lblError.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { lblError.Content = String.Empty; }));
-
-            Status.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { Status.Fill = new SolidColorBrush(Colors.Yellow); }));
+            sd.statusLEDColor = Colors.Yellow.ToString();
             try
             {
-                String data = getData(setupData);
-                if (data != String.Empty)
+                getData(setupData);
+                if (sd.rawData != String.Empty)
                 {
-                    parseData(data);
-                    lblSolar.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { lblSolar.Content = data; }));
+                    parseData();
                 }
             }
             catch (Exception ex) {
-                lblError.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { lblError.Content = ex.Message; }));
+                sd.error = ex.Message;
             }
 
-            SolarInput.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { SolarInput.Content = solarInput.ToString("F1", CultureInfo.CurrentCulture); }));
-            SolarOutput.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { SolarOutput.Content = solarOutput.ToString("F1", CultureInfo.CurrentCulture); }));
-            bojlerTeplota.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { bojlerTeplota.Content = bojler.ToString("F1", CultureInfo.CurrentCulture); }));
-            venkovniTeplota.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { venkovniTeplota.Content = outTemp.ToString("F1", CultureInfo.CurrentCulture); }));
-            vnitrniTeplota.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { vnitrniTeplota.Content = intTemp.ToString("F1", CultureInfo.CurrentCulture); }));
-
-            float solarPower = (5f / 1000f / 60f) * (solarOutput - solarInput) * 1054f * 3900f;
-            if (solarPower > 0)
-            {
-                pictureClouds.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { pictureClouds.Visibility = Visibility.Hidden; }));
-                pictureSun.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { pictureSun.Visibility = Visibility.Visible; }));
-            }
-            else
-            {
-                pictureClouds.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { pictureClouds.Visibility = Visibility.Visible; }));
-                pictureSun.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { pictureSun.Visibility = Visibility.Hidden; }));
-            }
-            SolarPower.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { SolarPower.Content = solarPower.ToString("F3", CultureInfo.CurrentCulture); }));
-            Status.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { Status.Fill = new SolidColorBrush(Colors.Green); }));
-            lblDateTime.Dispatcher.Invoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(delegate() { lblDateTime.Content = lastUpdate.ToLongDateString() + "\n" + lastUpdate.ToLongTimeString(); }));
+            sd.statusLEDColor = Colors.Green.ToString();
         }
 
-        private void parseData(string data)
+        private void parseData()
         {
             /*  DewPoint1,2012-11-26T09:31:57.811788Z,3
                 DewPoint2,2012-11-26T09:31:57.811788Z,6
@@ -95,22 +70,22 @@ namespace SolarSystem
                 TempDHT1,2012-11-26T09:31:57.811788Z,4
                 TempDHT2,2012-11-26T09:31:57.811788Z,13
              */
-            string[] radka = data.Split(new Char[] { '\n' });
+            string[] radka = sd.rawData.Split(new Char[] { '\n' });
             foreach (string s in radka)
             {
                 string[] column = s.Split(new Char[] { ',' });
                 if (column[0] == setupData.solarVstup)
-                    solarInput = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    sd.solarInput = (float)Convert.ToDecimal(column[2].Replace(".", ","));
                 if (column[0] == setupData.solarVystup)
-                    solarOutput = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    sd.solarOutput = (float)Convert.ToDecimal(column[2].Replace(".", ","));
                 if (column[0] == setupData.bojler)
-                    bojler = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    sd.bojler = (float)Convert.ToDecimal(column[2].Replace(".", ","));
                 if (column[0] == setupData.venkovni)
-                    outTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    sd.outTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
                 if (column[0] == setupData.vnitrni)
-                    intTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                    sd.intTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
                 
-                lastUpdate = getDateTimeFromCosmString(column[1]+column[2]);
+                sd.lastUpdate = getDateTimeFromCosmString(column[1]+column[2]).ToString();
             }
         }
 
@@ -126,7 +101,7 @@ namespace SolarSystem
 
         }
 
-        static private String getData(SetupData setupData)
+        private void getData(SetupData setupData)
         {
             string url = "http://api.cosm.com/v2/feeds/" + setupData.cosmID + ".csv";
 
@@ -143,8 +118,7 @@ namespace SolarSystem
                 client.Credentials = new NetworkCredential(setupData.userName, setupData.password);
 
                 // Grab Data
-                htmlCode = client.DownloadString(url);
-                return htmlCode;
+                sd.rawData = client.DownloadString(url);
             }
             catch (WebException ex)
             {
@@ -158,6 +132,76 @@ namespace SolarSystem
             win.ShowDialog();
             setupData.loadData();
             showData(setupData);
+        }
+    }
+
+    public class SolarData : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void NotifyPropertyChanged(string info)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(info));
+        }
+        public SolarData()
+        {
+        }
+
+        private float _solarInput;
+        private float _solarOutput;
+        private float _bojler;
+        private float _outTemp;
+        private float _intTemp;
+        private float _solarPower;
+        private string _statusLEDColor;
+        private string _lastUpdate;
+        private string _rawData;
+        private Visibility _pictureClouds;
+        private Visibility _pictureSun;
+        
+        private string _error;
+
+        public float solarInput { get { return _solarInput; } set { _solarInput = value; solarPower = 0; NotifyPropertyChanged("solarInput"); }}
+        public float solarOutput { get { return _solarOutput; } set { _solarOutput = value; solarPower = 0; NotifyPropertyChanged("solarOutput"); }}
+        public float bojler { get { return _bojler; } set { _bojler = value; NotifyPropertyChanged("bojler"); }}
+        public float outTemp { get { return _outTemp; } set { _outTemp = value; NotifyPropertyChanged("outTemp"); }}
+        public float intTemp { get { return _intTemp; } set { _intTemp = value; NotifyPropertyChanged("intTemp"); }}
+        
+        public float solarPower { get { return _solarPower; } 
+            set { 
+                _solarPower = (5f / 1000f / 60f) * (_solarOutput - _solarInput) * 1054f * 3900f; NotifyPropertyChanged("solarPower");
+                pictureClouds = Visibility.Hidden;
+                pictureSun = Visibility.Hidden;
+            }
+        }
+
+        public string error { get { return _error; } set { _error = value; NotifyPropertyChanged("error"); }}
+
+        public string statusLEDColor { get { return _statusLEDColor; } set { _statusLEDColor = value; NotifyPropertyChanged("statusLEDColor"); }}
+        public string lastUpdate { get { return _lastUpdate; } set { _lastUpdate = value; NotifyPropertyChanged("lastUpdate"); }}
+        public string rawData { get { return _rawData; } set { _rawData = value; NotifyPropertyChanged("rawData"); }}
+
+        public Visibility pictureClouds { 
+            get { 
+                return _pictureClouds; } 
+            set {
+                if (solarPower > 0)
+                    _pictureClouds = Visibility.Hidden;
+                else
+                    _pictureClouds = Visibility.Visible;
+                NotifyPropertyChanged("pictureClouds");
+            }
+        }
+        public Visibility pictureSun {
+            get {
+                return _pictureSun; }
+            set {
+                if (solarPower > 0)
+                    _pictureSun = Visibility.Visible;
+                else
+                    _pictureSun = Visibility.Hidden;
+                NotifyPropertyChanged("pictureSun");
+            } 
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Net;
 using System.Timers;
 using System.Windows;
+using System.Windows.Markup;
 using System.Windows.Media;
 
 namespace SolarSystem
@@ -21,6 +22,7 @@ namespace SolarSystem
         public MainWindow()
         {
             InitializeComponent();
+            this.Language = XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag);
             DataContext = sd;
             timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             timer.Enabled = true;
@@ -85,7 +87,7 @@ namespace SolarSystem
                 if (column[0] == setupData.vnitrni)
                     sd.intTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
                 
-                sd.lastUpdate = getDateTimeFromCosmString(column[1]+column[2]).ToString();
+                sd.lastUpdate = getDateTimeFromCosmString(column[1]+column[2]);
             }
         }
 
@@ -154,7 +156,7 @@ namespace SolarSystem
         private float _intTemp;
         private float _solarPower;
         private string _statusLEDColor;
-        private string _lastUpdate;
+        private DateTime _lastUpdate;
         private string _rawData;
         private Visibility _pictureClouds;
         private Visibility _pictureSun;
@@ -178,7 +180,7 @@ namespace SolarSystem
         public string error { get { return _error; } set { _error = value; NotifyPropertyChanged("error"); }}
 
         public string statusLEDColor { get { return _statusLEDColor; } set { _statusLEDColor = value; NotifyPropertyChanged("statusLEDColor"); }}
-        public string lastUpdate { get { return _lastUpdate; } set { _lastUpdate = value; NotifyPropertyChanged("lastUpdate"); }}
+        public DateTime lastUpdate { get { return _lastUpdate; } set { _lastUpdate = value; NotifyPropertyChanged("lastUpdate"); }}
         public string rawData { get { return _rawData; } set { _rawData = value; NotifyPropertyChanged("rawData"); }}
 
         public Visibility pictureClouds { 

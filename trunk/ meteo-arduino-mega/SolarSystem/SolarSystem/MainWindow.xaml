@@ -27,11 +27,11 @@
         <TextBlock x:Name="SolarOutput" Text="{Binding solarOutput, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="401,71,0,0" VerticalAlignment="Top" Width="68" FontSize="20"  FontWeight="Bold" TextAlignment="Right" />
         <Label Content="Vstupní teplota" HorizontalAlignment="Left" Margin="33,97,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
         <Label Content="Výstupní teplota" HorizontalAlignment="Left" Margin="393,97,0,0" VerticalAlignment="Top" Width="114" HorizontalContentAlignment="Center"/>
-        <Label Content="Výkon" HorizontalAlignment="Left" Margin="133,10,0,0" VerticalAlignment="Top" Width="114" HorizontalContentAlignment="Center"/>
-        <TextBlock x:Name="SolarPower" Text="{Binding solarPower, StringFormat=\{0:F4\}}" HorizontalAlignment="Left" Margin="210,8,0,0" VerticalAlignment="Top" Width="103" FontSize="20" FontWeight="Bold" TextAlignment="Right"  />
+        <Label Content="Výkon" HorizontalAlignment="Left" Margin="211,9,0,0" VerticalAlignment="Top" Width="59" HorizontalContentAlignment="Center"/>
+        <TextBlock x:Name="SolarPower" Text="{Binding solarPower, StringFormat=\{0:F2\}}" HorizontalAlignment="Left" Margin="260,8,0,0" VerticalAlignment="Top" Width="114" FontSize="20" FontWeight="Bold" TextAlignment="Right"  />
         <Label Content="ºC" HorizontalAlignment="Left" Margin="110,71,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,1.231"/>
         <Label Content="ºC" HorizontalAlignment="Left" Margin="469,71,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
-        <Label Content="W" HorizontalAlignment="Left" Margin="313,9,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
+        <Label Content="W" HorizontalAlignment="Left" Margin="374,9,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
         <Rectangle Fill="blue" HorizontalAlignment="Left" Height="8" Margin="23,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="121" Opacity="0.3"/>
         <Rectangle Fill="Red" HorizontalAlignment="Left" Height="8" Margin="393,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="121" Opacity="0.3"/>
         <TextBlock x:Name="lblError" Text="{Binding Path=error}" HorizontalAlignment="Left" Margin="23,599,0,0" VerticalAlignment="Top" Width="491"/>
@@ -54,7 +54,7 @@
         <Label Content="Vnitřní teplota" HorizontalAlignment="Left" Margin="39,421,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
         <Label Content="Bojler" HorizontalAlignment="Left" Margin="211,420,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
         <Button Content="Setup" HorizontalAlignment="Left" Margin="447,9,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.507,0.455" Click="Button_Click_1"/>
-        <Label x:Name="lblDateTime" HorizontalAlignment="Left" Margin="20,5,0,0" VerticalAlignment="Top" Width="130" Height="41" Content="{Binding Path=lastUpdate}"/>
+        <TextBlock x:Name="lblDateTime" HorizontalAlignment="Left" Margin="24,7,0,0" VerticalAlignment="Top" Width="187" Height="21" Text="{Binding lastUpdate, StringFormat={}\{0:dd MMMM yyyy HH:mm:ss UTC\}}"/>
 
 
     </Grid>

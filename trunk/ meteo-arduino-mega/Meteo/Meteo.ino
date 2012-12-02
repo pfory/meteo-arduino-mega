@@ -67,11 +67,12 @@ unsigned long lastSendTime;
 #ifdef UDPdef
 EthernetUDP Udp;
 unsigned int localPort = 8888;      // local port to listen for UDP packets
-IPAddress timeServer(192, 43, 244, 18); // time.nist.gov NTP server
+//IPAddress timeServer(192, 43, 244, 18); // time.nist.gov NTP server
+IPAddress timeServer(130,149,17,21); // time.nist.gov NTP server
 const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
 byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets 
 // A UDP instance to let us send and receive packets over UDP
-byte SNTP_server_IP[]    = { 192, 43, 244, 18}; // time.nist.gov
+//byte SNTP_server_IP[]    = { 192, 43, 244, 18}; // time.nist.gov
 //byte SNTP_server_IP[] = { 130,149,17,21};    // ntps1-0.cs.tu-berlin.de
 //byte SNTP_server_IP[] = { 192,53,103,108};   // ptbtime1.ptb.de
 #include <Time.h>
@@ -249,10 +250,10 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.93"); //SW name & version
+String versionSW("METEOv0.94"); //SW name & version
 
 // ID of the settings block
-#define CONFIG_VERSION "ls2"
+#define CONFIG_VERSION "ls3"
 
 // Tell it where to store your config data in EEPROM
 #define CONFIG_START 32
@@ -283,7 +284,7 @@ storage = {
   1000,               //displayTempDelay in ms
   5000,               //displayBMPDelay ms
   4000,               //displayDHTDelay in ms
-  25000,              //saveInterval in ms
+  10000,              //saveInterval in ms
   20000,              //interval between updates to Cosm.com in ms    
   1800000,            //interval for check press trend in ms
   "HyVsT65CnEPitk6vML664llGUZCSAKx0aXFocmJJVHBUVT0g",
@@ -522,7 +523,7 @@ void loop() {
 
     
     #ifdef BMP085def
-    unsigned long oldPress=Pressure;
+    //unsigned long oldPress=Pressure;
     Pressure = bmp.readPressure();
     Pressure = getRealPressure(Pressure, storage.high_above_sea);
     #else
@@ -1162,20 +1163,28 @@ void printDateTime(byte toLCD) {
 
 void printDigits(int digits, byte toLCD){
   // utility function for digital clock display: prints preceding colon and leading 0
-  if(digits < 10)
-    #ifdef LCDdef
-    if (toLCD==1)
+  if(digits < 10) {
+    //#ifdef LCDdef
+    if (toLCD==1) {
       lcd.print('0');
-    else
-    #endif
+    }
+    else {
+    //#endif
       Serial.print('0');
-      
-  #ifdef LCDdef
-  if (toLCD==1)
+    //#ifdef LCDdef
+    }
+    //#endif
+  }
+  //#ifdef LCDdef
+  if (toLCD==1) {
     lcd.print(digits);
-  else
-  #endif
+  }
+  else {
+  //#endif
     Serial.print(digits);
+  //#ifdef LCDdef
+  }
+  //#endif
 }
 
 #endif
@@ -1348,7 +1357,7 @@ long getRealPressure(long TruePressure, long _param_centimeters) {
 }
 #endif
 
-#ifdef DHTdef1 || #ifdef DHTdef2
+#if defined DHTdef1 || defined DHTdef2
 void dhtInit(byte sensor) {
   Serial.println("\nDHT setup");
   if (sensor==1) {

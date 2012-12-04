@@ -23,7 +23,7 @@ A5 free
 #define Ethernetdef
 #define DALLASdef 
 //#define Anemodef
-//#define BMP085def
+#define BMP085def
 
 
 #ifdef Anemodef
@@ -63,11 +63,19 @@ unsigned long lastSendTime;
 
 #ifdef DALLASdef
 #include <OneWire.h>
+#define dallasMinimal //-956 Bytes
+#ifdef dallasMinimal
+#include <DallasTemperatureMinimal.h>
+#else
 #include <DallasTemperature.h>
+#endif
 #define ONE_WIRE_BUS A0
-#define TEMPERATURE_PRECISION 12
 OneWire onewire(ONE_WIRE_BUS); // pin for onewire DALLAS bus
+#ifdef dallasMinimal
+DallasTemperatureMinimal dsSensors(&onewire);
+#else
 DallasTemperature dsSensors(&onewire);
+#endif
 DeviceAddress tempDeviceAddress;
 #ifndef NUMBER_OF_DEVICES
 #define NUMBER_OF_DEVICES 20
@@ -77,6 +85,10 @@ DeviceAddress tempDeviceAddresses[NUMBER_OF_DEVICES];
 unsigned int numberOfDevices; // Number of temperature devices found
 unsigned long lastDisplayTempTime;
 unsigned long lastDsMeasStartTime;
+unsigned int const dsMeassureDelay=750; //delay between start meassurement and read valid data in ms
+unsigned int const dsMeassureInterval=4000; //inteval between meassurements
+unsigned int const dsPrintTimeDelay=4000; //interval to show results
+unsigned int const sendTimeDelay=20000; //to send to cosm.com
 bool dsMeasStarted=false;
 float sensor[NUMBER_OF_DEVICES];
 
@@ -153,14 +165,15 @@ byte counterOverflow=0;
 unsigned int old_value=0;
 byte counter=0;
 
-
-String versionSW("METEO Simple v0.4"); //SW name & version
+char versionSW[]="0.5";
+char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
   // start serial port:
   Serial.begin(115200);
-  Serial.println(versionSW);
+  Serial.print(versionSWString);
+  Serial.print(versionSW);
 
 
   Serial.println("SW inicialization");
@@ -188,12 +201,7 @@ void setup() {
   #ifdef DALLASdef
   dsInit();
   lastDisplayTempTime = millis();
-  dsSensors.setResolution(12);
-  dsSensors.setWaitForConversion(false);
-  lastSendTime = millis();
-  
-  dsLastPrintTime = millis();
-  lastMeasTime = millis();
+  lastSendTime = dsLastPrintTime = lastMeasTime = millis();
   dsSensors.requestTemperatures(); 
   #endif
   
@@ -213,7 +221,6 @@ void setup() {
   bmp085Init();
   lastDisplayBMPTime = millis();
   #endif
-
   
   Serial.println("End of SW initialization phase, I am starting measuring.");
 
@@ -224,7 +231,7 @@ void setup() {
 void loop() {
 
   //start sampling
-  if (millis() - lastMeasTime > 4000) {
+  if (millis() - lastMeasTime > dsMeassureInterval) {
     sample++;
     lastMeasTime = millis();
     //startTimer();
@@ -235,7 +242,7 @@ void loop() {
     #endif
     
     #ifdef BMP085def
-    unsigned long oldPress=Pressure;
+    //unsigned long oldPress=Pressure;
     Pressure = bmp.readPressure();
     Pressure = getRealPressure(Pressure, high_above_sea);
     #endif
@@ -244,7 +251,7 @@ void loop() {
   
   #ifdef DALLASdef
   if (dsMeasStarted) {
-    if (millis() - lastDsMeasStartTime>750) {
+    if (millis() - lastDsMeasStartTime>dsMeassureDelay) {
       dsMeasStarted=false;
       //saving temperatures into variables
       for (byte i=0;i<numberOfDevices; i++) {
@@ -263,7 +270,7 @@ void loop() {
   #endif
   
     
-  if (millis() - dsLastPrintTime > 1000) {
+  if (millis() - dsLastPrintTime > dsPrintTimeDelay) {
 
     Serial.println();
     printTemperatureAll();
@@ -290,7 +297,7 @@ void loop() {
     checkConfigFlag = false;
   }
 
-  if(!client.connected() && (millis() - lastSendTime > 20000)) {
+  if(!client.connected() && (millis() - lastSendTime > sendTimeDelay)) {
     lastSendTime = millis();
     sendData();
     sample=0;
@@ -311,6 +318,10 @@ void sendData() {
   //00 01 02 03 04 05 06 07
   //-----------------------
   //28 C9 B8 41 04 00 00 97
+
+  dataString += "Version,";
+  dataString += versionSW;
+
   
   for(byte i=0;i<numberOfDevices; i++) {
     dataString += "T";
@@ -417,19 +428,24 @@ void dsInit(void) {
   numberOfDevices = dsSensors.getDeviceCount();
 
   // Loop through each device, print out address
-  for(byte i=0;i<numberOfDevices; i++) {
+  for (byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
-    if(dsSensors.getAddress(tempDeviceAddress, i)) {
+    if (dsSensors.getAddress(tempDeviceAddress, i)) {
       /*for (byte j=0; j<8; j++) {
         if (tempDeviceAddress[j] < 16) Serial.print("0");
       }
       */
       memcpy(tempDeviceAddresses[i],tempDeviceAddress,8);
-      
-      // set the resolution to TEMPERATURE_PRECISION bit (Each Dallas/Maxim device is capable of several different resolutions)
-      dsSensors.setResolution(tempDeviceAddress, TEMPERATURE_PRECISION);
+    }
+    else
+    {
+      Serial.println("Unable to get device address for sensor " + i);
     }
   }
+  #ifndef dallasMinimal
+  dsSensors.setResolution(12);
+  dsSensors.setWaitForConversion(false);
+  #endif
 }
 #endif
 

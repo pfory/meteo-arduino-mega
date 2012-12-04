@@ -14,7 +14,7 @@ namespace SolarSystem
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Timer timer = new Timer(5000);
+        private Timer timer = new Timer();
         private SetupData setupData;
         SolarData sd = new SolarData();
 
@@ -32,6 +32,7 @@ namespace SolarSystem
         {
             setupData = new SetupData();
             showData(setupData);
+            timer.Interval = setupData.intervalNacitani;
         }
 
         private void OnTimedEvent(object source, ElapsedEventArgs e)
@@ -134,6 +135,7 @@ namespace SolarSystem
             win.ShowDialog();
             setupData.loadData();
             showData(setupData);
+            timer.Interval = setupData.intervalNacitani;
         }
     }
 

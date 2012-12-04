@@ -14,6 +14,7 @@
                 <RowDefinition></RowDefinition>
                 <RowDefinition></RowDefinition>
                 <RowDefinition></RowDefinition>
+                <RowDefinition></RowDefinition>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition></ColumnDefinition>
@@ -28,6 +29,7 @@
             <Label Grid.Row="6" Grid.Column="0" HorizontalContentAlignment="Right">Bojler:</Label>
             <Label Grid.Row="7" Grid.Column="0" HorizontalContentAlignment="Right">Venkovní:</Label>
             <Label Grid.Row="8" Grid.Column="0" HorizontalContentAlignment="Right">Vnitřní:</Label>
+            <Label Grid.Row="9" Grid.Column="0" HorizontalContentAlignment="Right">Interval načítání v ms:</Label>
 
             <TextBox Grid.Row="0" Grid.Column="1" Name="tbCosmId" Text="{Binding Path=cosmID}"></TextBox>
             <TextBox Grid.Row="1" Grid.Column="1" Name="tbUserName" Text="{Binding Path=userName}"></TextBox>
@@ -37,6 +39,7 @@
             <TextBox Grid.Row="6" Grid.Column="1" Name="tbBojler" Text="{Binding Path=bojler}"></TextBox>
             <TextBox Grid.Row="7" Grid.Column="1" Name="tbVenkovni" Text="{Binding Path=venkovni}"></TextBox>
             <TextBox Grid.Row="8" Grid.Column="1" Name="tbSVnitrni" Text="{Binding Path=vnitrni}"></TextBox>
+            <TextBox Grid.Row="9" Grid.Column="1" Name="tbIntervalNacitani" Text="{Binding Path=intervalNacitani}"></TextBox>
 
 
         </Grid>

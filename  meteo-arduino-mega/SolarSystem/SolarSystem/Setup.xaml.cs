@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml;
@@ -53,6 +54,7 @@ namespace SolarSystem
         private string _bojler;
         private string _venkovni;
         private string _vnitrni;
+        private long _intervalNacitani;
 
         public SetupData()
         {
@@ -118,6 +120,11 @@ namespace SolarSystem
                         {
                             reader.Read();
                             bojler = reader.Value;
+                        }
+                        if (reader.Name == "intervalNacitani")
+                        {
+                            reader.Read();
+                            intervalNacitani = Convert.ToInt32(reader.Value);
                         }
                     }
 
@@ -213,10 +220,19 @@ namespace SolarSystem
             }
         }
 
+        public long intervalNacitani
+        {
+            get { return _intervalNacitani; }
+            set
+            {
+                _intervalNacitani = value;
+                NotifyPropertyChanged("intervalNacitani");
+            }
+        }
+
 
         internal void saveData()
         {
-            //MessageBox.Show("Zatím není implementováno.");
             XmlTextWriter textWriter = new XmlTextWriter(configFile, null);
             textWriter.WriteStartDocument();
             textWriter.WriteComment("Solar config file");
@@ -234,6 +250,7 @@ namespace SolarSystem
             textWriter.WriteElementString("intTemperature", vnitrni);
             textWriter.WriteElementString("outTemperature", venkovni);
             textWriter.WriteElementString("bojler", bojler);
+            textWriter.WriteElementString("intervalNacitani", intervalNacitani.ToString());
             textWriter.WriteEndElement();
 
             textWriter.WriteEndElement();

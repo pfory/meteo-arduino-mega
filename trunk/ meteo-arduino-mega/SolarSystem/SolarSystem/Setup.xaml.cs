@@ -141,6 +141,7 @@ namespace SolarSystem
                 bojler = "T28D376F301000020";
                 venkovni = "T28446CF3010000D5";
                 vnitrni = "T289879F3010000C2";
+                intervalNacitani = 20000;
 
                 this.saveData();
             }

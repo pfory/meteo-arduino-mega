@@ -17,6 +17,7 @@
                     <TextBlock x:Name="lblCorridorTemp" HorizontalAlignment="Left" Margin="90,380,0,0" VerticalAlignment="Top" Width="45" Text="{Binding corridorTemp, StringFormat=\{0:F1\}}"/>
                     <Ellipse x:Name="status" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="10,10,0,0" Fill="{Binding Path=statusLEDColor}"/>
                     <TextBlock x:Name="lblBedRoom" HorizontalAlignment="Left" Margin="331,453,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTemp, StringFormat=\{0:F1\}}"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="25,3,0,0" TextWrapping="Wrap" Text="{Binding lastUpdate, StringFormat=\{0:F\}}" VerticalAlignment="Top" Width="226"/>
                 </Grid>
             </TabItem>
             <TabItem Header="2nd floor">

@@ -14,8 +14,8 @@ A0 DALLAS temperature
 A1 free
 A2 free
 A3 free
-A4 free
-A5 free
+A4 SDA
+A5 SCL
 
 
 */
@@ -24,7 +24,7 @@ A5 free
 #define DALLASdef 
 //#define Anemodef
 #define BMP085def
-
+//#define SWI2C
 
 #ifdef Anemodef
 // Definition of interrupt names
@@ -86,27 +86,29 @@ unsigned int numberOfDevices; // Number of temperature devices found
 unsigned long lastDisplayTempTime;
 unsigned long lastDsMeasStartTime;
 unsigned int const dsMeassureDelay=750; //delay between start meassurement and read valid data in ms
-unsigned int const dsMeassureInterval=4000; //inteval between meassurements
-unsigned int const dsPrintTimeDelay=4000; //interval to show results
-unsigned int const sendTimeDelay=20000; //to send to cosm.com
 bool dsMeasStarted=false;
 float sensor[NUMBER_OF_DEVICES];
 
 int sensorReading = INT_MIN;
-
-unsigned int sample=0;
-
+#endif
+unsigned int const dsMeassureInterval=4000; //inteval between meassurements
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-#endif
+unsigned int sample=0;
+unsigned int const dsPrintTimeDelay=4000; //interval to show results
+unsigned int const sendTimeDelay=20000; //to send to cosm.com
+
 
 #ifdef BMP085def
 #include <Wire.h>
-//#include <BMP085.h> //558 bytes +
+#ifdef SWI2C
 #include <swI2C_BMP085.h>
 #include <I2cMaster.h>
-//BMP085 dps = BMP085();      // Digital Pressure Sensor 
 swI2C_BMP085 bmp;
+#else
+#include <BMP085.h> //558 bytes +
+BMP085 bmp = BMP085();      // Digital Pressure Sensor 
+#endif
 unsigned long lastDisplayBMPTime;
 unsigned long avgPressure=0;
 unsigned long lastAvgPressure=0;
@@ -118,7 +120,7 @@ unsigned long lastPressureTime=0;
 byte pressureChange=PRESSNOCHANGE;
 signed long         high_above_sea=34700;
 signed long Temperature = 0;
-unsigned long Pressure = 0;//, Altitude = 0;
+long Pressure = 0;//, Altitude = 0;
 
 #endif
 
@@ -165,7 +167,7 @@ byte counterOverflow=0;
 unsigned int old_value=0;
 byte counter=0;
 
-char versionSW[]="0.5";
+char versionSW[]="0.6";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -173,7 +175,7 @@ void setup() {
   // start serial port:
   Serial.begin(115200);
   Serial.print(versionSWString);
-  Serial.print(versionSW);
+  Serial.println(versionSW);
 
 
   Serial.println("SW inicialization");
@@ -243,8 +245,12 @@ void loop() {
     
     #ifdef BMP085def
     //unsigned long oldPress=Pressure;
+    #ifdef SWI2C
     Pressure = bmp.readPressure();
     Pressure = getRealPressure(Pressure, high_above_sea);
+    #else
+    bmp.getPressure(&Pressure);
+    #endif
     #endif
 
   }
@@ -273,8 +279,10 @@ void loop() {
   if (millis() - dsLastPrintTime > dsPrintTimeDelay) {
 
     Serial.println();
+    #ifdef DALLASdef
     printTemperatureAll();
-
+    #endif
+    
     #ifdef BMP085def
     Serial.print("Press(Pa):");
     Serial.print(Pressure);
@@ -321,8 +329,9 @@ void sendData() {
 
   dataString += "Version,";
   dataString += versionSW;
+  dataString += "\n";
 
-  
+  #ifdef DALLASdef
   for(byte i=0;i<numberOfDevices; i++) {
     dataString += "T";
 
@@ -349,6 +358,7 @@ void sendData() {
     dataString += abs(t%10);
     dataString += "\n";
   }
+  #endif
 
   #ifdef BMP085def
   //Pressure
@@ -451,11 +461,21 @@ void dsInit(void) {
 
 #ifdef BMP085def
 void bmp085Init() {
+  #ifdef SWI2C
   bmp.begin();
+  #else
+  Wire.begin();
+  delay(1000);
+  bmp.init(MODE_ULTRA_HIGHRES, high_above_sea, true);  // 250 meters, true = using meter units
+                  // this initialization is useful if current altitude is known,
+                  // pressure will be calculated based on TruePressure and known altitude.
+  #endif
 }
 
+#ifdef SWI2C
 long getRealPressure(long TruePressure, long _param_centimeters) {
   return TruePressure / pow((1 - (float)_param_centimeters / 4433000), 5.255); // + 101325;
 }
+#endif
 
 #endif

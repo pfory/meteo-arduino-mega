@@ -183,8 +183,10 @@ ISR(TIMER1_CAPT_vect)
 byte counterOverflow=0;
 unsigned int old_value=0;
 byte counter=0;
+String dataString = "";
 
-char versionSW[]="0.7";
+
+char versionSW[]="0.71";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -326,7 +328,6 @@ void loop() {
     Serial.print(".");
     Serial.println(abs(Temperature%10));
     #endif
-    */
     #ifdef DHTdef
     Serial.print("Humidity:");
     Serial.println(humidity);
@@ -335,6 +336,7 @@ void loop() {
     #endif
     
     Serial.println("");
+    */
     dsLastPrintTime = millis(); 
   }
   
@@ -364,9 +366,9 @@ void loop() {
 void sendData() {
 
   Serial.println("sending data");
+  dataString="";
 
   //prepare data to send
-  String dataString = "";
   char buffer[3];
   //temperature from DALLAS
   //00 01 02 03 04 05 06 07

@@ -5,57 +5,137 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
-    <Grid>
-        <Label Content="{Binding Path=rawData}" HorizontalAlignment="Left" Margin="143,46,0,0" VerticalAlignment="Top" Height="250" Width="250" x:Name="lblSolar" BorderBrush="Black" BorderThickness="2" FontSize="8" Foreground="Black" >
-            <Label.Background>
-                <LinearGradientBrush EndPoint="0.5,1" MappingMode="RelativeToBoundingBox" StartPoint="0.5,0" Opacity="0.3">
-                    <LinearGradientBrush.RelativeTransform>
-                        <TransformGroup>
-                            <ScaleTransform CenterY="0.5" CenterX="0.5"/>
-                            <SkewTransform CenterY="0.5" CenterX="0.5"/>
-                            <RotateTransform CenterY="0.5" CenterX="0.5" Angle="-90"/>
-                            <TranslateTransform/>
-                        </TransformGroup>
-                    </LinearGradientBrush.RelativeTransform>
-                    <GradientStop Color="#FF0606FF" Offset="0"/>
-                    <GradientStop Color="Red" Offset="1"/>
-                </LinearGradientBrush>
-            </Label.Background>
-        </Label>
-        <Ellipse x:Name="Status" HorizontalAlignment="Left" Height="10" Margin="10,10,0,0" Stroke="Black" VerticalAlignment="Top" Width="10" OverridesDefaultStyle="True" Fill="{Binding Path=statusLEDColor}" />
-        <TextBlock x:Name="SolarInput" Text="{Binding solarInput, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="39,71,0,0" VerticalAlignment="Top" Width="68" FontSize="20"  FontWeight="Bold" TextAlignment="Right" />
-        <TextBlock x:Name="SolarOutput" Text="{Binding solarOutput, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="401,71,0,0" VerticalAlignment="Top" Width="68" FontSize="20"  FontWeight="Bold" TextAlignment="Right" />
-        <Label Content="Vstupní teplota" HorizontalAlignment="Left" Margin="33,97,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
-        <Label Content="Výstupní teplota" HorizontalAlignment="Left" Margin="393,97,0,0" VerticalAlignment="Top" Width="114" HorizontalContentAlignment="Center"/>
-        <Label Content="Výkon" HorizontalAlignment="Left" Margin="211,9,0,0" VerticalAlignment="Top" Width="59" HorizontalContentAlignment="Center"/>
-        <TextBlock x:Name="SolarPower" Text="{Binding solarPower, StringFormat=\{0:F2\}}" HorizontalAlignment="Left" Margin="260,8,0,0" VerticalAlignment="Top" Width="114" FontSize="20" FontWeight="Bold" TextAlignment="Right"  />
-        <Label Content="ºC" HorizontalAlignment="Left" Margin="110,71,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,1.231"/>
-        <Label Content="ºC" HorizontalAlignment="Left" Margin="469,71,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
-        <Label Content="W" HorizontalAlignment="Left" Margin="374,9,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
-        <Rectangle Fill="blue" HorizontalAlignment="Left" Height="8" Margin="23,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="121" Opacity="0.3"/>
-        <Rectangle Fill="Red" HorizontalAlignment="Left" Height="8" Margin="393,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="121" Opacity="0.3"/>
-        <TextBlock x:Name="lblError" Text="{Binding Path=error}" HorizontalAlignment="Left" Margin="23,599,0,0" VerticalAlignment="Top" Width="491"/>
-        <Image x:Name="pictureClouds" HorizontalAlignment="Left" Height="67" Margin="23,143,0,0" VerticalAlignment="Top" Width="100" Source="Resources/clouds.png" Visibility="{Binding Path=pictureClouds}" />
-        <Image x:Name="pictureSun" HorizontalAlignment="Left" Height="86" Margin="36,143,0,0" VerticalAlignment="Top" Width="87" Source="Resources/sun.png" Visibility="{Binding Path=pictureSun}"/>
-        <Label x:Name="lblBojler" Content="" HorizontalAlignment="Left" Margin="210,378,0,0" VerticalAlignment="Top" Height="213" Width="114" BorderThickness="2" BorderBrush="Black" Background="Blue" Foreground="Black" Opacity="0.3"/>
-        <Rectangle Fill="blue" HorizontalAlignment="Left" Height="516" Margin="15,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="8" Opacity="0.3"/>
-        <Rectangle Fill="Blue" HorizontalAlignment="Left" Height="8" Margin="15,565,0,0" Stroke="Black" VerticalAlignment="Top" Width="125" Opacity="0.3"/>
-        <Rectangle Fill="red" HorizontalAlignment="Left" Height="516" Margin="514,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="8" Opacity="0.3"/>
-        <Ellipse Fill="blue" HorizontalAlignment="Left" Height="50" Margin="140,544,0,0" Stroke="Black" VerticalAlignment="Top" Width="50" Opacity="0.3"/>
-        <Rectangle Fill="Blue" HorizontalAlignment="Left" Height="8" Margin="190,565,0,0" Stroke="Black" VerticalAlignment="Top" Width="70" Opacity="0.3"/>
-        <Rectangle Fill="red" HorizontalAlignment="Left" Height="8" Margin="260,565,0,0" Stroke="Black" VerticalAlignment="Top" Width="262" Opacity="0.3"/>
-        <TextBlock x:Name="bojlerTeplota" Text="{Binding bojler, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="230,452,0,0" VerticalAlignment="Top" Width="68" FontSize="20" FontWeight="Bold" TextAlignment="Right" />
-        <Label Content="ºC" HorizontalAlignment="Left" Margin="298,452,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
-        <TextBlock x:Name="venkovniTeplota" Text="{Binding outTemp, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="39,245,0,0" VerticalAlignment="Top" Width="68" FontSize="20" FontWeight="Bold" TextAlignment="Right" />
-        <Label Content="ºC" HorizontalAlignment="Left" Margin="107,245,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
-        <Label Content="Venkovní teplota" HorizontalAlignment="Left" Margin="28,210,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
-        <TextBlock x:Name="vnitrniTeplota" Text="{Binding intTemp, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="50,452,0,0" VerticalAlignment="Top" Width="68" FontSize="20" FontWeight="Bold" TextAlignment="Right" />
-        <Label Content="ºC" HorizontalAlignment="Left" Margin="118,452,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
-        <Label Content="Vnitřní teplota" HorizontalAlignment="Left" Margin="39,421,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
-        <Label Content="Bojler" HorizontalAlignment="Left" Margin="211,420,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
-        <Button Content="Setup" HorizontalAlignment="Left" Margin="447,9,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="0.507,0.455" Click="Button_Click_1"/>
-        <TextBlock x:Name="lblDateTime" HorizontalAlignment="Left" Margin="24,7,0,0" VerticalAlignment="Top" Width="187" Height="21" Text="{Binding lastUpdate, StringFormat={}\{0:dd MMMM yyyy HH:mm:ss UTC\}}"/>
+    <TabControl>
+        <TabItem Header="Teploty" >
+            <Grid>
+                <Label Content="{Binding Path=rawData}" HorizontalAlignment="Left" Margin="143,46,0,0" VerticalAlignment="Top" Height="250" Width="250" x:Name="lblSolar" BorderBrush="Black" BorderThickness="2" FontSize="8" Foreground="Black" >
+                    <Label.Background>
+                        <LinearGradientBrush EndPoint="0.5,1" MappingMode="RelativeToBoundingBox" StartPoint="0.5,0" Opacity="0.3">
+                            <LinearGradientBrush.RelativeTransform>
+                                <TransformGroup>
+                                    <ScaleTransform CenterY="0.5" CenterX="0.5"/>
+                                    <SkewTransform CenterY="0.5" CenterX="0.5"/>
+                                    <RotateTransform CenterY="0.5" CenterX="0.5" Angle="-90"/>
+                                    <TranslateTransform/>
+                                </TransformGroup>
+                            </LinearGradientBrush.RelativeTransform>
+                            <GradientStop Color="#FF0606FF" Offset="0"/>
+                            <GradientStop Color="Red" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Label.Background>
+                </Label>
+                <Ellipse x:Name="Status" HorizontalAlignment="Left" Height="10" Margin="10,10,0,0" Stroke="Black" VerticalAlignment="Top" Width="10" OverridesDefaultStyle="True" Fill="{Binding Path=statusLEDColor}" />
+                <TextBlock x:Name="SolarInput" Text="{Binding solarInput, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="39,71,0,0" VerticalAlignment="Top" Width="68" FontSize="20"  FontWeight="Bold" TextAlignment="Right" />
+                <TextBlock x:Name="SolarOutput" Text="{Binding solarOutput, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="401,71,0,0" VerticalAlignment="Top" Width="68" FontSize="20"  FontWeight="Bold" TextAlignment="Right" />
+                <Label Content="Vstupní teplota" HorizontalAlignment="Left" Margin="33,97,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
+                <Label Content="Výstupní teplota" HorizontalAlignment="Left" Margin="393,97,0,0" VerticalAlignment="Top" Width="114" HorizontalContentAlignment="Center"/>
+                <Label Content="Výkon" HorizontalAlignment="Left" Margin="211,9,0,0" VerticalAlignment="Top" Width="59" HorizontalContentAlignment="Center"/>
+                <TextBlock x:Name="SolarPower" Text="{Binding solarPower, StringFormat=\{0:F2\}}" HorizontalAlignment="Left" Margin="260,8,0,0" VerticalAlignment="Top" Width="114" FontSize="20" FontWeight="Bold" TextAlignment="Right"  />
+                <Label Content="ºC" HorizontalAlignment="Left" Margin="110,71,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,1.231"/>
+                <Label Content="ºC" HorizontalAlignment="Left" Margin="469,71,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
+                <Label Content="W" HorizontalAlignment="Left" Margin="374,9,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
+                <Rectangle Fill="blue" HorizontalAlignment="Left" Height="8" Margin="23,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="121" Opacity="0.3"/>
+                <Rectangle Fill="Red" HorizontalAlignment="Left" Height="8" Margin="393,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="121" Opacity="0.3"/>
+                <TextBlock x:Name="lblError" Text="{Binding Path=error}" HorizontalAlignment="Left" Margin="23,599,0,0" VerticalAlignment="Top" Width="491"/>
+                <Image x:Name="pictureClouds" HorizontalAlignment="Left" Height="67" Margin="23,143,0,0" VerticalAlignment="Top" Width="100" Source="Resources/clouds.png" Visibility="{Binding Path=pictureClouds}" />
+                <Image x:Name="pictureSun" HorizontalAlignment="Left" Height="86" Margin="36,143,0,0" VerticalAlignment="Top" Width="87" Source="Resources/sun.png" Visibility="{Binding Path=pictureSun}"/>
+                <Label x:Name="lblBojler" Content="" HorizontalAlignment="Left" Margin="210,378,0,0" VerticalAlignment="Top" Height="213" Width="114" BorderThickness="2" BorderBrush="Black" Background="Blue" Foreground="Black" Opacity="0.3"/>
+                <Rectangle Fill="blue" HorizontalAlignment="Left" Height="516" Margin="15,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="8" Opacity="0.3"/>
+                <Rectangle Fill="Blue" HorizontalAlignment="Left" Height="8" Margin="15,565,0,0" Stroke="Black" VerticalAlignment="Top" Width="125" Opacity="0.3"/>
+                <Rectangle Fill="red" HorizontalAlignment="Left" Height="516" Margin="514,49,0,0" Stroke="Black" VerticalAlignment="Top" Width="8" Opacity="0.3"/>
+                <Ellipse Fill="blue" HorizontalAlignment="Left" Height="50" Margin="140,544,0,0" Stroke="Black" VerticalAlignment="Top" Width="50" Opacity="0.3"/>
+                <Rectangle Fill="Blue" HorizontalAlignment="Left" Height="8" Margin="190,565,0,0" Stroke="Black" VerticalAlignment="Top" Width="70" Opacity="0.3"/>
+                <Rectangle Fill="red" HorizontalAlignment="Left" Height="8" Margin="260,565,0,0" Stroke="Black" VerticalAlignment="Top" Width="262" Opacity="0.3"/>
+                <TextBlock x:Name="bojlerTeplota" Text="{Binding bojlerTemp, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="230,452,0,0" VerticalAlignment="Top" Width="68" FontSize="20" FontWeight="Bold" TextAlignment="Right" />
+                <Label Content="ºC" HorizontalAlignment="Left" Margin="298,452,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
+                <TextBlock x:Name="venkovniTeplota" Text="{Binding outTemp, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="39,245,0,0" VerticalAlignment="Top" Width="68" FontSize="20" FontWeight="Bold" TextAlignment="Right" />
+                <Label Content="ºC" HorizontalAlignment="Left" Margin="107,245,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
+                <Label Content="Venkovní teplota" HorizontalAlignment="Left" Margin="28,210,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
+                <TextBlock x:Name="vnitrniTeplota" Text="{Binding intTemp, StringFormat=\{0:F1\}}" HorizontalAlignment="Left" Margin="50,452,0,0" VerticalAlignment="Top" Width="68" FontSize="20" FontWeight="Bold" TextAlignment="Right" />
+                <Label Content="ºC" HorizontalAlignment="Left" Margin="118,452,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.522,3.154"/>
+                <Label Content="Vnitřní teplota" HorizontalAlignment="Left" Margin="39,421,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
+                <Label Content="Bojler" HorizontalAlignment="Left" Margin="211,420,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
+                <TextBlock x:Name="lblDateTime" HorizontalAlignment="Left" Margin="24,7,0,0" VerticalAlignment="Top" Width="187" Height="21" Text="{Binding lastUpdate, StringFormat={}\{0:dd MMMM yyyy HH:mm:ss UTC\}}"/>
 
 
-    </Grid>
+            </Grid>
+        </TabItem>
+        <TabItem Header="Nastavení" >
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="17*"/>
+                    <ColumnDefinition Width="514*"/>
+                </Grid.ColumnDefinitions>
+                <Grid VerticalAlignment="Top" Grid.ColumnSpan="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0" HorizontalContentAlignment="Right">Zeměpisná šířka [°]:</Label>
+                    <Label Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right">Zeměpisná délka [°]:</Label>
+                    <Label Grid.Row="2" Grid.Column="0" HorizontalContentAlignment="Right">Náklon kolektorů [°]:</Label>
+                    <Label Grid.Row="3" Grid.Column="0" HorizontalContentAlignment="Right">Odchylka kolektorů od jihu +Z -V[°]:</Label>
+                    <Label Grid.Row="4" Grid.Column="0" HorizontalContentAlignment="Right">Solární konstanta [W/m2]:</Label>
+                    <Label Grid.Row="5" Grid.Column="0" HorizontalContentAlignment="Right" UseLayoutRounding="False" Tag="" ToolTip="0 = plně zataženo – 1 = plně roztaženo">Koeficient propustnosti [interval 0 – 1]:</Label>
+                    <Label Grid.Row="6" Grid.Column="0" HorizontalContentAlignment="Right">Plocha kolektorů [m2]:</Label>
+
+                    <TextBox Grid.Row="0" Grid.Column="1" Name="zemepisnaSirka" Text="{Binding zemepisnaSirka}" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Name="zemepisnaDelka" Text="{Binding zemepisnaDelka}" />
+                    <TextBox Grid.Row="2" Grid.Column="1" Name="naklon" Text="{Binding naklon}" />
+                    <TextBox Grid.Row="3" Grid.Column="1" Name="odchylka" Text="{Binding odchylka}"/>
+                    <TextBox Grid.Row="4" Grid.Column="1" Name="solarniKonstanta" Text="{Binding solarniKonstanta}" />
+                    <TextBox Grid.Row="5" Grid.Column="1" Name="koeficientPropustnosti" ToolTip="0 = plně zataženo – 1 = plně roztaženo" Text="{Binding koeficientPropustnosti}" />
+                    <TextBox Grid.Row="6" Grid.Column="1" Name="plochaKolektoru" Text="{Binding plochaKolektoru}" />
+                    <Label Grid.Row="7" Grid.Column="1"  />
+
+                    <Label Grid.Row="8" Grid.Column="0" HorizontalContentAlignment="Right">COSM ID:</Label>
+                    <Label Grid.Row="9" Grid.Column="0" HorizontalContentAlignment="Right">UserName:</Label>
+                    <Label Grid.Row="10" Grid.Column="0" HorizontalContentAlignment="Right">Password:</Label>
+                    <Label Grid.Row="11" Grid.Column="0" HorizontalContentAlignment="Right">ID čidel</Label>
+                    <Label Grid.Row="12" Grid.Column="0" HorizontalContentAlignment="Right">Solar vstup:</Label>
+                    <Label Grid.Row="13" Grid.Column="0" HorizontalContentAlignment="Right">Solar výstup:</Label>
+                    <Label Grid.Row="14" Grid.Column="0" HorizontalContentAlignment="Right">Bojler:</Label>
+                    <Label Grid.Row="15" Grid.Column="0" HorizontalContentAlignment="Right">Venkovní:</Label>
+                    <Label Grid.Row="16" Grid.Column="0" HorizontalContentAlignment="Right">Vnitřní:</Label>
+                    <Label Grid.Row="17" Grid.Column="0" HorizontalContentAlignment="Right">Interval načítání v ms:</Label>
+
+                    <TextBox Grid.Row="8" Grid.Column="1" Name="tbCosmId" Text="{Binding Path=cosmID}"></TextBox>
+                    <TextBox Grid.Row="9" Grid.Column="1" Name="tbUserName" Text="{Binding Path=userName}"></TextBox>
+                    <TextBox Grid.Row="10" Grid.Column="1" Name="tbPassw" Text="{Binding Path=password}"></TextBox>
+                    <TextBox Grid.Row="11" Grid.Column="1" Name="tbSolarVstup" Text="{Binding Path=solarVstup}"></TextBox>
+                    <TextBox Grid.Row="13" Grid.Column="1" Name="tbSolarVystup" Text="{Binding Path=solarVystup}"></TextBox>
+                    <TextBox Grid.Row="14" Grid.Column="1" Name="tbBojler" Text="{Binding Path=bojler}"></TextBox>
+                    <TextBox Grid.Row="15" Grid.Column="1" Name="tbVenkovni" Text="{Binding Path=venkovni}"></TextBox>
+                    <TextBox Grid.Row="16" Grid.Column="1" Name="tbSVnitrni" Text="{Binding Path=vnitrni}"></TextBox>
+                    <TextBox Grid.Row="17" Grid.Column="1" Name="tbIntervalNacitani" Text="{Binding Path=intervalNacitani}"></TextBox>
+
+
+                </Grid>
+                <Button Content="Uložit" HorizontalAlignment="Center" VerticalAlignment="Bottom" Click="Button_Click_2" Grid.Column="1" Margin="230,0,247,0" />
+
+            </Grid>
+
+        </TabItem>
+
+    </TabControl>
 </Window>

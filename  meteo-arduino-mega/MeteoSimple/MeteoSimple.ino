@@ -25,6 +25,7 @@ A5 SCL
 //#define Anemodef
 #define BMP085def
 //#define SWI2C
+#define DHTdef
 
 #ifdef Anemodef
 // Definition of interrupt names
@@ -110,19 +111,35 @@ swI2C_BMP085 bmp;
 BMP085 bmp = BMP085();      // Digital Pressure Sensor 
 #endif
 unsigned long lastDisplayBMPTime;
-unsigned long avgPressure=0;
-unsigned long lastAvgPressure=0;
-unsigned int numberOfSamples=0;
+//unsigned long avgPressure=0;
+//unsigned long lastAvgPressure=0;
+//unsigned int numberOfSamples=0;
 unsigned long lastPressureTime=0;
 #define PRESSNOCHANGE 0
 #define PRESSUP       1
 #define PRESSDOWN     2
-byte pressureChange=PRESSNOCHANGE;
+//byte pressureChange=PRESSNOCHANGE;
 signed long         high_above_sea=34700;
 signed long Temperature = 0;
 long Pressure = 0;//, Altitude = 0;
 
 #endif
+
+#ifdef DHTdef
+#include "DHT.h"
+#define DHTTYPE DHT11   // DHT 11 
+#define DHTPIN 2     // what pin we're connected to
+
+// Connect pin 1 (on the left) of the sensor to +5V
+// Connect pin 2 of the sensor to whatever your DHTPIN is
+// Connect pin 4 (on the right) of the sensor to GROUND
+// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
+DHT dht(DHTPIN, DHTTYPE);
+unsigned long lastDHTMeasTime;
+unsigned long lastDisplayDHTTime;
+#endif
+int humidity = 0;
+int tempDHT = 0;
 
 
 #ifdef Anemodef 
@@ -167,7 +184,7 @@ byte counterOverflow=0;
 unsigned int old_value=0;
 byte counter=0;
 
-char versionSW[]="0.6";
+char versionSW[]="0.7";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -224,6 +241,16 @@ void setup() {
   lastDisplayBMPTime = millis();
   #endif
   
+  #ifdef DHTdef
+  dhtInit();
+  lastDHTMeasTime=millis();
+  dht.startMeas();
+  lastDisplayDHTTime = millis();
+  #else
+  Serial.println("DHT N/A");
+  #endif
+
+  
   Serial.println("End of SW initialization phase, I am starting measuring.");
 
 }
@@ -243,6 +270,13 @@ void loop() {
     dsMeasStarted=true;
     #endif
     
+    #ifdef DHTdef
+    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+    humidity = dht.readHumidity();
+    tempDHT = dht.readTemperature();
+    #endif
+
+    
     #ifdef BMP085def
     //unsigned long oldPress=Pressure;
     #ifdef SWI2C
@@ -250,6 +284,7 @@ void loop() {
     Pressure = getRealPressure(Pressure, high_above_sea);
     #else
     bmp.getPressure(&Pressure);
+    bmp.getTemperature(&Temperature); 
     #endif
     #endif
 
@@ -278,16 +313,27 @@ void loop() {
     
   if (millis() - dsLastPrintTime > dsPrintTimeDelay) {
 
-    Serial.println();
+    /*Serial.println();
     #ifdef DALLASdef
     printTemperatureAll();
     #endif
-    
+
     #ifdef BMP085def
     Serial.print("Press(Pa):");
-    Serial.print(Pressure);
+    Serial.println(Pressure);
+    Serial.print("Temp:");
+    Serial.print(Temperature/10);
+    Serial.print(".");
+    Serial.println(abs(Temperature%10));
     #endif
-
+    */
+    #ifdef DHTdef
+    Serial.print("Humidity:");
+    Serial.println(humidity);
+    Serial.print("Temp:");
+    Serial.println(tempDHT);
+    #endif
+    
     Serial.println("");
     dsLastPrintTime = millis(); 
   }
@@ -364,7 +410,24 @@ void sendData() {
   //Pressure
   dataString += "Press,";
   dataString += Pressure;
+  dataString += "\n";
+  //Temperature
+  dataString += "Temp085,";
+  dataString += Temperature/10;
+  dataString += ".";
+  dataString += abs(Temperature%10);
+  dataString += "\n";
   #endif
+
+  #ifdef DHTdef
+  dataString += "Humidity,";
+  dataString += humidity;
+  dataString += "\n";
+  dataString += "TempDHT,";
+  dataString += tempDHT;
+  #endif
+
+
   //dataString += "\n";
   
    
@@ -414,7 +477,7 @@ void sendData() {
 
 
 #ifdef DALLASdef
-void printTemperatureAll() {
+/*void printTemperatureAll() {
   // Loop through each device, print out temperature data
   for(byte i=0;i<numberOfDevices; i++) {
     // Search the wire for address
@@ -431,7 +494,7 @@ void printTemperatureAll() {
       Serial.println(" C ");
   }
 }
-
+*/
 
 void dsInit(void) {
   dsSensors.begin();
@@ -478,4 +541,14 @@ long getRealPressure(long TruePressure, long _param_centimeters) {
 }
 #endif
 
+#endif
+
+#ifdef DHTdef
+void dhtInit() {
+  Serial.println("\nDHT setup");
+  dht.begin();
+  Serial.print("DHT software on PIN D");
+  Serial.print(DHTPIN);
+  Serial.println(" OK");
+}
 #endif

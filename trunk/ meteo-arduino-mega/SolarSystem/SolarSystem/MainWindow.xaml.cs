@@ -190,7 +190,20 @@ namespace SolarSystem
       get { return _solarPower; }
       set
       {
-        _solarPower = (5f / 1000f / 60f) * (_solarOutput - _solarInput) * 1054f * 3900f; NotifyPropertyChanged("solarPower");
+        float sp = (5f / 1000f / 60f) * (_solarOutput - _solarInput) * 1054f * 3900f;
+        if (_solarOutput < _solarInput)
+          sp = 0;
+        if (vykonKolektor < 0)
+          sp = 0;
+        if (sp > 0)
+        {
+          _solarPower = sp;
+        }
+        else {
+          _solarPower = 0;
+        }
+        
+        NotifyPropertyChanged("solarPower");
         pictureClouds = Visibility.Hidden;
         pictureSun = Visibility.Hidden;
       }
@@ -250,7 +263,16 @@ namespace SolarSystem
     public float koeficientPropustnosti { get { return _koeficientPropustnosti; } set { _koeficientPropustnosti = value; NotifyPropertyChanged("koeficientPropustnosti"); } }
     public float plochaKolektoru { get { return _plochaKolektoru; } set { _plochaKolektoru = value; NotifyPropertyChanged("plochaKolektoru"); } }
 
-    public float vykonKolektor { get { return _vykonKolektor; } set { _vykonKolektor = value; NotifyPropertyChanged("vykonKolektor"); } }
+    public float vykonKolektor { get { return _vykonKolektor; } 
+    set {
+      if (value >= 0)
+      {
+        _vykonKolektor = value; NotifyPropertyChanged("vykonKolektor");
+      }
+      else
+        _vykonKolektor = 0;
+      }
+    }
 
     public void loadData()
     {

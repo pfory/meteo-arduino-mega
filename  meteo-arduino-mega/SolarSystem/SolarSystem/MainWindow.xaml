@@ -56,9 +56,11 @@
                 <Label Content="Vnitřní teplota" HorizontalAlignment="Left" Margin="39,421,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
                 <Label Content="Bojler" HorizontalAlignment="Left" Margin="211,420,0,0" VerticalAlignment="Top" Width="110" HorizontalContentAlignment="Center"/>
                 <TextBlock x:Name="lblDateTime" HorizontalAlignment="Left" Margin="24,7,0,0" VerticalAlignment="Top" Width="187" Height="21" Text="{Binding lastUpdate, StringFormat={}\{0:dd MMMM yyyy HH:mm:ss UTC\}}"/>
+        <TextBlock x:Name="vykonKolektor" HorizontalAlignment="Left" Margin="289,306,0,0" Text="{Binding vykonKolektor, StringFormat=\{0:F2\}}" VerticalAlignment="Top" Width="85" Height="26" FontSize="20" FontWeight="Bold"/>
+        <Label Content="Teoretický maximální výkon kolektoru [W]:" HorizontalAlignment="Left" Margin="50,306,0,0" VerticalAlignment="Top" Width="239"/>
 
 
-            </Grid>
+      </Grid>
         </TabItem>
         <TabItem Header="Nastavení" >
             <Grid>

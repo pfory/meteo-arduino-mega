@@ -20,6 +20,9 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 
 */
 
+//#define JH
+#define PP
+
 // Contains EEPROM.read() and EEPROM.write()
 #include <EEPROM.h>
 
@@ -82,13 +85,6 @@ byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing pack
 #define DATE_TIME_DELIMITER " "
 
 #endif
-#endif
-
-#ifdef Ethernetdef
-//COSM
-#define APIKEY         "HyVsT65CnEPitk6vML664llGUZCSAKx0aXFocmJJVHBUVT0g" // your cosm api key
-#define FEEDID         75618 // your feed ID
-#define USERAGENT      "Solar JH" // user agent is the project name
 #endif
 
 #ifdef DALLASdef
@@ -250,7 +246,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.94"); //SW name & version
+String versionSW("METEOv0.95"); //SW name & version
 
 // ID of the settings block
 #define CONFIG_VERSION "ls3"
@@ -279,7 +275,12 @@ storage = {
   CONFIG_VERSION,
   // The default values
   0,                  //last configuration stamp
+  #ifdef JH
   53500,              //high_above_sea in cm
+  #endif
+  #ifdef PP
+  34600,
+  #endif
   4000,               //measDelay im ms;
   1000,               //displayTempDelay in ms
   5000,               //displayBMPDelay ms
@@ -287,9 +288,16 @@ storage = {
   10000,              //saveInterval in ms
   20000,              //interval between updates to Cosm.com in ms    
   1800000,            //interval for check press trend in ms
+  #ifdef JH
   "HyVsT65CnEPitk6vML664llGUZCSAKx0aXFocmJJVHBUVT0g",
   75618,
   "Solar JH"
+  #endif
+  #ifdef PP
+  "T1g2V52CSYmkE-tIAh-tHnK-hDWSAKxneEVkUzVVK2Q0QT0g",
+  91158,
+  "Meteo PP"
+  #endif
 };
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -862,7 +870,7 @@ void sendData() {
     Serial.println();
     printDateTime(0);
     Serial.print(" connecting to COSM [FEEDID=");
-    Serial.print(FEEDID);
+    Serial.print(storage.feedId);
     Serial.println("]");
     // send the HTTP PUT request:
     client.print("PUT /v2/feeds/");

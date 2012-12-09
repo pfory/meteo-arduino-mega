@@ -119,7 +119,7 @@ unsigned long lastPressureTime=0;
 #define PRESSUP       1
 #define PRESSDOWN     2
 //byte pressureChange=PRESSNOCHANGE;
-signed long         high_above_sea=34700;
+signed long         high_above_sea=36900;
 signed long Temperature = 0;
 long Pressure = 0;//, Altitude = 0;
 
@@ -128,7 +128,7 @@ long Pressure = 0;//, Altitude = 0;
 #ifdef DHTdef
 #include "DHT.h"
 #define DHTTYPE DHT11   // DHT 11 
-#define DHTPIN 2     // what pin we're connected to
+#define DHTPIN A1    // what pin we're connected to
 
 // Connect pin 1 (on the left) of the sensor to +5V
 // Connect pin 2 of the sensor to whatever your DHTPIN is
@@ -186,18 +186,18 @@ byte counter=0;
 String dataString = "";
 
 
-char versionSW[]="0.71";
+char versionSW[]="0.72";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
   // start serial port:
   Serial.begin(115200);
-  Serial.print(versionSWString);
+  //Serial.print(versionSWString);
   Serial.println(versionSW);
 
 
-  Serial.println("SW inicialization");
+  //Serial.println("SW inicialization");
 
   #ifdef Ethernetdef
   Serial.print("waiting for net connection...");
@@ -208,7 +208,7 @@ void setup() {
 
   Serial.println("Ethernet OK");
   
-  Serial.print("\nIP:");
+  /*Serial.print("\nIP:");
   Serial.println(Ethernet.localIP());
   Serial.print("Mask:");
   Serial.println(Ethernet.subnetMask());
@@ -217,6 +217,7 @@ void setup() {
   Serial.print("DNS:");
   Serial.println(Ethernet.dnsServerIP());
   Serial.println();
+  */
   #endif
   
   #ifdef DALLASdef
@@ -253,7 +254,7 @@ void setup() {
   #endif
 
   
-  Serial.println("End of SW initialization phase, I am starting measuring.");
+  //Serial.println("End of SW initialization phase, I am starting measuring.");
 
 }
 
@@ -365,7 +366,7 @@ void loop() {
 //-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
 void sendData() {
 
-  Serial.println("sending data");
+  //Serial.println("sending data");
   dataString="";
 
   //prepare data to send
@@ -436,10 +437,10 @@ void sendData() {
 
   // if there's a successful connection:
   if (client.connect(server, 80)) {
-    Serial.println();
-    Serial.print("connecting to COSM [FEEDID=");
-    Serial.print(FEEDID);
-    Serial.println("]");
+    //Serial.println();
+    //Serial.print("connecting to COSM [FEEDID=");
+    //Serial.print(FEEDID);
+    //Serial.println("]");
     // send the HTTP PUT request:
     client.print("PUT /v2/feeds/");
     client.print(FEEDID);
@@ -547,10 +548,10 @@ long getRealPressure(long TruePressure, long _param_centimeters) {
 
 #ifdef DHTdef
 void dhtInit() {
-  Serial.println("\nDHT setup");
+  //Serial.println("\nDHT setup");
   dht.begin();
-  Serial.print("DHT software on PIN D");
-  Serial.print(DHTPIN);
-  Serial.println(" OK");
+  //Serial.print("DHT software on PIN D");
+  //Serial.print(DHTPIN);
+  //Serial.println(" OK");
 }
 #endif

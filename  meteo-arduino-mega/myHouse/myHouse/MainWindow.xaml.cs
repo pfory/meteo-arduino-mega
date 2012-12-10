@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Windows.Media;
 using System.Windows.Markup;
 using System.Globalization;
+using System.Windows.Controls;
 
 namespace myHouse
 {
@@ -137,6 +138,36 @@ namespace myHouse
 
             return new DateTime(Convert.ToInt16(date[0]), Convert.ToInt16(date[1]), Convert.ToInt16(date[2]), Convert.ToInt16(time[0]), Convert.ToInt16(time[1]), Convert.ToInt16(time[2].Substring(0, time[2].IndexOf('.'))));
 
+        }
+
+
+        private void cb1Floor_Click(object sender, RoutedEventArgs e)
+        {
+          CheckBox cb = (CheckBox)sender;
+          if (cb.IsChecked == true)
+          {
+            lblHallTemp.Visibility = lblLivingRoomTemp.Visibility = lblWorkroomTemp.Visibility = lblCorridorTemp.Visibility = System.Windows.Visibility.Visible;
+            lblHall.Visibility = lblLivingRoom.Visibility = lblWorkRoom.Visibility = lblCorridor.Visibility = System.Windows.Visibility.Visible;
+          }
+          else
+          {
+            lblHallTemp.Visibility = lblLivingRoomTemp.Visibility = lblWorkroomTemp.Visibility = lblCorridorTemp.Visibility = System.Windows.Visibility.Hidden;
+            lblHall.Visibility = lblLivingRoom.Visibility = lblWorkRoom.Visibility = lblCorridor.Visibility = System.Windows.Visibility.Hidden;
+          }
+        }
+
+        private void CheckBox_Click_1(object sender, RoutedEventArgs e)
+        {
+          CheckBox cb = (CheckBox)sender;
+          if (cb.IsChecked == true)
+          {
+            lblBedRoomTemp.Visibility = System.Windows.Visibility.Visible;
+          }
+          else
+          {
+            lblBedRoomTemp.Visibility = System.Windows.Visibility.Hidden;
+          }
+          lblBedroom.Visibility = lblBedRoomTemp.Visibility;
         }
     }
 

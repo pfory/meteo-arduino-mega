@@ -3,32 +3,53 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow" Height="750" Width="694">
     <Grid Margin="0,0,0,0">
-        <TabControl HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top">
-            <TabItem Header="View">
-                <Grid Background="#FFE5E5E5" Margin="0,0,0,0">
-                    <Rectangle x:Name="hallRect" HorizontalAlignment="Left" Height="250" Margin="155,423,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=hallColor}"/>
-                    <Rectangle x:Name="teraceRect" HorizontalAlignment="Left" Height="250" Margin="410,423,0,0" Stroke="Black" VerticalAlignment="Top" Width="150"/>
-                    <Rectangle x:Name="livingRoomRect" HorizontalAlignment="Left" Height="400" Margin="155,18,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=livingRoomColor}"/>
-                    <Rectangle x:Name="corridorRect" HorizontalAlignment="Left" Height="400" Margin="50,18,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=corridorColor}"/>
-                    <Rectangle x:Name="workRoomRect" HorizontalAlignment="Left" Height="250" Margin="50,423,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=workRoomColor}"/>
-                    <TextBlock x:Name="lblWorkroomTemp" HorizontalAlignment="Left" Margin="90,455,0,0" VerticalAlignment="Top" Width="45" Text="{Binding workRoomTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" Foreground="Brown"/>
-                    <TextBlock x:Name="lblHallTemp" HorizontalAlignment="Left" Margin="331,434,0,0" VerticalAlignment="Top" Width="45" Text="{Binding hallTemp, StringFormat=\{0:F1\}}" Foreground="Brown"/>
-                    <TextBlock x:Name="lblLivingRoomTemp" HorizontalAlignment="Left" Margin="250,380,0,0" VerticalAlignment="Top" Text="{Binding livingRoomTemp, StringFormat=\{0:F1\}}" Width="45" Foreground="Brown"/>
-                    <TextBlock x:Name="lblCorridorTemp" HorizontalAlignment="Left" Margin="90,380,0,0" VerticalAlignment="Top" Width="45" Text="{Binding corridorTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" Foreground="Brown"/>
-                    <Ellipse x:Name="status" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="10,10,0,0" Fill="{Binding Path=statusLEDColor}"/>
-                    <TextBlock x:Name="lblBedRoomTemp" HorizontalAlignment="Left" Margin="331,453,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTemp, StringFormat=\{0:F1\}}" Foreground="DarkBlue"/>
-                    <TextBlock HorizontalAlignment="Left" Margin="25,3,0,0" TextWrapping="Wrap" Text="{Binding lastUpdate, StringFormat=\{0:F\}}" VerticalAlignment="Top" Width="226"/>
-          <CheckBox x:Name="cb1Floor" Content="1st floor" HorizontalAlignment="Left" Margin="445,20,0,0" VerticalAlignment="Top" IsChecked="True" Foreground="Brown" Click="cb1Floor_Click"/>
-          <CheckBox Content="2nd floor" HorizontalAlignment="Left" Margin="445,41,0,0" VerticalAlignment="Top" IsChecked="True" Foreground="DarkBlue" Click="CheckBox_Click_1"/>
-          <CheckBox Content="Roof" HorizontalAlignment="Left" Margin="445,62,0,0" VerticalAlignment="Top" Foreground="Red"/>
-          <Label x:Name="lblBedroom" Foreground="DarkBlue" Content="Bedroom 1:" HorizontalAlignment="Left" Margin="257,453,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblHall" Foreground="Brown" Content="Hall:" HorizontalAlignment="Left" Margin="257,434,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblLivingRoom" Foreground="Brown" Content="Livingroom:" HorizontalAlignment="Left" Margin="176,380,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblWorkRoom" Foreground="Brown" Content="Workroom:" HorizontalAlignment="Left" Margin="66,434,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblCorridor" Foreground="Brown" Content="Corridor:" HorizontalAlignment="Left" Margin="66,364,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-        </Grid>
-            </TabItem>
-        </TabControl>
+    <Grid.Resources>
+      <Style x:Key="firstFloorLabel" TargetType="Label">
+        <Setter Property="Foreground" Value="LightCoral"/>
+        <Setter Property="Background" Value="AntiqueWhite"/>
+      </Style>
+      <Style x:Key="firstFloorTextBlock" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="LightCoral"/>
+      </Style>
+      <Style x:Key="firstFloorCheckBox" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="LightCoral"/>
+      </Style>
+      <Style x:Key="secondFloorLabel" TargetType="Label">
+        <Setter Property="Foreground" Value="DarkBlue"/>
+      </Style>
+      <Style x:Key="secondFloorTextBlock" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="DarkBlue"/>
+      </Style>
+      <Style x:Key="secondFloorCheckBox" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="DarkBlue"/>
+      </Style>
+    </Grid.Resources>
 
-    </Grid>
+    <TabControl HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top">
+      <TabItem Header="View">
+        <Grid Background="#FFE5E5E5" Margin="0,0,0,0">
+          <Rectangle x:Name="hallRect" HorizontalAlignment="Left" Height="250" Margin="155,423,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=hallColor}"/>
+          <Rectangle x:Name="teraceRect" HorizontalAlignment="Left" Height="250" Margin="410,423,0,0" Stroke="Black" VerticalAlignment="Top" Width="150"/>
+          <Rectangle x:Name="livingRoomRect" HorizontalAlignment="Left" Height="400" Margin="155,18,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=livingRoomColor}"/>
+          <Rectangle x:Name="corridorRect" HorizontalAlignment="Left" Height="400" Margin="50,18,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=corridorColor}"/>
+          <Rectangle x:Name="workRoomRect" HorizontalAlignment="Left" Height="250" Margin="50,423,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=workRoomColor}"/>
+          <TextBlock x:Name="lblWorkroomTemp" Style="{StaticResource firstFloorTextBlock}"  HorizontalAlignment="Left" Margin="90,455,0,0" VerticalAlignment="Top" Width="45" Text="{Binding workRoomTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" />
+          <TextBlock x:Name="lblHallTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,434,0,0" VerticalAlignment="Top" Width="45" Text="{Binding hallTemp, StringFormat=\{0:F1\}}" />
+          <TextBlock x:Name="lblLivingRoomTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="250,380,0,0" VerticalAlignment="Top" Text="{Binding livingRoomTemp, StringFormat=\{0:F1\}}" Width="45" />
+          <TextBlock x:Name="lblCorridorTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="90,380,0,0" VerticalAlignment="Top" Width="45" Text="{Binding corridorTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" />
+          <Ellipse x:Name="status" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="10,10,0,0" Fill="{Binding Path=statusLEDColor}"/>
+          <TextBlock x:Name="lblBedRoomTemp" Style="{StaticResource secondFloorTextBlock}" HorizontalAlignment="Left" Margin="331,453,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTemp, StringFormat=\{0:F1\}}" />
+          <TextBlock HorizontalAlignment="Left" Margin="25,3,0,0" TextWrapping="Wrap" Text="{Binding lastUpdate, StringFormat=\{0:F\}}" VerticalAlignment="Top" Width="226"/>
+          <CheckBox x:Name="cb1Floor" Style="{StaticResource firstFloorCheckBox}" Content="1st floor" HorizontalAlignment="Left" Margin="445,20,0,0" VerticalAlignment="Top" IsChecked="True" Click="cb1Floor_Click"/>
+          <CheckBox Content="2nd floor" Style="{StaticResource secondFloorCheckBox}" HorizontalAlignment="Left" Margin="445,41,0,0" VerticalAlignment="Top" IsChecked="True" Click="CheckBox_Click_1"/>
+          <CheckBox Content="Roof" HorizontalAlignment="Left" Margin="445,62,0,0" VerticalAlignment="Top" Foreground="Red"/>
+          <Label x:Name="lblBedroom" Style="{StaticResource secondFloorLabel}" Content="Bedroom 1:" HorizontalAlignment="Left" Margin="257,453,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblHall" Style="{StaticResource firstFloorLabel}" Content="Hall:" HorizontalAlignment="Left" Margin="257,434,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblLivingRoom" Style="{StaticResource firstFloorLabel}" Content="Livingroom:" HorizontalAlignment="Left" Margin="176,380,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" />
+          <Label x:Name="lblWorkRoom" Style="{StaticResource firstFloorLabel}" Content="Workroom:" HorizontalAlignment="Left" Margin="66,434,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblCorridor" Style="{StaticResource firstFloorLabel}" Content="Corridor:" HorizontalAlignment="Left" Margin="66,364,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+        </Grid>
+      </TabItem>
+    </TabControl>
+  </Grid>
 </Window>

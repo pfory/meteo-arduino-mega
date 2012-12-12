@@ -31,6 +31,7 @@ namespace SolarSystem
     private void Window_Loaded_1(object sender, RoutedEventArgs e)
     {
       sd.loadData();
+      sd.calculateVykonNaKolektorDen();
       showData(sd);
       timer.Interval = sd.intervalNacitani;
     }
@@ -178,6 +179,9 @@ namespace SolarSystem
     private float _koeficientPropustnosti;
     private float _plochaKolektoru;
     private float _vykonKolektor;
+    private float _vykonKolektorOld;
+    private float _vykonKolektorTrend;
+    private float _vykonKolektorDen;
 
     public float solarInput { get { return _solarInput; } set { _solarInput = value; solarPower = 0; NotifyPropertyChanged("solarInput"); } }
     public float solarOutput { get { return _solarOutput; } set { _solarOutput = value; solarPower = 0; NotifyPropertyChanged("solarOutput"); } }
@@ -268,11 +272,17 @@ namespace SolarSystem
       if (value >= 0)
       {
         _vykonKolektor = value; NotifyPropertyChanged("vykonKolektor");
+        _vykonKolektorTrend = _vykonKolektor - _vykonKolektorOld;
+        NotifyPropertyChanged("vykonKolektorTrend");
+
+        _vykonKolektorOld = _vykonKolektor;
       }
       else
         _vykonKolektor = 0;
       }
     }
+
+    public float vykonKolektorTrend { get { return _vykonKolektorTrend; } }
 
     public void loadData()
     {
@@ -336,42 +346,101 @@ namespace SolarSystem
 
     private float getDopoctenaHodina()
     {
-      return (float)DateTime.Now.Hour + (float)DateTime.Now.Minute / 60f + (float)DateTime.Now.Second / 3600f + (zemepisnaDelka / 15f - 1f);
+      return getDopoctenaHodina(DateTime.Now);
+    }
+
+    private float getDopoctenaHodina(DateTime dt)
+    {
+      return (float)dt.Hour + (float)dt.Minute / 60f + (float)dt.Second / 3600f + (zemepisnaDelka / 15f - 1f);
     }
 
     private float getDeklinace()
     {
-      return 23.45f / 180f * (float)Math.PI * (float)Math.Sin((float)Math.PI * (0.98f / 180f * (float)DateTime.Now.Day + 29.7f / 180f * (float)DateTime.Now.Month - 109f / 180f));
+      return getDeklinace(DateTime.Now);
+    }
+
+    private float getDeklinace(DateTime dt)
+    {
+      return 23.45f / 180f * (float)Math.PI * (float)Math.Sin((float)Math.PI * (0.98f / 180f * (float)dt.Day + 29.7f / 180f * (float)dt.Month - 109f / 180f));
     }
 
     private float getDenniUhel()
     {
-      return (float)Math.PI / 6f * (getDopoctenaHodina() - 12f);
+      return getDenniUhel(DateTime.Now);
+    }
+
+    private float getDenniUhel(DateTime dt)
+    {
+      return (float)Math.PI / 6f * (getDopoctenaHodina(dt) - 12f);
     }
 
     private float getVyskaNadObzorem()
     {
-      return (float)Math.Asin((float)Math.Sin(getDeklinace()) * (float)Math.Sin(zemepisnaSirkaRad) + (float)Math.Cos(getDeklinace()) * (float)Math.Cos(zemepisnaSirkaRad) * (float)Math.Cos(getDenniUhel()));
+      return getVyskaNadObzorem(DateTime.Now);
+    }
+
+    private float getVyskaNadObzorem(DateTime dt)
+    {
+      return (float)Math.Asin((float)Math.Sin(getDeklinace(dt)) * (float)Math.Sin(zemepisnaSirkaRad) + (float)Math.Cos(getDeklinace(dt)) * (float)Math.Cos(zemepisnaSirkaRad) * (float)Math.Cos(getDenniUhel(dt)));
     }
 
     private float getAzimutSlunce()
     {
-      return (float)Math.Asin((float)Math.Cos(getDeklinace()) / (float)Math.Cos(getVyskaNadObzorem()) * (float)Math.Sin(getDenniUhel()));
+      return getAzimutSlunce(DateTime.Now);
+    }
+
+    private float getAzimutSlunce(DateTime dt)
+    {
+      return (float)Math.Asin((float)Math.Cos(getDeklinace(dt)) / (float)Math.Cos(getVyskaNadObzorem()) * (float)Math.Sin(getDenniUhel(dt)));
     }
 
     private float getUhelNormalyKolektoruAPaprsku()
     {
-      return (float)Math.Acos((float)Math.Sin(getVyskaNadObzorem()) * (float)Math.Cos(naklonRad) + (float)Math.Cos(getVyskaNadObzorem()) * (float)Math.Sin(naklonRad) * (float)Math.Cos(getAzimutSlunce() - odchylkaRad));
+      return getUhelNormalyKolektoruAPaprsku(DateTime.Now);
+    }
+
+    private float getUhelNormalyKolektoruAPaprsku(DateTime dt)
+    {
+      return (float)Math.Acos((float)Math.Sin(getVyskaNadObzorem(dt)) * (float)Math.Cos(naklonRad) + (float)Math.Cos(getVyskaNadObzorem(dt)) * (float)Math.Sin(naklonRad) * (float)Math.Cos(getAzimutSlunce(dt) - odchylkaRad));
     }
 
     private float getTeoretickyMaximalniVykon()
     {
-      return solarniKonstanta * (float)Math.Cos(getUhelNormalyKolektoruAPaprsku());
+      return getTeoretickyMaximalniVykon(DateTime.Now);
     }
 
-    public void calculateVykonNaKolektor()
+    private float getTeoretickyMaximalniVykon(DateTime dt)
     {
-      vykonKolektor = getTeoretickyMaximalniVykon() * plochaKolektoru;
+      return solarniKonstanta * (float)Math.Cos(getUhelNormalyKolektoruAPaprsku(dt));
+    }
+
+    public float calculateVykonNaKolektor()
+    {
+      return calculateVykonNaKolektor(DateTime.Now);
+    }
+
+    public float calculateVykonNaKolektor(DateTime dt)
+    {
+      vykonKolektor = getTeoretickyMaximalniVykon(dt) * plochaKolektoru;
+      return vykonKolektor;
+    }
+
+    public void calculateVykonNaKolektorDen()
+    {
+      DateTime dt = DateTime.Now;
+      calculateVykonNaKolektorDen(dt.Year, dt.Month, dt.Day);
+
+    }
+
+    public void calculateVykonNaKolektorDen(int rok, int mesic, int den)
+    {
+      _vykonKolektorDen = 0;
+      DateTime dt = new DateTime(rok, mesic, den);
+      for (int i = 0; i < 1440; i++)
+      {
+        if (dt.AddMinutes(i).Hour>5 && dt.AddMinutes(i).Hour<16)
+          _vykonKolektorDen += calculateVykonNaKolektor(dt.AddMinutes(i)) / 60;
+      }
     }
 
 

@@ -6,7 +6,7 @@
     <Grid.Resources>
       <Style x:Key="firstFloorLabel" TargetType="Label">
         <Setter Property="Foreground" Value="LightCoral"/>
-        <Setter Property="Background" Value="AntiqueWhite"/>
+        <!--<Setter Property="Background" Value="AntiqueWhite"/>-->
       </Style>
       <Style x:Key="firstFloorTextBlock" TargetType="TextBlock">
         <Setter Property="Foreground" Value="LightCoral"/>

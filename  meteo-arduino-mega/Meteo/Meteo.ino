@@ -29,7 +29,9 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 #define DALLASdef //1702 bytes
 #define BMP085def //3220 bytes for standard library
 #define DHTdef1 //1052 bytes
+#ifdef JH
 #define DHTdef2 //1052 bytes
+#endif
 #define UDPdef //672 bytes
 #define Ethernetdef //10614 bytes
 #define LCDdef
@@ -246,9 +248,8 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-char versionSW[]="0.96";
+char versionSW[]="0.97";
 char versionSWString[] = "METEO v"; //SW name
-//String versionSW("METEOv0.96"); //SW name & version
 
 // ID of the settings block
 #define CONFIG_VERSION "ls3"
@@ -726,6 +727,7 @@ void loop() {
     Serial.print("Press(Pa):");
     Serial.print(Pressure);
 
+    #ifdef DHTdef1
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(tempDHT1) || isnan(humidity1)) {
       Serial.println("DHT1 fail.");
@@ -735,7 +737,9 @@ void loop() {
       Serial.print(" Temp DHT1(C): "); 
       Serial.print(tempDHT1);
     }
+    #endif
 
+    #ifdef DHTdef2
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(tempDHT2) || isnan(humidity2)) {
       Serial.println("DHT2 fail.");
@@ -745,13 +749,17 @@ void loop() {
       Serial.print(" Temp DHT2(C): "); 
       Serial.print(tempDHT2);
     }
+    #endif
     
+    #ifdef DHTdef1
     Serial.print(" Dew point DHT1: "); 
     Serial.print(calcDewPoint(humidity1, tempDHT1));
-
+    #endif
+    
+    #ifdef DHTdef2
     Serial.print(" Dew point DHT2: "); 
     Serial.print(calcDewPoint(humidity2, tempDHT2));
-
+    #endif
    
     Serial.println("");
     dsLastPrintTime = millis(); 
@@ -1001,6 +1009,7 @@ void saveDataToSD(bool rep) {
       dataFile.print('0');
     dataFile.print(second());
 
+    #ifdef DALLASdef
     dataFile.print(";");
     //temperature from DALLAS
     for(byte i=0;i<numberOfDevices; i++) {
@@ -1014,10 +1023,17 @@ void saveDataToSD(bool rep) {
       dataFile.print(abs(t%10));
       dataFile.print(";");
     }
+    #endif
     
+    #ifdef BMP085def
+    #ifndef DALLASdef
+    dataFile.print(";");
+    #endif
     //Pressure
     dataFile.print(Pressure);
-
+    #endif
+    
+    #ifdef DHTdef1
     //DHT1
     //Humidity from DHT
     dataFile.print(";");
@@ -1032,7 +1048,9 @@ void saveDataToSD(bool rep) {
     dataFile.print(t/10);
     dataFile.print(",");
     dataFile.print(abs(t%10));
-
+    #endif
+    
+    #ifdef DHTdef2
     //DHT2
     //Humidity from DHT
     dataFile.print(";");
@@ -1047,7 +1065,7 @@ void saveDataToSD(bool rep) {
     dataFile.print(t/10);
     dataFile.print(",");
     dataFile.print(abs(t%10));
-
+    #endif
     
     #ifdef Anemodef
     dataFile.print(";");
@@ -1399,6 +1417,7 @@ void dhtInit(byte sensor) {
 
   }
   else if (sensor==2) {
+    #ifdef DHTdef2
     dht2.begin();
     Serial.print("DHT2 software on PIN D");
     Serial.print(DHTPIN2);
@@ -1408,6 +1427,7 @@ void dhtInit(byte sensor) {
     lcd.print("DHT2");
     delay(1000);
     eraseRow(1);
+    #endif
     #endif
   }
 }

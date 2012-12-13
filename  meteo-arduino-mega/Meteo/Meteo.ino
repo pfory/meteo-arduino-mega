@@ -246,7 +246,9 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-String versionSW("METEOv0.95"); //SW name & version
+char versionSW[]="0.96";
+char versionSWString[] = "METEO v"; //SW name
+//String versionSW("METEOv0.96"); //SW name & version
 
 // ID of the settings block
 #define CONFIG_VERSION "ls3"
@@ -304,6 +306,7 @@ storage = {
 void setup() {
   // start serial port:
   Serial.begin(115200);
+  Serial.print(versionSWString);
   Serial.println(versionSW);
 
   loadConfig(); //load values from EEPROM
@@ -363,16 +366,6 @@ void setup() {
 
     cardInfo();
   }
-
-  String fileName = String(year());
-  if (month()<10) fileName+="0";
-  fileName+=String(month());
-  if (day()<10) fileName+="0";
-  fileName+=String(day());
-  fileName+=".csv";
-  Serial.print("Filename:");
-  Serial.println(fileName);
-
   #endif
 
   #ifdef Ethernetdef
@@ -438,8 +431,18 @@ void setup() {
   #endif
   #endif
 
+  #ifdef SDdef
+  String fileName = String(year());
+  if (month()<10) fileName+="0";
+  fileName+=String(month());
+  if (day()<10) fileName+="0";
+  fileName+=String(day());
+  fileName+=".csv";
+  Serial.print("Filename:");
+  Serial.println(fileName);
+  #endif
   
-  
+ 
   #ifdef DALLASdef    
   dsInit();
   lastDisplayTempTime = millis();
@@ -795,12 +798,18 @@ void sendData() {
     lcd.setCursor(15, 1);
     lcd.write(1);
     #endif
-
+    
     //prepare data to send
     String dataString = "";
     char buffer[3];
     //temperature from DALLAS
+
+    dataString += "Version,";
+    dataString += versionSW;
+    dataString += "\n";
+
     
+    #ifdef DALLASdef
     for(byte i=0;i<numberOfDevices; i++) {
       dataString += "T";
  
@@ -828,23 +837,29 @@ void sendData() {
 
       dataString += "\n";
     }
-    
+    #endif
+
+    #ifdef BMP085def
     //Pressure
     dataString += "Press,";
     dataString += Pressure;
+    #endif
 
+    #ifdef DHTdef1
     //DHT1
     //Humidity
     dataString += "\nHumidity1,";
     dataString += humidity1;
-
+    
     //temperature from DHT11
     dataString += "\nTempDHT1,";
     dataString += tempDHT1;
    
     dataString += "\nDewPoint1,";
     dataString += (int)calcDewPoint(humidity1, tempDHT1);
+    #endif
 
+    #ifdef DHTdef2
     //DHT2
     //Humidity
     dataString += "\nHumidity2,";
@@ -856,6 +871,7 @@ void sendData() {
    
     dataString += "\nDewPoint2,";
     dataString += (int)calcDewPoint(humidity2, tempDHT2);
+    #endif
     
     #ifdef Anemodef
     dataString += "\nWindDirection,";
@@ -1209,6 +1225,7 @@ float calcDewPoint (int humidity, int temperature)
 #ifdef LCDdef
 void lcdPrintVersion() {
   lcd.setCursor(0,0);
+  lcd.print(versionSWString);
   lcd.print(versionSW);
 }
 

@@ -91,7 +91,8 @@
                         <RowDefinition></RowDefinition>
                         <RowDefinition></RowDefinition>
                         <RowDefinition></RowDefinition>
-                    </Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+          </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition></ColumnDefinition>
                         <ColumnDefinition></ColumnDefinition>
@@ -99,40 +100,41 @@
                     <Label Grid.Row="0" Grid.Column="0" HorizontalContentAlignment="Right">Zeměpisná šířka [°]:</Label>
                     <Label Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right">Zeměpisná délka [°]:</Label>
                     <Label Grid.Row="2" Grid.Column="0" HorizontalContentAlignment="Right">Náklon kolektorů [°]:</Label>
-                    <Label Grid.Row="3" Grid.Column="0" HorizontalContentAlignment="Right">Odchylka kolektorů od jihu +Z -V[°]:</Label>
+                    <Label Grid.Row="3" Grid.Column="0" HorizontalContentAlignment="Right">Azimut kolektoru [°]:</Label>
                     <Label Grid.Row="4" Grid.Column="0" HorizontalContentAlignment="Right">Solární konstanta [W/m2]:</Label>
                     <Label Grid.Row="5" Grid.Column="0" HorizontalContentAlignment="Right" UseLayoutRounding="False" Tag="" ToolTip="0 = plně zataženo – 1 = plně roztaženo">Koeficient propustnosti [interval 0 – 1]:</Label>
                     <Label Grid.Row="6" Grid.Column="0" HorizontalContentAlignment="Right">Plocha kolektorů [m2]:</Label>
+                    <Label Grid.Row="7" Grid.Column="0" HorizontalContentAlignment="Right">Časové pásmo:</Label>
 
                     <TextBox Grid.Row="0" Grid.Column="1" Name="zemepisnaSirka" Text="{Binding zemepisnaSirka}" />
                     <TextBox Grid.Row="1" Grid.Column="1" Name="zemepisnaDelka" Text="{Binding zemepisnaDelka}" />
                     <TextBox Grid.Row="2" Grid.Column="1" Name="naklon" Text="{Binding naklon}" />
-                    <TextBox Grid.Row="3" Grid.Column="1" Name="odchylka" Text="{Binding odchylka}"/>
+                    <TextBox Grid.Row="3" Grid.Column="1" Name="azimutKolektoru" Text="{Binding azimutKolektoru}"/>
                     <TextBox Grid.Row="4" Grid.Column="1" Name="solarniKonstanta" Text="{Binding solarniKonstanta}" />
                     <TextBox Grid.Row="5" Grid.Column="1" Name="koeficientPropustnosti" ToolTip="0 = plně zataženo – 1 = plně roztaženo" Text="{Binding koeficientPropustnosti}" />
                     <TextBox Grid.Row="6" Grid.Column="1" Name="plochaKolektoru" Text="{Binding plochaKolektoru}" />
-                    <Label Grid.Row="7" Grid.Column="1"  />
+                    <TextBox Grid.Row="7" Grid.Column="1" Name="casovePasmo" Text="{Binding casovePasmo}" />
 
-                    <Label Grid.Row="8" Grid.Column="0" HorizontalContentAlignment="Right">COSM ID:</Label>
-                    <Label Grid.Row="9" Grid.Column="0" HorizontalContentAlignment="Right">UserName:</Label>
-                    <Label Grid.Row="10" Grid.Column="0" HorizontalContentAlignment="Right">Password:</Label>
-                    <Label Grid.Row="11" Grid.Column="0" HorizontalContentAlignment="Right">ID čidel</Label>
-                    <Label Grid.Row="12" Grid.Column="0" HorizontalContentAlignment="Right">Solar vstup:</Label>
-                    <Label Grid.Row="13" Grid.Column="0" HorizontalContentAlignment="Right">Solar výstup:</Label>
-                    <Label Grid.Row="14" Grid.Column="0" HorizontalContentAlignment="Right">Bojler:</Label>
-                    <Label Grid.Row="15" Grid.Column="0" HorizontalContentAlignment="Right">Venkovní:</Label>
-                    <Label Grid.Row="16" Grid.Column="0" HorizontalContentAlignment="Right">Vnitřní:</Label>
-                    <Label Grid.Row="17" Grid.Column="0" HorizontalContentAlignment="Right">Interval načítání v ms:</Label>
+                    <Label Grid.Row="9" Grid.Column="0" HorizontalContentAlignment="Right">COSM ID:</Label>
+                    <Label Grid.Row="10" Grid.Column="0" HorizontalContentAlignment="Right">UserName:</Label>
+                    <Label Grid.Row="11" Grid.Column="0" HorizontalContentAlignment="Right">Password:</Label>
+                    <Label Grid.Row="12" Grid.Column="0" HorizontalContentAlignment="Right">ID čidel</Label>
+                    <Label Grid.Row="13" Grid.Column="0" HorizontalContentAlignment="Right">Solar vstup:</Label>
+                    <Label Grid.Row="14" Grid.Column="0" HorizontalContentAlignment="Right">Solar výstup:</Label>
+                    <Label Grid.Row="15" Grid.Column="0" HorizontalContentAlignment="Right">Bojler:</Label>
+                    <Label Grid.Row="16" Grid.Column="0" HorizontalContentAlignment="Right">Venkovní:</Label>
+                    <Label Grid.Row="17" Grid.Column="0" HorizontalContentAlignment="Right">Vnitřní:</Label>
+                    <Label Grid.Row="18" Grid.Column="0" HorizontalContentAlignment="Right">Interval načítání v ms:</Label>
 
-                    <TextBox Grid.Row="8" Grid.Column="1" Name="tbCosmId" Text="{Binding Path=cosmID}"></TextBox>
-                    <TextBox Grid.Row="9" Grid.Column="1" Name="tbUserName" Text="{Binding Path=userName}"></TextBox>
-                    <TextBox Grid.Row="10" Grid.Column="1" Name="tbPassw" Text="{Binding Path=password}"></TextBox>
-                    <TextBox Grid.Row="11" Grid.Column="1" Name="tbSolarVstup" Text="{Binding Path=solarVstup}"></TextBox>
-                    <TextBox Grid.Row="13" Grid.Column="1" Name="tbSolarVystup" Text="{Binding Path=solarVystup}"></TextBox>
-                    <TextBox Grid.Row="14" Grid.Column="1" Name="tbBojler" Text="{Binding Path=bojler}"></TextBox>
-                    <TextBox Grid.Row="15" Grid.Column="1" Name="tbVenkovni" Text="{Binding Path=venkovni}"></TextBox>
-                    <TextBox Grid.Row="16" Grid.Column="1" Name="tbSVnitrni" Text="{Binding Path=vnitrni}"></TextBox>
-                    <TextBox Grid.Row="17" Grid.Column="1" Name="tbIntervalNacitani" Text="{Binding Path=intervalNacitani}"></TextBox>
+                    <TextBox Grid.Row="9" Grid.Column="1" Name="tbCosmId" Text="{Binding Path=cosmID}"></TextBox>
+                    <TextBox Grid.Row="10" Grid.Column="1" Name="tbUserName" Text="{Binding Path=userName}"></TextBox>
+                    <TextBox Grid.Row="11" Grid.Column="1" Name="tbPassw" Text="{Binding Path=password}"></TextBox>
+                    <TextBox Grid.Row="13" Grid.Column="1" Name="tbSolarVstup" Text="{Binding Path=solarVstup}"></TextBox>
+                    <TextBox Grid.Row="14" Grid.Column="1" Name="tbSolarVystup" Text="{Binding Path=solarVystup}"></TextBox>
+                    <TextBox Grid.Row="15" Grid.Column="1" Name="tbBojler" Text="{Binding Path=bojler}"></TextBox>
+                    <TextBox Grid.Row="16" Grid.Column="1" Name="tbVenkovni" Text="{Binding Path=venkovni}"></TextBox>
+                    <TextBox Grid.Row="17" Grid.Column="1" Name="tbSVnitrni" Text="{Binding Path=vnitrni}"></TextBox>
+                    <TextBox Grid.Row="18" Grid.Column="1" Name="tbIntervalNacitani" Text="{Binding Path=intervalNacitani}"></TextBox>
 
 
                 </Grid>

@@ -32,11 +32,9 @@ namespace SolarSystem
     private void Window_Loaded_1(object sender, RoutedEventArgs e)
     {
       sd.loadData();
-      sd.odchylkaOdJihu = -29;
-      sd.casovePasmo = 1;
-      sd.azimutKolektoru = 151;
       showData(sd);
       sd.energieKolektorDen = 0;
+      sd.hodinovyUhel = 0;
       timer.Interval = sd.intervalNacitani;
     }
 
@@ -183,7 +181,6 @@ namespace SolarSystem
     private float _zemepisnaSirka;
     private float _zemepisnaDelka;
     private float _naklon;
-    private float _odchylka;
     private float _solarniKonstanta;
     private float _koeficientPropustnosti;
     private float _plochaKolektoru;
@@ -191,20 +188,27 @@ namespace SolarSystem
     private float _vykonKolektorOld;
     private float _vykonKolektorTrend;
     private float _energieKolektorDen;
-    private float _odchylkaOdJihu;
     private float _casovePasmo;
     private float _azimutKolektoru;
+    private float _hodinovyUhel;
 
     public float solarInput { get { return _solarInput; } set { _solarInput = value; solarPower = 0; NotifyPropertyChanged("solarInput"); } }
     public float solarOutput { get { return _solarOutput; } set { _solarOutput = value; solarPower = 0; NotifyPropertyChanged("solarOutput"); } }
     public float bojlerTemp { get { return _bojlerTemp; } set { _bojlerTemp = value; NotifyPropertyChanged("bojlerTemp"); } }
     public float outTemp { get { return _outTemp; } set { _outTemp = value; NotifyPropertyChanged("outTemp"); } }
     public float intTemp { get { return _intTemp; } set { _intTemp = value; NotifyPropertyChanged("intTemp"); } }
-    public float odchylkaOdJihu { get { return _odchylkaOdJihu; } set { _odchylkaOdJihu = value; } }
-    public float casovePasmo { get { return _casovePasmo; } set { _casovePasmo = value; } }
-    public float azimutKolektoru { get { return _azimutKolektoru; } set { _azimutKolektoru = value; } }
+    public float casovePasmo { get { return _casovePasmo; } set { _casovePasmo = value; NotifyPropertyChanged("casovePasmo"); } }
+    public float azimutKolektoru { get { return _azimutKolektoru; } set { _azimutKolektoru = value; NotifyPropertyChanged("azimutKolektoru"); } }
     public float azimutKolektoruRad { get { return degreeToRadian(_azimutKolektoru); } }
     public float energieKolektorDen { get { return _energieKolektorDen / 1000f; } set { _energieKolektorDen = calculateEnergieKolektorDen(); NotifyPropertyChanged("energieKolektorDen"); } }
+    public float hodinovyUhel { get { return _hodinovyUhel; } set { _hodinovyUhel = getHodinovyUhel(); } }
+
+    private float getHodinovyUhel()
+    {
+      float d = degreeToRadian(getDeklinace());
+      float f = radianToDegree((float)Math.Acos(-Math.Tan(zemepisnaSirkaRad) * degreeToRadian(getDeklinace())));
+      return f;
+    }
 
 
     public float solarPower
@@ -271,16 +275,11 @@ namespace SolarSystem
     public string venkovni { get { return _venkovni; } set { _venkovni = value; NotifyPropertyChanged("venkovni"); } }
     public string vnitrni { get { return _vnitrni; } set { _vnitrni = value; NotifyPropertyChanged("vnitrni"); } }
     public long   intervalNacitani { get { return _intervalNacitani; } set { _intervalNacitani = value; NotifyPropertyChanged("intervalNacitani"); } }
-
-    //public float  solarInput             { get { return _solarInput; }               set { _solarInput = value; solarPower = 0; NotifyPropertyChanged("solarInput"); } }
-
     public float zemepisnaSirka { get { return _zemepisnaSirka; } set { _zemepisnaSirka = value; NotifyPropertyChanged("zemepisnaSirka"); } }
     public float zemepisnaSirkaRad { get { return degreeToRadian(_zemepisnaSirka); }}
     public float zemepisnaDelka { get { return _zemepisnaDelka; } set { _zemepisnaDelka = value; NotifyPropertyChanged("zemepisnaDelka"); } }
     public float naklon { get { return _naklon; } set { _naklon = value; NotifyPropertyChanged("naklon"); } }
     public float naklonRad { get { return degreeToRadian(_naklon); }}
-    public float odchylka { get { return _odchylka; } set { _odchylka = value; NotifyPropertyChanged("odchylka"); } }
-    public float odchylkaRad { get { return degreeToRadian(_odchylka); }}
     public float solarniKonstanta { get { return _solarniKonstanta; } set { _solarniKonstanta = value; NotifyPropertyChanged("solarniKonstanta"); } }
     public float koeficientPropustnosti { get { return _koeficientPropustnosti; } set { _koeficientPropustnosti = value; NotifyPropertyChanged("koeficientPropustnosti"); } }
     public float plochaKolektoru { get { return _plochaKolektoru; } set { _plochaKolektoru = value; NotifyPropertyChanged("plochaKolektoru"); } }
@@ -326,10 +325,11 @@ namespace SolarSystem
             if (reader.Name == "lat") { reader.Read(); zemepisnaSirka = (float)Convert.ToDouble(reader.Value); }
             if (reader.Name == "lon") { reader.Read(); zemepisnaDelka = (float)Convert.ToDouble(reader.Value); }
             if (reader.Name == "lambda") { reader.Read(); naklon = (float)Convert.ToDouble(reader.Value); }
-            if (reader.Name == "azimut") { reader.Read(); odchylka = (float)Convert.ToDouble(reader.Value); }
+            if (reader.Name == "azimutKolektoru") { reader.Read(); azimutKolektoru = (float)Convert.ToDouble(reader.Value); }
             if (reader.Name == "solarConstant") { reader.Read(); solarniKonstanta = (float)Convert.ToDouble(reader.Value); }
             if (reader.Name == "throughpuCoef") { reader.Read(); koeficientPropustnosti = (float)Convert.ToDouble(reader.Value); }
             if (reader.Name == "collectorArea") { reader.Read(); plochaKolektoru = (float)Convert.ToDouble(reader.Value); }
+            if (reader.Name == "casovePasmo") { reader.Read(); casovePasmo = (float)Convert.ToDouble(reader.Value); }
           }
 
         }
@@ -351,10 +351,11 @@ namespace SolarSystem
         zemepisnaSirka = 0;
         zemepisnaDelka = 0;
         naklon = 0;
-        odchylka = 0;
+        azimutKolektoru = 0;
         solarniKonstanta = 0;
         koeficientPropustnosti = 0;
         plochaKolektoru = 0;
+        casovePasmo = 1;
 
         this.saveData();
       }
@@ -498,10 +499,11 @@ namespace SolarSystem
       textWriter.WriteElementString("lat", zemepisnaSirka.ToString());
       textWriter.WriteElementString("lon", zemepisnaDelka.ToString());
       textWriter.WriteElementString("lambda", naklon.ToString());
-      textWriter.WriteElementString("azimut", odchylka.ToString());
+      textWriter.WriteElementString("azimutKolektoru", azimutKolektoru.ToString());
       textWriter.WriteElementString("solarConstant", solarniKonstanta.ToString());
       textWriter.WriteElementString("throughpuCoef", koeficientPropustnosti.ToString());
       textWriter.WriteElementString("collectorArea", plochaKolektoru.ToString());
+      textWriter.WriteElementString("casovePasmo", casovePasmo.ToString());
       textWriter.WriteEndElement();
 
       textWriter.WriteEndElement();

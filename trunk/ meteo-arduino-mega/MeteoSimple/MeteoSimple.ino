@@ -430,11 +430,6 @@ void sendData() {
   dataString += tempDHT;
   #endif
 
-
-  //dataString += "\n";
-  
-   
-
   // if there's a successful connection:
   if (client.connect(server, 80)) {
     //Serial.println();

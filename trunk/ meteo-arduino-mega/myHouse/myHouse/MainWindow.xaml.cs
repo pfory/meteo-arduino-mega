@@ -44,7 +44,7 @@ namespace myHouse
 
         static private String getData()
         {
-            string url = "http://api.cosm.com/v2/feeds/" + "63310" + ".csv";
+            string url = "https://api.cosm.com/v2/feeds/" + "63310" + ".csv";
 
             string htmlCode = String.Empty;
             try

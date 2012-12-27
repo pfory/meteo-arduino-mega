@@ -105,6 +105,16 @@ namespace myHouse
                         hd.bedRoomTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
                         hd.bedRoomColor = getRoomColor(hd.workRoomTemp);
                     }
+                    if (column[0] == "T285DF3CF0200007E")
+                    {
+                      hd.bojlerTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                      hd.bojlerColor = getRoomColor(hd.bojlerTemp);
+                    }
+                    if (column[0] == "T2899BDCF02000076")
+                    {
+                      hd.outdoorTemp = (float)Convert.ToDecimal(column[2].Replace(".", ","));
+                      hd.outdoorColor = getRoomColor(hd.outdoorTemp);
+                    }
                     if (column[0] == "Humidity")
                     {
                       hd.humidity = (float)Convert.ToDecimal(column[2].Replace(".",","));
@@ -164,14 +174,18 @@ namespace myHouse
           if (cb.IsChecked == true)
           {
             tbHallTemp.Visibility = tbLivingRoomTemp.Visibility = tbWorkroomTemp.Visibility = tbCorridorTemp.Visibility = 
-              lblPressure.Visibility = lblTemp085.Visibility = lblTempDHT.Visibility = lblHumidity.Visibility = System.Windows.Visibility.Visible;
+              tbOutdoorTemp.Visibility =
+              lblPressure.Visibility = lblTemp085.Visibility = lblTempDHT.Visibility = lblHumidity.Visibility = 
+              tbBojlerTemp.Visibility = lblBojler.Visibility = lblOutdoor.Visibility = System.Windows.Visibility.Visible;
             lblHall.Visibility = lblLivingRoom.Visibility = lblWorkRoom.Visibility = lblCorridor.Visibility =
               tbHumidity.Visibility = tbPressure.Visibility = tbTempDHT.Visibility = tbTemp085.Visibility = System.Windows.Visibility.Visible;
           }
           else
           {
             tbHallTemp.Visibility = tbLivingRoomTemp.Visibility = tbWorkroomTemp.Visibility = tbCorridorTemp.Visibility =
-              lblPressure.Visibility = lblTemp085.Visibility = lblTempDHT.Visibility = lblHumidity.Visibility = System.Windows.Visibility.Hidden;
+              tbOutdoorTemp.Visibility =
+              lblPressure.Visibility = lblTemp085.Visibility = lblTempDHT.Visibility = lblHumidity.Visibility = 
+              tbBojlerTemp.Visibility = lblBojler.Visibility = lblOutdoor.Visibility = System.Windows.Visibility.Hidden;
             lblHall.Visibility = lblLivingRoom.Visibility = lblWorkRoom.Visibility = lblCorridor.Visibility =
               tbHumidity.Visibility = tbPressure.Visibility = tbTempDHT.Visibility = tbTemp085.Visibility = System.Windows.Visibility.Hidden;
           }
@@ -207,11 +221,15 @@ namespace myHouse
         private float     _livingRoomTemp;
         private float     _workRoomTemp;
         private float     _bedRoomTemp;
+        private float     _bojlerTemp;
+        private float     _outdoorTemp;
         private string    _corridorColor;
         private string    _hallColor;
         private string    _livingRoomColor;
         private string    _workRoomColor;
         private string    _bedRoomColor;
+        private string    _bojlerColor;
+        private string    _outdoorColor;
         private string    _statusLEDColor;
         private DateTime  _lastUpdate;
         private float     _humidity;
@@ -224,8 +242,8 @@ namespace myHouse
         }
 
         public void resetTemperatures() {
-            bedRoomTemp = corridorTemp = hallTemp = workRoomTemp = livingRoomTemp = -127;
-            bedRoomColor = corridorColor = hallColor = workRoomColor = livingRoomColor = Colors.Red.ToString();
+            bedRoomTemp = corridorTemp = hallTemp = workRoomTemp = livingRoomTemp = _bojlerTemp = _outdoorTemp = -127;
+            bedRoomColor = corridorColor = hallColor = workRoomColor = livingRoomColor = outdoorColor = Colors.Red.ToString();
         }
 
         public float corridorTemp     { get { return _corridorTemp; }               set { _corridorTemp       = value; NotifyPropertyChanged("corridorTemp"); }}
@@ -233,12 +251,16 @@ namespace myHouse
         public float livingRoomTemp   { get { return _livingRoomTemp; }             set { _livingRoomTemp     = value; NotifyPropertyChanged("livingRoomTemp"); }}
         public float workRoomTemp     { get { return _workRoomTemp; }               set { _workRoomTemp       = value; NotifyPropertyChanged("workRoomTemp"); }}
         public float bedRoomTemp      { get { return _bedRoomTemp; }                set { _bedRoomTemp        = value; NotifyPropertyChanged("bedRoomTemp"); }}
+        public float bojlerTemp       { get { return _bojlerTemp; }                 set { _bojlerTemp         = value; NotifyPropertyChanged("bojlerTemp"); } }
+        public float outdoorTemp      { get { return _outdoorTemp; }                set { _outdoorTemp        = value; NotifyPropertyChanged("outdoorTemp"); } }
 
         public string corridorColor   { get { return _corridorColor.ToString(); }   set { _corridorColor      = value; NotifyPropertyChanged("corridorColor"); }}
         public string hallColor       { get { return _hallColor.ToString(); }       set { _hallColor          = value; NotifyPropertyChanged("hallColor"); }}
         public string livingRoomColor { get { return _livingRoomColor.ToString(); } set { _livingRoomColor    = value; NotifyPropertyChanged("livingRoomColor"); }}
         public string workRoomColor   { get { return _workRoomColor.ToString(); }   set { _workRoomColor      = value; NotifyPropertyChanged("workRoomColor"); }}
         public string bedRoomColor    { get { return _bedRoomColor.ToString(); }    set { _bedRoomColor       = value; NotifyPropertyChanged("bedRoomColor"); }}
+        public string bojlerColor     { get { return _bojlerColor.ToString(); }     set { _bojlerColor        = value; NotifyPropertyChanged("bojlerColor"); } }
+        public string outdoorColor    { get { return _outdoorColor.ToString(); }    set { _outdoorColor       = value; NotifyPropertyChanged("outdoorColor"); } }
 
         public string statusLEDColor  { get { return _statusLEDColor; }             set { _statusLEDColor     = value; NotifyPropertyChanged("statusLEDColor");}}
 

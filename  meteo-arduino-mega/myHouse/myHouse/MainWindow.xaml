@@ -1,7 +1,7 @@
 ﻿<Window x:Class="myHouse.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="750" Width="694">
+        Title="MainWindow" Height="818.491" Width="587.132">
   <Window.Resources>
     <Style x:Key="secondFloorLabel" TargetType="{x:Type Label}">
       <Setter Property="Foreground" Value="DarkBlue"/>
@@ -9,8 +9,12 @@
     <Style x:Key="firstFloorTextBlock" TargetType="{x:Type TextBlock}">
       <Setter Property="Foreground" Value="LightCoral"/>
     </Style>
+    <Style x:Key="firstFloorLabel" TargetType="{x:Type Label}">
+      <Setter Property="Foreground" Value="LightCoral"/>
+      <!--<Setter Property="Background" Value="AntiqueWhite"/>-->
+    </Style>
   </Window.Resources>
-  <Grid Margin="0,0,0,0">
+  <Grid Margin="0,0,2.623,1.453">
     <Grid.Resources>
       <Style x:Key="firstFloorLabel" TargetType="Label">
         <Setter Property="Foreground" Value="LightCoral"/>
@@ -33,37 +37,42 @@
       </Style>
     </Grid.Resources>
 
-    <TabControl HorizontalAlignment="Left" Margin="0,23,0,-6.094" VerticalAlignment="Top">
+    <TabControl HorizontalAlignment="Left" Margin="0,23,0,0" VerticalAlignment="Top" Height="755">
       <TabItem Header="View">
-        <Grid Background="#FFE5E5E5" Margin="0,0,0,0">
-          <Rectangle x:Name="hallRect" HorizontalAlignment="Left" Height="250" Margin="155,423,0,-0.094" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=hallColor}"/>
-          <Rectangle x:Name="teraceRect" HorizontalAlignment="Left" Height="250" Margin="410,423,0,0" Stroke="Black" VerticalAlignment="Top" Width="150"/>
-          <Rectangle x:Name="livingRoomRect" HorizontalAlignment="Left" Height="400" Margin="155,18,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=livingRoomColor}"/>
-          <Rectangle x:Name="corridorRect" HorizontalAlignment="Left" Height="400" Margin="50,18,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=corridorColor}"/>
-          <Rectangle x:Name="workRoomRect" HorizontalAlignment="Left" Height="250" Margin="50,423,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=workRoomColor}"/>
-          <TextBlock x:Name="tbWorkroomTemp" Style="{StaticResource firstFloorTextBlock}"  HorizontalAlignment="Left" Margin="90,455,0,0" VerticalAlignment="Top" Width="45" Text="{Binding workRoomTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" />
-          <TextBlock x:Name="tbHallTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,434,0,0" VerticalAlignment="Top" Width="45" Text="{Binding hallTemp, StringFormat=\{0:F1\}}" />
-          <TextBlock x:Name="tbLivingRoomTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="250,380,0,0" VerticalAlignment="Top" Text="{Binding livingRoomTemp, StringFormat=\{0:F1\}}" Width="45" />
-          <TextBlock x:Name="tbCorridorTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="90,380,0,0" VerticalAlignment="Top" Width="45" Text="{Binding corridorTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" />
+        <Grid Background="#FFE5E5E5" Margin="0,0,0,-56.755">
+          <Rectangle x:Name="hallRect" HorizontalAlignment="Left" Height="250" Margin="155,463,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=hallColor}"/>
+          <Rectangle x:Name="teraceRect" HorizontalAlignment="Left" Height="250" Margin="410,463,-0.302,0" Stroke="Black" VerticalAlignment="Top" Width="150"/>
+          <Rectangle x:Name="livingRoomRect" HorizontalAlignment="Left" Height="400" Margin="155,58,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=livingRoomColor}"/>
+          <Rectangle x:Name="corridorRect" HorizontalAlignment="Left" Height="400" Margin="50,58,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=corridorColor}"/>
+          <Rectangle x:Name="workRoomRect" HorizontalAlignment="Left" Height="250" Margin="50,463,0,0" Stroke="Black" VerticalAlignment="Top" Width="100" Fill="{Binding Path=workRoomColor}"/>
+          <TextBlock x:Name="tbWorkroomTemp" Style="{StaticResource firstFloorTextBlock}"  HorizontalAlignment="Left" Margin="90,495,0,0" VerticalAlignment="Top" Width="45" Text="{Binding workRoomTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" />
+          <TextBlock x:Name="tbBojlerTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="206,619,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bojlerTemp, StringFormat=\{0:F1\}}" />
+          <TextBlock x:Name="tbLivingRoomTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="225,430,0,0" VerticalAlignment="Top" Text="{Binding livingRoomTemp, StringFormat=\{0:F1\}}" Width="45" />
+          <TextBlock x:Name="tbCorridorTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="90,420,0,0" VerticalAlignment="Top" Width="45" Text="{Binding corridorTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" />
           <Ellipse x:Name="status" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="10,10,0,0" Fill="{Binding Path=statusLEDColor}"/>
-          <TextBlock x:Name="tbBedRoomTemp" Style="{StaticResource secondFloorTextBlock}" HorizontalAlignment="Left" Margin="331,453,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTemp, StringFormat=\{0:F1\}}" />
-          <TextBlock HorizontalAlignment="Left" Margin="25,3,0,0" TextWrapping="Wrap" Text="{Binding lastUpdate, StringFormat=\{0:F\}}" VerticalAlignment="Top" Width="226"/>
+          <TextBlock x:Name="tbBedRoomTemp" Style="{StaticResource secondFloorTextBlock}" HorizontalAlignment="Left" Margin="331,493,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTemp, StringFormat=\{0:F1\}}" />
+          <TextBlock HorizontalAlignment="Left" Margin="25,10,0,0" TextWrapping="Wrap" Text="{Binding lastUpdate, StringFormat=\{0:F\}}" VerticalAlignment="Top" Width="226"/>
           <CheckBox x:Name="cb1Floor" Style="{StaticResource firstFloorCheckBox}" Content="1st floor" HorizontalAlignment="Left" Margin="445,20,0,0" VerticalAlignment="Top" IsChecked="True" Click="cb1Floor_Click"/>
           <CheckBox Content="2nd floor" Style="{StaticResource secondFloorCheckBox}" HorizontalAlignment="Left" Margin="445,41,0,0" VerticalAlignment="Top" IsChecked="True" Click="CheckBox_Click_1"/>
           <CheckBox Content="Roof" HorizontalAlignment="Left" Margin="445,62,0,0" VerticalAlignment="Top" Foreground="Red"/>
-          <Label x:Name="lblBedroom" Style="{StaticResource secondFloorLabel}" Content="Bedroom 1:" HorizontalAlignment="Left" Margin="257,453,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblHall" Style="{StaticResource firstFloorLabel}" Content="Hall:" HorizontalAlignment="Left" Margin="257,434,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblLivingRoom" Style="{StaticResource firstFloorLabel}" Content="Livingroom:" HorizontalAlignment="Left" Margin="176,380,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" />
-          <Label x:Name="lblWorkRoom" Style="{StaticResource firstFloorLabel}" Content="Workroom:" HorizontalAlignment="Left" Margin="66,434,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblCorridor" Style="{StaticResource firstFloorLabel}" Content="Corridor:" HorizontalAlignment="Left" Margin="66,364,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblHumidity" Style="{StaticResource firstFloorLabel}" Content="Humidity:" HorizontalAlignment="Left" Margin="257,481,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblPressure" Style="{StaticResource firstFloorLabel}" Content="Pressure:" HorizontalAlignment="Left" Margin="257,502,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblTemp085" Style="{StaticResource firstFloorLabel}" Content="Temp085:" HorizontalAlignment="Left" Margin="257,523,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <Label x:Name="lblTempDHT" Style="{StaticResource firstFloorLabel}" Content="TempDHT:" HorizontalAlignment="Left" Margin="257,544,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
-          <TextBlock x:Name="tbHumidity" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,482,0,0" VerticalAlignment="Top" Width="45" Text="{Binding humidity, StringFormat=\{0:F0\}}" />
-          <TextBlock x:Name="tbPressure" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,503,0,0" VerticalAlignment="Top" Width="45" Text="{Binding pressure, StringFormat=\{0:F0\}}" />
-          <TextBlock x:Name="tbTemp085" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,523,0,0" VerticalAlignment="Top" Width="45" Text="{Binding temp085, StringFormat=\{0:F1\}}" />
-          <TextBlock x:Name="tbTempDHT" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,544,0,0" VerticalAlignment="Top" Width="45" Text="{Binding tempDHT, StringFormat=\{0:F0\}}" />
+          <Label x:Name="lblBedroom" Style="{StaticResource secondFloorLabel}" Content="Bedroom 1:" HorizontalAlignment="Left" Margin="257,493,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblHall" Style="{StaticResource firstFloorLabel}" Content="Hall:" HorizontalAlignment="Left" Margin="257,474,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblLivingRoom" Style="{StaticResource firstFloorLabel}" Content="Livingroom:" HorizontalAlignment="Left" Margin="150,430,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" />
+          <Label x:Name="lblWorkRoom" Style="{StaticResource firstFloorLabel}" Content="Workroom:" HorizontalAlignment="Left" Margin="66,474,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblCorridor" Style="{StaticResource firstFloorLabel}" Content="Corridor:" HorizontalAlignment="Left" Margin="66,404,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblHumidity" Style="{StaticResource firstFloorLabel}" Content="Humidity:" HorizontalAlignment="Left" Margin="275,415,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblPressure" Style="{StaticResource firstFloorLabel}" Content="Pressure:" HorizontalAlignment="Left" Margin="257,517,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblTemp085" Style="{StaticResource firstFloorLabel}" Content="Temp085:" HorizontalAlignment="Left" Margin="257,538,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <Label x:Name="lblTempDHT" Style="{StaticResource firstFloorLabel}" Content="TempDHT:" HorizontalAlignment="Left" Margin="275,431,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
+          <TextBlock x:Name="tbHumidity" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="349,416,0,0" VerticalAlignment="Top" Width="45" Text="{Binding humidity, StringFormat=\{0:F0\}}" />
+          <TextBlock x:Name="tbPressure" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,517,0,0" VerticalAlignment="Top" Width="45" Text="{Binding pressure, StringFormat=\{0:F0\}}" />
+          <TextBlock x:Name="tbTemp085" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,537,0,0" VerticalAlignment="Top" Width="45" Text="{Binding temp085, StringFormat=\{0:F1\}}" />
+          <TextBlock x:Name="tbTempDHT" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="349,431,0,0" VerticalAlignment="Top" Width="45" Text="{Binding tempDHT, StringFormat=\{0:F0\}}" />
+          <Ellipse Fill="{Binding Path=bojlerColor}" HorizontalAlignment="Left" Height="35" Margin="165,578,0,0" Stroke="Black" VerticalAlignment="Top" Width="35"/>
+          <Label x:Name="lblBojler" Style="{StaticResource firstFloorLabel}" Content="Bojler:" HorizontalAlignment="Left" Margin="165,618,0,0" VerticalAlignment="Top"  Height="16" Width="35" Padding="0" HorizontalContentAlignment="Right"/>
+          <TextBlock x:Name="tbHallTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,473,0,0" VerticalAlignment="Top" Width="45" Text="{Binding hallTemp, StringFormat=\{0:F1\}}" />
+          <Label x:Name="lblOutdoor" Style="{StaticResource firstFloorLabel}" Content="Outdoor:" HorizontalAlignment="Left" Margin="6,38,0,0" VerticalAlignment="Top"  Height="16" Width="45" Padding="0" HorizontalContentAlignment="Right"/>
+          <TextBlock x:Name="tbOutdoorTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="56,38,0,0" VerticalAlignment="Top" Width="45" Text="{Binding outdoorTemp, StringFormat=\{0:F1\}}" />
         </Grid>
       </TabItem>
     </TabControl>

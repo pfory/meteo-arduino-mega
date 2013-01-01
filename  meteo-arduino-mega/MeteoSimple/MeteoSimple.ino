@@ -11,11 +11,11 @@ D11 free
 D12
 D13
 A0 DALLAS temperature
-A1 free
+A1 DHT sensor
 A2 free
 A3 free
-A4 SDA
-A5 SCL
+A4 SDA for BMP
+A5 SCL for BMP
 
 
 */

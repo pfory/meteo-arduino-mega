@@ -22,11 +22,13 @@ A5 SCL for BMP
 
 */
 
-#include <FreqPeriodCounter.h>
+//#include <FreqPeriodCounter.h>
  
 const byte counterPin = 3; 
 const byte counterInterrupt = 1; // = pin 3
-FreqPeriodCounter counter(counterPin, micros, 0);
+//FreqPeriodCounter counter(counterPin, micros, 0);
+unsigned int pulseCount=0;
+unsigned long time=0;
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
@@ -34,7 +36,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println("SW inicialization");
 
-  attachInterrupt(counterInterrupt, counterISR, CHANGE);
+  //attachInterrupt(counterInterrupt, counterISR, CHANGE);
+  attachInterrupt(counterInterrupt, counterISR, RISING);
 }
 
 //-------------------------------------------------------------------------LOOP------------------------------------------------------------------------------
@@ -44,9 +47,12 @@ void loop() {
   Serial.print(val);
   Serial.print(" - ");
   Serial.print(calculateWindDirection(val));
-  if(counter.ready()) {
+  //if(counter.ready()) {
+  if (time + 1000 > millis())
     Serial.print("; ");
-    Serial.println(counter.hertz());
+    Serial.println(pulseCount);
+    pulseCount=0;
+    time=0;
   }
   else
   {
@@ -81,5 +87,9 @@ String calculateWindDirection(int adcValue)
 }
 
 void counterISR()
-{ counter.poll();
+{ 
+  //counter.poll();
+  if (pulseCount==0)
+    time = millis();
+  pulseCount++;
 }

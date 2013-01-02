@@ -43,7 +43,7 @@ void setup() {
 //-------------------------------------------------------------------------LOOP------------------------------------------------------------------------------
 
 void loop() {
-  int val=analogRead(3);
+  /*int val=analogRead(3);
   Serial.print(val);
   Serial.print(" - ");
   Serial.print(calculateWindDirection(val));
@@ -56,9 +56,9 @@ void loop() {
   }
   else
   {
-    Serial.println();
+    //Serial.println();
   }
-  delay(500);
+  //delay(500);
 }
 
 //calculate wind direction

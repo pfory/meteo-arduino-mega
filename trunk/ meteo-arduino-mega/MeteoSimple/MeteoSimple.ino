@@ -21,17 +21,21 @@ A5 SCL for BMP
 */
 
 #define Ethernetdef
-#define DALLASdef 
-//#define Anemodef
-#define BMP085def
+#define DALLASdef //5388
+#define Anemodef
+#define BMP085def //4216
 //#define SWI2C
-#define DHTdef
+#define DHTdef //1022
 
 #ifdef Anemodef
-// Definition of interrupt names
-#include < avr/io.h >
-// ISR interrupt service routine
-#include < avr/interrupt.h >
+const byte counterPin = 3; 
+const byte counterInterrupt = 1; // = pin D3
+volatile unsigned int pulseCount=0;
+unsigned int pulseCountAll=0;
+unsigned int pulseCountMax=0;
+unsigned int windDirectionAll=0;
+unsigned long time=0;
+byte numberOfWindSamples=0;
 #endif
 
 #include <limits.h>
@@ -141,52 +145,13 @@ unsigned long lastDisplayDHTTime;
 int humidity = 0;
 int tempDHT = 0;
 
-
-#ifdef Anemodef 
-ISR(TIMER1_COMPA_vect)
-{
-  Serial.println("COMPA");
-  counterOverflow++;
-  if (counterOverflow>1) 
-  {
-    Serial.println("bezvetri");
-  }
-}
-
-ISR(TIMER1_CAPT_vect)
-{
-   Serial.println("CAPT");
-	// uint16_t value, result;
-	// value = ICR1L;
-	// value += (ICR1H<<8);
-
-  // if (counterOverflow==1)
-    // result=(0xFFFF-old_value)+value;
-  // else if (counterOverflow==0)
-   	// result=value-old_value;
-  // else
-    // result=0;
-	
-	// if (result>65500)
-	  // result = 0;
-
- 	// old_value=value;
-
-  // Serial.print(216000/result);
-  // Serial.println("/min");
-
-
-  // counterOverflow=0;
-}
-#endif 
-
 byte counterOverflow=0;
 unsigned int old_value=0;
 byte counter=0;
 String dataString = "";
 
 
-char versionSW[]="0.72";
+char versionSW[]="0.73";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -227,18 +192,6 @@ void setup() {
   dsSensors.requestTemperatures(); 
   #endif
   
-  #ifdef Anemodef 
-  OCR1A=0xE100;     //57600   
-  TCCR1B |= 1<<WGM12;
-  TIMSK1|=1<<ICIE1; //input capture interrupt enable
-	TCCR1B|=1<<ICES1; //input capture edge select
-	TIMSK1|=1<<OCIE1A;	//output compareA match interrupt enable
-
-	TCCR1B|=1<<CS12;  //prescaler clk/256
-
-  pinMode(8, INPUT);
-  #endif
-
   #ifdef BMP085def
   bmp085Init();
   lastDisplayBMPTime = millis();
@@ -253,7 +206,12 @@ void setup() {
   Serial.println("DHT N/A");
   #endif
 
-  
+  #ifdef Anemodef
+  pinMode(counterPin, INPUT);      
+  digitalWrite(counterPin, HIGH);
+  attachInterrupt(counterInterrupt, counterISR, RISING);
+  #endif
+
   //Serial.println("End of SW initialization phase, I am starting measuring.");
 
 }
@@ -292,6 +250,27 @@ void loop() {
     #endif
 
   }
+
+  #ifdef Anemodef
+  if (millis() - time > 1000) {
+    numberOfWindSamples++;
+    time = millis();
+    int val=analogRead(3);
+    // Serial.print(val);
+    // Serial.print(" - ");
+    // Serial.print(calculateWindDirection(val));
+    // Serial.print(" ");
+    // Serial.print(calculateWindDirectionDegrees(val));
+    windDirectionAll+=calculateWindDirectionDegrees(val);
+    // Serial.print("; ");
+    // Serial.println(pulseCount);
+    pulseCountAll+=pulseCount;
+    if (pulseCount>pulseCountMax) {
+      pulseCountMax=pulseCount;
+    }
+    pulseCount=0;
+  }
+  #endif
   
   #ifdef DALLASdef
   if (dsMeasStarted) {
@@ -428,7 +407,24 @@ void sendData() {
   dataString += "\n";
   dataString += "TempDHT,";
   dataString += tempDHT;
+  dataString += "\n";
   #endif
+
+  #ifdef Anemodef
+  dataString += "WindSpeed,";
+  dataString += pulseCountAll/numberOfWindSamples;
+  pulseCountAll=0;
+  dataString += "\n";
+  dataString += "WindSpeedMax,";
+  dataString += pulseCountMax;
+  pulseCountMax=0;
+  dataString += "\n";
+  dataString += "WindDirection,";
+  dataString += windDirectionAll/numberOfWindSamples;
+  windDirectionAll=0;
+  numberOfWindSamples=0;
+  #endif
+  
 
   // if there's a successful connection:
   if (client.connect(server, 80)) {
@@ -548,5 +544,42 @@ void dhtInit() {
   //Serial.print("DHT software on PIN D");
   //Serial.print(DHTPIN);
   //Serial.println(" OK");
+}
+#endif
+
+#ifdef Anemodef
+//calculate wind direction
+String calculateWindDirection(int adcValue)
+{
+  String retVal="";
+  if (adcValue>0 && adcValue<64)
+    retVal="J";
+  if (adcValue>=64 && adcValue<192)
+    retVal="JZ";
+  if (adcValue>=192 && adcValue<320)
+    retVal="Z";
+  if (adcValue>=320 && adcValue<448)
+    retVal="SZ";
+  if (adcValue>=448 && adcValue<576)
+    retVal="S";
+  if (adcValue>=576 && adcValue<704)
+    retVal="SV";
+  if (adcValue>=704 && adcValue<832)
+    retVal="V";
+  if (adcValue>=832 && adcValue<960)
+    retVal="JV";
+  if (adcValue>=960)
+    retVal="J";
+  return retVal;
+}
+
+unsigned int calculateWindDirectionDegrees(int adcValue)
+{
+  return (int)((float)adcValue/1024.f*360.f);
+}
+
+void counterISR()
+{ 
+  pulseCount++;
 }
 #endif

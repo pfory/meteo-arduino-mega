@@ -3,7 +3,7 @@
 D0 Rx
 D1 Tx
 D2 free
-D3 free
+D3 Anemometer - wind speed
 D4 free
 D5-D9 free
 D10 Ethernet shield
@@ -12,7 +12,7 @@ D12
 D13
 A0 DALLAS temperature
 A1 DHT sensor
-A2 free
+A2 Anemometer - wind direction
 A3 free
 A4 SDA for BMP
 A5 SCL for BMP

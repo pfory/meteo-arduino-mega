@@ -20,6 +20,7 @@ A5 SCL for BMP
 
 */
 
+#define debug
 #define Ethernetdef
 #define DALLASdef //5388
 #define Anemodef
@@ -148,11 +149,13 @@ int tempDHT = 0;
 byte counterOverflow=0;
 unsigned int old_value=0;
 byte counter=0;
-String dataString = "";
+//String dataString="";
+char dataString[200];
 
-
-char versionSW[]="0.73";
+char versionSW[]="0.74";
 char versionSWString[] = "METEO Simple v"; //SW name & version
+
+//byte ledPin=9;
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
@@ -160,9 +163,11 @@ void setup() {
   Serial.begin(115200);
   //Serial.print(versionSWString);
   Serial.println(versionSW);
-
-
-  //Serial.println("SW inicialization");
+  
+  #ifdef debug
+  printDebugInfo();
+  #endif
+  Serial.println(F("SW inicialization"));
 
   #ifdef Ethernetdef
   Serial.print("waiting for net connection...");
@@ -173,8 +178,9 @@ void setup() {
 
   Serial.println("Ethernet OK");
   
-  /*Serial.print("\nIP:");
+  Serial.print("\nIP:");
   Serial.println(Ethernet.localIP());
+  /*
   Serial.print("Mask:");
   Serial.println(Ethernet.subnetMask());
   Serial.print("Gateway:");
@@ -212,6 +218,7 @@ void setup() {
   attachInterrupt(counterInterrupt, counterISR, RISING);
   #endif
 
+  //pinMode(ledPin, OUTPUT);
   //Serial.println("End of SW initialization phase, I am starting measuring.");
 
 }
@@ -265,9 +272,10 @@ void loop() {
     // Serial.print("; ");
     // Serial.println(pulseCount);
     pulseCountAll+=pulseCount;
-    if (pulseCount>pulseCountMax) {
-      pulseCountMax=pulseCount;
-    }
+    max(pulseCount,pulseCountMax);
+    //if (pulseCount>pulseCountMax) {
+    //  pulseCountMax=pulseCount;
+    //}
     pulseCount=0;
   }
   #endif
@@ -335,7 +343,9 @@ void loop() {
 
   if(!client.connected() && (millis() - lastSendTime > sendTimeDelay)) {
     lastSendTime = millis();
+    //digitalWrite(ledPin, HIGH);
     sendData();
+    //digitalWrite(ledPin, LOW);
     sample=0;
   }
   #endif
@@ -346,7 +356,6 @@ void loop() {
 void sendData() {
 
   //Serial.println("sending data");
-  dataString="";
 
   //prepare data to send
   char buffer[3];
@@ -355,83 +364,60 @@ void sendData() {
   //-----------------------
   //28 C9 B8 41 04 00 00 97
 
-  dataString += "Version,";
-  dataString += versionSW;
-  dataString += "\n";
-
+  sprintf(dataString,"Version,%s\n",versionSW);
+ 
   #ifdef DALLASdef
   for(byte i=0;i<numberOfDevices; i++) {
-    dataString += "T";
+    sprintf(dataString,"%sT",dataString);
 
     for (byte j=0; j<8; j++) {
       sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
       if (tempDeviceAddresses[i][j]<16) {
-        dataString += "0";
-        dataString += buffer[0];
+        sprintf(dataString,"%s0",dataString);
+        sprintf(dataString,"%s%X",dataString, buffer[0]);
       }
       else {
-        dataString += buffer[0];
-        dataString += buffer[1];
+        sprintf(dataString,"%s%X",dataString, buffer[0]);
+        sprintf(dataString,"%s%X",dataString, buffer[1]);
       }
     }
 
-    dataString += ",";
+    sprintf(dataString,"%s,",dataString);
     int t = (int)(sensor[i]*10);
-    
+
     if (t<0&&t>-10) {
-      dataString += "-";
+      sprintf(dataString,"%s-",dataString);
     }
-    dataString += t/10;
-    dataString += ".";
-    dataString += abs(t%10);
-    dataString += "\n";
+    sprintf(dataString,"%s%u.%u\n",dataString,t/10,abs(t%10));
   }
   #endif
 
   #ifdef BMP085def
   //Pressure
-  dataString += "Press,";
-  dataString += Pressure;
-  dataString += "\n";
+  sprintf(dataString,"%sPress,%u\n",dataString,Pressure);
+
   //Temperature
-  dataString += "Temp085,";
-  dataString += Temperature/10;
-  dataString += ".";
-  dataString += abs(Temperature%10);
-  dataString += "\n";
+  sprintf(dataString,"%sTemp085,%u.%u\n",dataString,Temperature/10,abs(Temperature%10));
   #endif
 
   #ifdef DHTdef
-  dataString += "Humidity,";
-  dataString += humidity;
-  dataString += "\n";
-  dataString += "TempDHT,";
-  dataString += tempDHT;
+  sprintf(dataString,"%sHumidity,%u\nTempDHT,%u\n", dataString,humidity,tempDHT);
   dataString += "\n";
   #endif
-
+  
   #ifdef Anemodef
-  dataString += "WindSpeed,";
-  dataString += pulseCountAll/numberOfWindSamples;
+  int n=sprintf(dataString,"%sWindSpeed,%u\nWindSpeedMax,%u\nWindDirection,%u",dataString,pulseCountAll/numberOfWindSamples,pulseCountMax,windDirectionAll/numberOfWindSamples);
   pulseCountAll=0;
-  dataString += "\n";
-  dataString += "WindSpeedMax,";
-  dataString += pulseCountMax;
   pulseCountMax=0;
-  dataString += "\n";
-  dataString += "WindDirection,";
-  dataString += windDirectionAll/numberOfWindSamples;
   windDirectionAll=0;
   numberOfWindSamples=0;
   #endif
   
-
+  Serial.println("ted se conectim");
+  
   // if there's a successful connection:
   if (client.connect(server, 80)) {
-    //Serial.println();
-    //Serial.print("connecting to COSM [FEEDID=");
-    //Serial.print(FEEDID);
-    //Serial.println("]");
+    Serial.println("connected");
     // send the HTTP PUT request:
     client.print("PUT /v2/feeds/");
     client.print(FEEDID);
@@ -442,7 +428,7 @@ void sendData() {
     client.print("User-Agent: ");
     client.println(USERAGENT);
     client.print("Content-Length: ");
-    client.println(dataString.length());
+    client.println(n);
 
     // last pieces of the HTTP PUT request:
     client.println("Content-Type: text/csv");
@@ -459,7 +445,6 @@ void sendData() {
     Serial.println("disconnecting.");
     client.stop();
   }
-  
  
   Serial.println("\nDATA:");
   Serial.println(dataString);
@@ -583,3 +568,71 @@ void counterISR()
   pulseCount++;
 }
 #endif
+
+// Helper function for free ram.
+//   With use of http://arduino.cc/playground/Code/AvailableMemory
+//
+int freeRam(void)
+{
+  extern unsigned int __heap_start;
+  extern void *__brkval;
+
+  int free_memory;
+  int stack_here;
+
+  if (__brkval == 0)
+    free_memory = (int) &stack_here - (int) &__heap_start;
+  else
+    free_memory = (int) &stack_here - (int) __brkval;
+
+  return (free_memory);
+}
+
+void printDebugInfo(void) {
+  #ifdef debug
+  Serial.print(F("free RAM = "));
+  Serial.println(freeRam(),DEC);
+  
+  Serial.print(F("__VERSION__ = "));
+  Serial.println(F(__VERSION__));
+
+  Serial.print(F("__DATE__    = "));
+  Serial.println(F(__DATE__));
+
+  Serial.print(F("__TIME__    = "));
+  Serial.println(F(__TIME__));
+
+  Serial.print(F("__AVR_LIBC_VERSION_STRING__ = "));
+  Serial.println(F(__AVR_LIBC_VERSION_STRING__));
+
+  Serial.print(F("__FILE__    = "));
+  Serial.println(F(__FILE__));
+
+  Serial.print(F("__STDC__    = "));
+  Serial.println(__STDC__,DEC);
+
+  Serial.print(F("OSCCAL = "));
+  Serial.println(OSCCAL,DEC);
+
+  Serial.print(F("GPIOR0 = 0x"));
+  Serial.println(GPIOR0,HEX);
+
+  Serial.print(F("GPIOR1 = 0x"));
+  Serial.println(GPIOR1,HEX);
+
+  Serial.print(F("GPIOR1 = 0x"));
+  Serial.println(GPIOR1,HEX);
+
+  Serial.print(F("RAMEND   = 0x"));
+  Serial.println(RAMEND,HEX);
+
+  Serial.print(F("XRAMEND  = 0x"));
+  Serial.println(XRAMEND,HEX);
+
+  Serial.print(F("E2END    = 0x"));
+  Serial.println(E2END,HEX);
+
+  Serial.print(F("FLASHEND = 0x"));
+  Serial.println(FLASHEND,HEX);
+  #endif
+}

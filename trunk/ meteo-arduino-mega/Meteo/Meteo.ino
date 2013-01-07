@@ -8,16 +8,14 @@ D4 SS for SD
 D5-D9 display
 D10 Ethernet shield
 D11 display
-D12
-D13
-A0 free reserved for rain sensor
-A1 free reserved for anemometer (current sensor Holcik)
-A2 free reserved for anemometer (voltage sensor Holcik)
-A3 free reserved for light sensor
-A4-SDA for BMP085 ATMEGA328  D20 for BMP085 ATMEGA2560
-A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
-
-
+D12 free
+D13 free
+A0 free
+A1 free 
+A2 free
+A3 free
+A4-SDA for BMP085
+A5-SCL for BMP085
 */
 
 //#define JH
@@ -26,23 +24,16 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 // Contains EEPROM.read() and EEPROM.write()
 #include <EEPROM.h>
 
-#define DALLASdef //1702 bytes
-#define BMP085def //3220 bytes for standard library
-#define DHTdef1 //1052 bytes
+#define DALLASdef
+#define BMP085def
+#define DHTdef1
 #ifdef JH
-#define DHTdef2 //1052 bytes
+#define DHTdef2
 #endif
-#define UDPdef //672 bytes
-#define Ethernetdef //10614 bytes
+#define UDPdef 
+#define Ethernetdef 
 #define LCDdef
-//#define Anemodef //1454 bytes
 #define SDdef 
-
-#ifdef Anemodef
-#include <ooPinChangeInt.h>
-#include <ByteBuffer.h>
-#include "pushbuttonswitch.h" // How do you subclass?  See the pushbuttonswitch.h file:
-#endif
 
 #include <limits.h>
 #include <MemoryFree.h>
@@ -54,15 +45,9 @@ A5-SCL for BMP085 ATMEGA328  D21 for BMP085 ATMEGA2560
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 // fill in your address here:
 byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
-// fill in an available IP address on your network here,
-// for manual configuration:
-//IPAddress ip(192,168,1,1);
 // initialize the library instance:
 EthernetClient client;
 EthernetClient clientConfig;
-// if you don't want to use DNS (and reduce your sketch size)
-// use the numeric IP instead of the name for the server:
-//IPAddress server(216,52,233,121);      // numeric IP for api.cosm.com
 char server[] = "api.cosm.com";   // name address for cosm API
 char serverConfig[] = "datel.asp2.cz"; //config server
 bool checkConfigFlag = false;
@@ -76,10 +61,6 @@ unsigned int localPort = 8888;      // local port to listen for UDP packets
 IPAddress timeServer(130,149,17,21); // time.nist.gov NTP server
 const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
 byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets 
-// A UDP instance to let us send and receive packets over UDP
-//byte SNTP_server_IP[]    = { 192, 43, 244, 18}; // time.nist.gov
-//byte SNTP_server_IP[] = { 130,149,17,21};    // ntps1-0.cs.tu-berlin.de
-//byte SNTP_server_IP[] = { 192,53,103,108};   // ptbtime1.ptb.de
 #include <Time.h>
 
 #define DATE_DELIMITER "."
@@ -144,10 +125,6 @@ unsigned long Pressure = 0;//, Altitude = 0;
 //#define DHTTYPE DHT22   // DHT 22  (AM2302)
 //#define DHTTYPE DHT21   // DHT 21 (AM2301)
 
-// Connect pin 1 (on the left) of the sensor to +5V
-// Connect pin 2 of the sensor to whatever your DHTPIN is
-// Connect pin 4 (on the right) of the sensor to GROUND
-// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
 DHT dht1(DHTPIN1, DHTTYPE1);
 unsigned long lastDHTMeasTime;
 unsigned long lastDisplayDHTTime;
@@ -161,11 +138,6 @@ unsigned long lastDisplayDHTTime;
 #define DHTTYPE2 DHT11   // DHT 11 
 //#define DHTTYPE DHT22   // DHT 22  (AM2302)
 //#define DHTTYPE DHT21   // DHT 21 (AM2301)
-
-// Connect pin 1 (on the left) of the sensor to +5V
-// Connect pin 2 of the sensor to whatever your DHTPIN is
-// Connect pin 4 (on the right) of the sensor to GROUND
-// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
 DHT dht2(DHTPIN2, DHTTYPE2);
 #endif
 
@@ -220,17 +192,6 @@ byte save[8] = {
 #define DISPLAY_BACKLIGHT 150
 #endif
 
-#ifdef Anemodef
-//ByteBuffer printBuffer(80);
-//long anemoLastMeasTime = 0;
-//pushbuttonswitch anemoswitch=pushbuttonswitch(A2, "anemoswitch");
-char windDirection[2];
-#define anemoDirectioPin 1
-long windDirection20=0;
-int anemoCountDirectionSamples=0;
-
-#endif
-
 #ifdef SDdef
 #include <SD.h>
 const int chipSelect = 4;
@@ -282,7 +243,7 @@ storage = {
   53500,              //high_above_sea in cm
   #endif
   #ifdef PP
-  34600,
+  34600,              //high_above_sea in cm
   #endif
   4000,               //measDelay im ms;
   1000,               //displayTempDelay in ms
@@ -292,14 +253,14 @@ storage = {
   20000,              //interval between updates to Cosm.com in ms    
   1800000,            //interval for check press trend in ms
   #ifdef JH
-  "HyVsT65CnEPitk6vML664llGUZCSAKx0aXFocmJJVHBUVT0g",
-  75618,
-  "Solar JH"
+  "HyVsT65CnEPitk6vML664llGUZCSAKx0aXFocmJJVHBUVT0g", //cosm key
+  75618,                                              //cosm ID
+  "Solar JH"                                          //cosm project name
   #endif
   #ifdef PP
-  "T1g2V52CSYmkE-tIAh-tHnK-hDWSAKxneEVkUzVVK2Q0QT0g",
-  91158,
-  "Meteo PP"
+  "T1g2V52CSYmkE-tIAh-tHnK-hDWSAKxneEVkUzVVK2Q0QT0g", //cosm key
+  91158,                                              //cosm ID
+  "Meteo PP"                                          //cosm project name
   #endif
 };
 
@@ -508,12 +469,9 @@ void loop() {
   }
 
   
-  //Serial.print(".");
-  //start sampling
   if (millis() - lastMeasTime > storage.measDelay) {
     sample++;
     lastMeasTime = millis();
-    //startTimer();
     #ifdef DALLASdef    
     dsSensors.requestTemperatures(); 
     lastDsMeasStartTime=millis();
@@ -531,19 +489,20 @@ void loop() {
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
     humidity2 = dht2.readHumidity();
     tempDHT2 = dht2.readTemperature();
+    #else
+      humidity2 = humidity1;
+      tempDHT2 = tempDHT1;
     #endif
+    
 
     
     #ifdef BMP085def
-    //unsigned long oldPress=Pressure;
     Pressure = bmp.readPressure();
     Pressure = getRealPressure(Pressure, storage.high_above_sea);
     #else
     Pressure=101325;
     #endif
-    
-    //stopTimer();
-    //printTimer("Start sampling takes:");
+   
   }
   
   #ifdef DALLASdef  
@@ -554,7 +513,6 @@ void loop() {
       for (byte i=0;i<numberOfDevices; i++) {
         float tempTemp=-126;
         for (byte j=0;j<10;j++) { //try to read temperature ten times
-          //tempTemp = dsSensors.getTempCByIndex(i);
           tempTemp = dsSensors.getTempC(tempDeviceAddresses[i]);
           if (tempTemp>=-55) {
             break;
@@ -566,34 +524,7 @@ void loop() {
   }
   #endif
   
-  #ifdef Anemodef
-  int val = analogRead(anemoDirectioPin);    // read the input pin
-  //lcd.setCursor(0,1);
-  //lcd.print(getWindDirection(val));
-  getWindDirectionStr(val);
-  //lcd.print("[");
-  //lcd.print(windDirection);
-  //lcd.print("]");
-  windDirection20+=val;
-  anemoCountDirectionSamples++;
-  
-/*  if (millis() - anemoLastMeasTime > 1000) {
-    int val = analogRead(1);    // read the input pin
-    Serial.print("Analog value ");
-    Serial.println(val);
-    lcd.setCursor(0,1);
-    lcd.print(val);
-    anemoLastMeasTime=millis();
-    Serial.print("Count per sec ");
-    uint8_t count;
-    count=anemoswitch.getCount();
-    Serial.println(count, DEC);
-    lcd.setCursor(0,1);
-    lcd.print(count);
-    anemoswitch.reset();
-  }*/
-  #endif
-  
+ 
   #ifdef LCDdef
   lcd.setCursor(hourC, hourR);
   printDigits(hour(),1);
@@ -722,8 +653,6 @@ void loop() {
     Serial.println();
     printTemperatureAll();
   
-    //Serial.print(" Alt(cm):");
-    //Serial.print(Altitude);
     Serial.print("Press(Pa):");
     Serial.print(Pressure);
 
@@ -881,14 +810,6 @@ void sendData() {
     dataString += (int)calcDewPoint(humidity2, tempDHT2);
     #endif
     
-    #ifdef Anemodef
-    dataString += "\nWindDirection,";
-    dataString += (int)windDirection20/anemoCountDirectionSamples;
-
-    windDirection20=0;
-    anemoCountDirectionSamples=0;
-    #endif
-
   // if there's a successful connection:
   if (client.connect(server, 80)) {
     Serial.println();
@@ -946,7 +867,7 @@ void checkConfig() {
   } 
   else
   {
-    // kf you didn't get a connection to the server:
+    // if you didn't get a connection to the server:
     Serial.println("Connection to config server failed.");
   }
 }
@@ -1013,7 +934,6 @@ void saveDataToSD(bool rep) {
     dataFile.print(";");
     //temperature from DALLAS
     for(byte i=0;i<numberOfDevices; i++) {
-      //int t = (int)(dsSensors.getTempCByIndex(i)*10);
       int t = (int)(sensor[i]*10);
       if (t<0&&t>-10) {
         dataFile.print("-");
@@ -1065,11 +985,6 @@ void saveDataToSD(bool rep) {
     dataFile.print(t/10);
     dataFile.print(",");
     dataFile.print(abs(t%10));
-    #endif
-    
-    #ifdef Anemodef
-    dataFile.print(";");
-    dataFile.print(windDirection20/anemoCountDirectionSamples);
     #endif
     
     dataFile.print("\n");
@@ -1253,36 +1168,6 @@ void eraseRow(byte r) {
     lcd.print(" ");
   }
   lcd.setCursor(0, r);
-}
-#endif
-
-#ifdef Anemodef
-int getWindDirection(int analogValue) {
-  return analogValue / 2.844;
-}
-
-//calculate wind direction
-void getWindDirectionStr(uint16_t adcValue)
-{
-  if (adcValue>0 && adcValue<64)
-    strcpy(windDirection,"V");
-  if (adcValue>=64 && adcValue<192)
-    strcpy(windDirection,"SV");
-  if (adcValue>=192 && adcValue<320)
-    strcpy(windDirection,"S");
-  if (adcValue>=320 && adcValue<448)
-    strcpy(windDirection,"SZ");
-  if (adcValue>=448 && adcValue<576)
-    strcpy(windDirection,"Z");
-  if (adcValue>=576 && adcValue<704)
-    strcpy(windDirection,"JZ");
-  if (adcValue>=704 && adcValue<832)
-    strcpy(windDirection,"J");
-  if (adcValue>=832 && adcValue<960)
-    strcpy(windDirection,"JV");
-  if (adcValue>=960)
-    strcpy(windDirection,"V");
-  return;
 }
 #endif
 

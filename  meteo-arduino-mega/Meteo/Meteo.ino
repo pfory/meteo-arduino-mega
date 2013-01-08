@@ -47,10 +47,10 @@ A5-SCL for BMP085
 byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
 // initialize the library instance:
 EthernetClient client;
-EthernetClient clientConfig;
+//EthernetClient clientConfig;
 char server[] = "api.cosm.com";   // name address for cosm API
 char serverConfig[] = "datel.asp2.cz"; //config server
-bool checkConfigFlag = false;
+//bool checkConfigFlag = false;
 char dataString[400];
 
 unsigned long lastSendTime;
@@ -462,12 +462,12 @@ void setup() {
 
 void loop() {
 
-  while (clientConfig.connected()) {
+  /*while (clientConfig.connected()) {
    if (clientConfig.available()) {
      char c = clientConfig.read();
      Serial.write(c);
     }
-  }
+  }*/
 
   
   if (millis() - lastMeasTime > storage.measDelay) {
@@ -705,14 +705,14 @@ void loop() {
     client.stop();
   }
 
-  if (sample==5 && checkConfigFlag == false) {
+  //if (sample==5 && checkConfigFlag == false) {
     //checkConfig();
-  }
+  //}
 
-  if (sample==8) {
+  /*if (sample==8) {
     clientConfig.stop();
     checkConfigFlag = false;
-  }
+  }*/
 
   #endif
   
@@ -755,15 +755,10 @@ void sendData() {
     sprintf(dataString,"%sT",dataString);
 
     for (byte j = 0; j < 8; j++) {
-      sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
       if (tempDeviceAddresses[i][j] < 16) {
         sprintf(dataString,"%s0",dataString);
-        sprintf(dataString,"%s%X",dataString, buffer[0]);
       }
-      else {
-        sprintf(dataString,"%s%X",dataString, buffer[0]);
-        sprintf(dataString,"%s%X",dataString, buffer[1]);
-      }
+      sprintf (dataString, "%s%X", dataString, tempDeviceAddresses[i][j]);
     }
 
     sprintf(dataString,"%s,",dataString);
@@ -776,7 +771,6 @@ void sendData() {
   }
   #endif
 
-  Serial.println(dataString);
   #ifdef BMP085def
   //Pressure
   sprintf(dataString,"%sPress,%ld\n",dataString,Pressure);
@@ -789,7 +783,7 @@ void sendData() {
   #ifdef DHTdef1
   //DHT1
   //Humidity and temp
-  sprintf(dataString,"%sHumidity1,%u\nTempDHT,%u\n", dataString,humidity1,tempDHT1);
+  sprintf(dataString,"%sHumidity1,%u\nTempDHT1,%u\n", dataString,humidity1,tempDHT1);
   //Dew Point
   n=sprintf(dataString,"%sDewPoint1,%u\n", dataString,(int)calcDewPoint(humidity1, tempDHT1));
   #endif
@@ -797,7 +791,7 @@ void sendData() {
   #ifdef DHTdef2
   //DHT2
   //Humidity and temp
-  sprintf(dataString,"%sHumidity2,%u\nTempDHT,%u\n", dataString,humidity2,tempDHT2);
+  sprintf(dataString,"%sHumidity2,%u\nTempDHT2,%u\n", dataString,humidity2,tempDHT2);
   //Dew Point
   n=sprintf(dataString,"%sDewPoint2,%u", dataString,(int)calcDewPoint(humidity2, tempDHT2));
   #endif
@@ -844,16 +838,14 @@ void sendData() {
   
   Serial.println("\nDATA:");
   Serial.println(dataString);
-  Serial.println();
 
   Serial.print("\nDATA sentence length=");
   Serial.println(n);
-  Serial.println();
   
   // note the time that the connection was made or attempted:
 }
 
-void checkConfig() {
+/*void checkConfig() {
   checkConfigFlag = true;
   if (clientConfig.connect(serverConfig, 80)) {
     Serial.println("Connected to config server.");
@@ -867,6 +859,7 @@ void checkConfig() {
     Serial.println("Connection to config server failed.");
   }
 }
+*/
 
 
 #endif

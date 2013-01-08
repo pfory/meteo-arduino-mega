@@ -51,6 +51,7 @@ EthernetClient clientConfig;
 char server[] = "api.cosm.com";   // name address for cosm API
 char serverConfig[] = "datel.asp2.cz"; //config server
 bool checkConfigFlag = false;
+char dataString[400];
 
 unsigned long lastSendTime;
 
@@ -113,7 +114,7 @@ unsigned long lastPressureTime=0;
 #define PRESSDOWN     2
 byte pressureChange=PRESSNOCHANGE;
 #endif
-signed long Temperature = 0;
+float Temperature = 0;
 unsigned long Pressure = 0;//, Altitude = 0;
 
 
@@ -209,7 +210,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-char versionSW[]="0.97";
+char versionSW[]="0.98";
 char versionSWString[] = "METEO v"; //SW name
 
 // ID of the settings block
@@ -243,7 +244,7 @@ storage = {
   53500,              //high_above_sea in cm
   #endif
   #ifdef PP
-  34600,              //high_above_sea in cm
+  29500,              //high_above_sea in cm
   #endif
   4000,               //measDelay im ms;
   1000,               //displayTempDelay in ms
@@ -499,8 +500,10 @@ void loop() {
     #ifdef BMP085def
     Pressure = bmp.readPressure();
     Pressure = getRealPressure(Pressure, storage.high_above_sea);
+    Temperature = bmp.readTemperature();
     #else
     Pressure=101325;
+    Temperature=0;
     #endif
    
   }
@@ -656,6 +659,9 @@ void loop() {
     Serial.print("Press(Pa):");
     Serial.print(Pressure);
 
+    Serial.print(" Temperature BMP085(C):");
+    Serial.print(Temperature);
+
     #ifdef DHTdef1
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(tempDHT1) || isnan(humidity1)) {
@@ -731,84 +737,70 @@ void loop() {
 #ifdef Ethernetdef
 void sendData() {
 
-    #ifdef LCDdef
-    lcd.setCursor(15, 1);
-    lcd.write(1);
-    #endif
-    
-    //prepare data to send
-    String dataString = "";
-    char buffer[3];
-    //temperature from DALLAS
+  int n; //data length
 
-    dataString += "Version,";
-    dataString += versionSW;
-    dataString += "\n";
+  #ifdef LCDdef
+  lcd.setCursor(15, 1);
+  lcd.write(1);
+  #endif
+  
+  //prepare data to send
+  char buffer[3];
+  //temperature from DALLAS
 
-    
-    #ifdef DALLASdef
-    for(byte i=0;i<numberOfDevices; i++) {
-      dataString += "T";
- 
-      for (byte j = 0; j < 8; j++) {
-        sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
-        if (tempDeviceAddresses[i][j] < 16) {
-          dataString += "0";
-          dataString += buffer[0];
-        }
-        else {
-          dataString += buffer[0];
-          dataString += buffer[1];
-        }
+  sprintf(dataString,"Version,%s\n",versionSW);
+  
+  #ifdef DALLASdef
+  for(byte i=0;i<numberOfDevices; i++) {
+    sprintf(dataString,"%sT",dataString);
+
+    for (byte j = 0; j < 8; j++) {
+      sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
+      if (tempDeviceAddresses[i][j] < 16) {
+        sprintf(dataString,"%s0",dataString);
+        sprintf(dataString,"%s%X",dataString, buffer[0]);
       }
- 
-      dataString += ",";
-      int t = (int)(sensor[i]*10);
-      
-      if (t<0&&t>-10) {
-        dataString += "-";
+      else {
+        sprintf(dataString,"%s%X",dataString, buffer[0]);
+        sprintf(dataString,"%s%X",dataString, buffer[1]);
       }
-      dataString += t/10;
-      dataString += ".";
-      dataString += abs(t%10);
-
-      dataString += "\n";
     }
-    #endif
 
-    #ifdef BMP085def
-    //Pressure
-    dataString += "Press,";
-    dataString += Pressure;
-    #endif
-
-    #ifdef DHTdef1
-    //DHT1
-    //Humidity
-    dataString += "\nHumidity1,";
-    dataString += humidity1;
+    sprintf(dataString,"%s,",dataString);
+    int t = (int)(sensor[i]*10);
     
-    //temperature from DHT11
-    dataString += "\nTempDHT1,";
-    dataString += tempDHT1;
-   
-    dataString += "\nDewPoint1,";
-    dataString += (int)calcDewPoint(humidity1, tempDHT1);
-    #endif
+    if (t<0&&t>-10) {
+      sprintf(dataString,"%s-",dataString);
+    }
+    sprintf(dataString,"%s%u.%u\n",dataString,t/10,abs(t%10));
+  }
+  #endif
 
-    #ifdef DHTdef2
-    //DHT2
-    //Humidity
-    dataString += "\nHumidity2,";
-    dataString += humidity2;
+  Serial.println(dataString);
+  #ifdef BMP085def
+  //Pressure
+  sprintf(dataString,"%sPress,%ld\n",dataString,Pressure);
 
-    //temperature from DHT11
-    dataString += "\nTempDHT2,";
-    dataString += tempDHT2;
-   
-    dataString += "\nDewPoint2,";
-    dataString += (int)calcDewPoint(humidity2, tempDHT2);
-    #endif
+  //Temperature
+  int temp1 = (Temperature - (int)Temperature) * 100;
+  sprintf(dataString,"%sTemp085,%0d.%d\n",dataString,(int)Temperature,temp1);
+  #endif
+
+  #ifdef DHTdef1
+  //DHT1
+  //Humidity and temp
+  sprintf(dataString,"%sHumidity1,%u\nTempDHT,%u\n", dataString,humidity1,tempDHT1);
+  //Dew Point
+  n=sprintf(dataString,"%sDewPoint1,%u\n", dataString,(int)calcDewPoint(humidity1, tempDHT1));
+  #endif
+
+  #ifdef DHTdef2
+  //DHT2
+  //Humidity and temp
+  sprintf(dataString,"%sHumidity2,%u\nTempDHT,%u\n", dataString,humidity2,tempDHT2);
+  //Dew Point
+  n=sprintf(dataString,"%sDewPoint2,%u", dataString,(int)calcDewPoint(humidity2, tempDHT2));
+  #endif
     
   // if there's a successful connection:
   if (client.connect(server, 80)) {
@@ -827,7 +819,7 @@ void sendData() {
     client.print("User-Agent: ");
     client.println(storage.userAgent);
     client.print("Content-Length: ");
-    client.println(dataString.length());
+    client.println(n);
 
     // last pieces of the HTTP PUT request:
     client.println("Content-Type: text/csv");
@@ -852,6 +844,10 @@ void sendData() {
   
   Serial.println("\nDATA:");
   Serial.println(dataString);
+  Serial.println();
+
+  Serial.print("\nDATA sentence length=");
+  Serial.println(n);
   Serial.println();
   
   // note the time that the connection was made or attempted:

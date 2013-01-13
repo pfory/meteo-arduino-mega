@@ -3,7 +3,11 @@
 D0 Rx
 D1 Tx
 D2 free
+<<<<<<< .mine
+D3 Anemometer - Wind spped
+=======
 D3 Anemometer - wind speed
+>>>>>>> .r154
 D4 free
 D5-D9 free
 D10 Ethernet shield
@@ -11,24 +15,44 @@ D11 free
 D12
 D13
 A0 DALLAS temperature
+<<<<<<< .mine
+A1 DHT humidity
+A2 free
+=======
 A1 DHT sensor
 A2 Anemometer - wind direction
+>>>>>>> .r154
+<<<<<<< .mine
+A3 Anemometer - Wind direction
+A4 SDA for Pressure BMP085
+A5 SCL fpr Pressure BMP085
+=======
 A3 free
 A4 SDA for BMP
 A5 SCL for BMP
+>>>>>>> .r154
 
 
 */
 
 #define debug
 #define Ethernetdef
+<<<<<<< .mine
+#define DALLASdef 
+#define Anemodef
+#define BMP085def
+=======
 #define DALLASdef //5388
 #define Anemodef
 #define BMP085def //4216
+>>>>>>> .r154
 //#define SWI2C
 #define DHTdef //1022
 
 #ifdef Anemodef
+<<<<<<< .mine
+
+=======
 const byte counterPin = 3; 
 const byte counterInterrupt = 1; // = pin D3
 volatile unsigned int pulseCount=0;
@@ -37,6 +61,7 @@ unsigned int pulseCountMax=0;
 unsigned int windDirectionAll=0;
 unsigned long time=0;
 byte numberOfWindSamples=0;
+>>>>>>> .r154
 #endif
 
 #include <limits.h>
@@ -146,13 +171,38 @@ unsigned long lastDisplayDHTTime;
 int humidity = 0;
 int tempDHT = 0;
 
+<<<<<<< .mine
+
+#ifdef Anemodef 
+const byte counterPin = 3; 
+const byte counterInterrupt = 1; // = pin D3
+volatile unsigned int pulseCount=0;
+unsigned int pulseCountAll=0;
+unsigned int pulseCountMax=0;
+unsigned int windDirectionAll=0;
+unsigned long time=0;
+byte numberOfWindSamples=0;
+#define windDirPin A3
+#endif 
+
+=======
+>>>>>>> .r154
 byte counterOverflow=0;
 unsigned int old_value=0;
 byte counter=0;
+<<<<<<< .mine
+String dataString1 = "";
+String dataString2 = "";
+=======
 //String dataString="";
 char dataString[200];
+>>>>>>> .r154
 
+<<<<<<< .mine
+char versionSW[]="0.75";
+=======
 char versionSW[]="0.74";
+>>>>>>> .r154
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
@@ -161,8 +211,8 @@ char versionSWString[] = "METEO Simple v"; //SW name & version
 void setup() {
   // start serial port:
   Serial.begin(115200);
-  //Serial.print(versionSWString);
-  Serial.println(versionSW);
+//  Serial.println();
+//  Serial.println(versionSW);
   
   #ifdef debug
   printDebugInfo();
@@ -170,18 +220,24 @@ void setup() {
   Serial.println(F("SW inicialization"));
 
   #ifdef Ethernetdef
-  Serial.print("waiting for net connection...");
+//  Serial.print("waiting for net connection...");
   if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed using DHCP");
+//    Serial.println("Failed using DHCP");
     // DHCP failed, so use a fixed IP address:
   }
 
-  Serial.println("Ethernet OK");
+//  Serial.println("Ethernet OK");
   
+<<<<<<< .mine
+//  Serial.print("\nIP:");
+//  Serial.println(Ethernet.localIP());
+  /*Serial.print("Mask:");
+=======
   Serial.print("\nIP:");
   Serial.println(Ethernet.localIP());
   /*
   Serial.print("Mask:");
+>>>>>>> .r154
   Serial.println(Ethernet.subnetMask());
   Serial.print("Gateway:");
   Serial.println(Ethernet.gatewayIP());
@@ -198,6 +254,15 @@ void setup() {
   dsSensors.requestTemperatures(); 
   #endif
   
+<<<<<<< .mine
+  #ifdef Anemodef 
+  pinMode(counterPin, INPUT);      
+  digitalWrite(counterPin, HIGH);
+  attachInterrupt(counterInterrupt, counterISR, RISING);
+  #endif
+
+=======
+>>>>>>> .r154
   #ifdef BMP085def
   bmp085Init();
   lastDisplayBMPTime = millis();
@@ -209,7 +274,7 @@ void setup() {
   dht.startMeas();
   lastDisplayDHTTime = millis();
   #else
-  Serial.println("DHT N/A");
+//  Serial.println("DHT N/A");
   #endif
 
   #ifdef Anemodef
@@ -255,8 +320,21 @@ void loop() {
     bmp.getTemperature(&Temperature); 
     #endif
     #endif
-
   }
+
+  #ifdef Anemodef
+  if (millis() - time > 1000) {
+    numberOfWindSamples++;
+    time = millis();
+    int val=analogRead(windDirPin);
+    windDirectionAll+=calculateWindDirectionDegrees(val);
+    pulseCountAll+=pulseCount;
+    pulseCountMax = max(pulseCount,pulseCountMax);
+    pulseCount=0;
+  }
+<<<<<<< .mine
+  #endif
+=======
 
   #ifdef Anemodef
   if (millis() - time > 1000) {
@@ -279,6 +357,7 @@ void loop() {
     pulseCount=0;
   }
   #endif
+>>>>>>> .r154
   
   #ifdef DALLASdef
   if (dsMeasStarted) {
@@ -356,6 +435,10 @@ void loop() {
 void sendData() {
 
   //Serial.println("sending data");
+<<<<<<< .mine
+  dataString1="";
+=======
+>>>>>>> .r154
 
   //prepare data to send
   char buffer[3];
@@ -364,47 +447,121 @@ void sendData() {
   //-----------------------
   //28 C9 B8 41 04 00 00 97
 
+<<<<<<< .mine
+  dataString1 += "V,";
+  dataString1 += versionSW;
+  dataString1 += "\n";
+
+=======
   sprintf(dataString,"Version,%s\n",versionSW);
  
+>>>>>>> .r154
   #ifdef DALLASdef
   for(byte i=0;i<numberOfDevices; i++) {
+<<<<<<< .mine
+    dataString1 += "T";
+=======
     sprintf(dataString,"%sT",dataString);
+>>>>>>> .r154
 
     for (byte j=0; j<8; j++) {
       sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
       if (tempDeviceAddresses[i][j]<16) {
+<<<<<<< .mine
+        dataString1 += "0";
+        dataString1 += buffer[0];
+=======
         sprintf(dataString,"%s0",dataString);
         sprintf(dataString,"%s%X",dataString, buffer[0]);
+>>>>>>> .r154
       }
       else {
+<<<<<<< .mine
+        dataString1 += buffer[0];
+        dataString1 += buffer[1];
+=======
         sprintf(dataString,"%s%X",dataString, buffer[0]);
         sprintf(dataString,"%s%X",dataString, buffer[1]);
+>>>>>>> .r154
       }
     }
 
+<<<<<<< .mine
+    dataString1 += ",";
+=======
     sprintf(dataString,"%s,",dataString);
+>>>>>>> .r154
     int t = (int)(sensor[i]*10);
 
     if (t<0&&t>-10) {
+<<<<<<< .mine
+      dataString1 += "-";
+=======
       sprintf(dataString,"%s-",dataString);
+>>>>>>> .r154
     }
+<<<<<<< .mine
+    dataString1 += t/10;
+    dataString1 += ".";
+    dataString1 += abs(t%10);
+    dataString1 += "\n";
+=======
     sprintf(dataString,"%s%u.%u\n",dataString,t/10,abs(t%10));
+>>>>>>> .r154
   }
   #endif
 
   #ifdef BMP085def
   //Pressure
+<<<<<<< .mine
+  dataString1 += "Press,";
+  dataString1 += Pressure;
+  dataString1 += "\n";
+=======
   sprintf(dataString,"%sPress,%u\n",dataString,Pressure);
 
+>>>>>>> .r154
   //Temperature
+<<<<<<< .mine
+  dataString1 += "Temp085,";
+  dataString1 += Temperature/10;
+  dataString1 += ".";
+  dataString1 += abs(Temperature%10);
+  dataString1 += "\n";
+=======
   sprintf(dataString,"%sTemp085,%u.%u\n",dataString,Temperature/10,abs(Temperature%10));
+>>>>>>> .r154
   #endif
 
   #ifdef DHTdef
+<<<<<<< .mine
+  dataString1 += "Humidity,";
+  dataString1 += humidity;
+  dataString1 += "\n";
+  dataString1 += "TempDHT,";
+  dataString1 += tempDHT;
+=======
   sprintf(dataString,"%sHumidity,%u\nTempDHT,%u\n", dataString,humidity,tempDHT);
   dataString += "\n";
+>>>>>>> .r154
   #endif
   
+<<<<<<< .mine
+  dataString2 = "";
+  #ifdef Anemodef
+  dataString2 = "\nWindS,";
+  dataString2 += pulseCountAll/numberOfWindSamples;
+  dataString2 += "\nWindSM,";
+  dataString2 += pulseCountMax;
+  dataString2 += "\nWindD,";
+  dataString2 += windDirectionAll/numberOfWindSamples;
+  pulseCountAll=0;
+  pulseCountMax=0;
+  windDirectionAll=0;
+  numberOfWindSamples=0;
+  #endif
+
+=======
   #ifdef Anemodef
   int n=sprintf(dataString,"%sWindSpeed,%u\nWindSpeedMax,%u\nWindDirection,%u",dataString,pulseCountAll/numberOfWindSamples,pulseCountMax,windDirectionAll/numberOfWindSamples);
   pulseCountAll=0;
@@ -415,6 +572,7 @@ void sendData() {
   
   Serial.println("ted se conectim");
   
+>>>>>>> .r154
   // if there's a successful connection:
   if (client.connect(server, 80)) {
     Serial.println("connected");
@@ -428,7 +586,12 @@ void sendData() {
     client.print("User-Agent: ");
     client.println(USERAGENT);
     client.print("Content-Length: ");
+<<<<<<< .mine
+    client.println(dataString1.length()+dataString2.length());
+    //client.println(dataString2.length());
+=======
     client.println(n);
+>>>>>>> .r154
 
     // last pieces of the HTTP PUT request:
     client.println("Content-Type: text/csv");
@@ -436,20 +599,24 @@ void sendData() {
     client.println();
 
     // here's the actual content of the PUT request:
-    client.print(dataString);
+	//dataString1.trim();
+	//dataString2.trim();
+    client.print(dataString1);
+    client.print(dataString2);
   } 
   else {
     // if you couldn't make a connection:
     Serial.println("failed");
-    Serial.println();
-    Serial.println("disconnecting.");
+//    Serial.println();
+//    Serial.println("disconnecting.");
     client.stop();
   }
  
-  Serial.println("\nDATA:");
-  Serial.println(dataString);
+/*  Serial.println("\nDATA:");
+  Serial.println(dataString1);
+  Serial.println(dataString2);
   Serial.println();
-  
+*/  
   // note the time that the connection was made or attempted:
 }
 #endif
@@ -491,7 +658,7 @@ void dsInit(void) {
     }
     else
     {
-      Serial.println("Unable to get device address for sensor " + i);
+      //Serial.println("Unable to get device address for sensor " + i);
     }
   }
   #ifndef dallasMinimal
@@ -531,6 +698,41 @@ void dhtInit() {
   //Serial.println(" OK");
 }
 #endif
+<<<<<<< .mine
+
+#ifdef Anemodef
+//calculate wind direction
+String calculateWindDirection(int adcValue) {
+  String retVal="";
+  if (adcValue>0 && adcValue<64)
+    retVal="J";
+  if (adcValue>=64 && adcValue<192)
+    retVal="JZ";
+  if (adcValue>=192 && adcValue<320)
+    retVal="Z";
+  if (adcValue>=320 && adcValue<448)
+    retVal="SZ";
+  if (adcValue>=448 && adcValue<576)
+    retVal="S";
+  if (adcValue>=576 && adcValue<704)
+    retVal="SV";
+  if (adcValue>=704 && adcValue<832)
+    retVal="V";
+  if (adcValue>=832 && adcValue<960)
+    retVal="JV";
+  if (adcValue>=960)
+    retVal="J";
+  return retVal;
+}
+
+unsigned int calculateWindDirectionDegrees(int adcValue) {
+  return (int)((float)adcValue/1024.f*360.f);
+}
+
+void counterISR() { 
+  pulseCount++;
+}
+#endif=======
 
 #ifdef Anemodef
 //calculate wind direction
@@ -636,3 +838,4 @@ void printDebugInfo(void) {
   Serial.println(FLASHEND,HEX);
   #endif
 }
+>>>>>>> .r154

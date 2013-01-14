@@ -18,24 +18,13 @@ A4 SDA for Pressure BMP085
 A5 SCL fpr Pressure BMP085
 */
 
-#define debug
+//#define debug
 #define Ethernetdef
 #define DALLASdef 
 #define Anemodef
 #define BMP085def
 //#define SWI2C
 #define DHTdef //1022
-
-#ifdef Anemodef
-const byte counterPin = 3; 
-const byte counterInterrupt = 1; // = pin D3
-volatile unsigned int pulseCount=0;
-unsigned int pulseCountAll=0;
-unsigned int pulseCountMax=0;
-unsigned int windDirectionAll=0;
-unsigned long time=0;
-byte numberOfWindSamples=0;
-#endif
 
 #include <limits.h>
 #include "Arduino.h"
@@ -148,6 +137,8 @@ int tempDHT = 0;
 const byte counterPin = 3; 
 const byte counterInterrupt = 1; // = pin D3
 volatile unsigned int pulseCount=0;
+unsigned int pulseCountPrev=0;
+const unsigned int pulseDiff=100;      //rozdil mezi otackami v minule vterine a aktualnimi, pokud je vetsi nez pulseDiff jde o zakmit a otacky se neprictou
 unsigned int pulseCountAll=0;
 unsigned int pulseCountMax=0;
 unsigned int windDirectionAll=0;
@@ -162,7 +153,7 @@ byte counter=0;
 String dataString1 = "";
 String dataString2 = "";
 
-char versionSW[]="0.75";
+char versionSW[]="0.76";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
@@ -278,8 +269,11 @@ void loop() {
     time = millis();
     int val=analogRead(windDirPin);
     windDirectionAll+=calculateWindDirectionDegrees(val);
-    pulseCountAll+=pulseCount;
-    pulseCountMax = max(pulseCount,pulseCountMax);
+    if (abs(pulseCount-pulseCountPrev)<pulseDiff) {
+      pulseCountAll+=pulseCount;
+      pulseCountMax = max(pulseCount,pulseCountMax);
+    }
+    pulseCountPrev = pulseCount;
     pulseCount=0;
   }
   #endif

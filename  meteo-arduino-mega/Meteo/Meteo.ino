@@ -767,7 +767,8 @@ void sendData() {
     if (t<0&&t>-10) {
       sprintf(dataString,"%s-",dataString);
     }
-    sprintf(dataString,"%s%u.%u\n",dataString,t/10,abs(t%10));
+    //sprintf(dataString,"%s%u.%u\n",dataString,t/10,abs(t%10));
+    sprintf(dataString,"%s%d.%d\n",dataString,t/10,abs(t%10));
   }
   #endif
 

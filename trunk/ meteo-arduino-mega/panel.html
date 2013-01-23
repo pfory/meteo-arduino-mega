@@ -1,0 +1,214 @@
+<!DOCTYPE html >
+<html>
+<head>
+    <link rel="stylesheet" href="demos.css" type="text/css" media="screen" />
+
+    <script src="../libraries/RGraph.common.core.js" ></script>
+    <script src="../libraries/RGraph.common.dynamic.js" ></script>
+    <script src="../libraries/RGraph.gauge.js" ></script>
+    <script src="../libraries/RGraph.meter.js" ></script>
+    <script src="../libraries/RGraph.odo.js" ></script>
+    <!--[if lt IE 9]><script src="../excanvas/excanvas.js"></script><![endif]-->
+    
+    <!--<META HTTP-EQUIV="refresh" CONTENT="5">-->
+    
+    <title>Meteo and home data</title>
+</head>
+<body>
+
+    <h1>Meteo</h1>
+
+    <canvas id="cvs2" width="250" height="250">[No canvas support]</canvas>
+    <canvas id="cvs4" width="250" height="250" >[No canvas support]</canvas> 
+    <canvas id="cvs9" width="250" height="250">[No canvas support]</canvas> 
+    <canvas id="cvs10" width="250" height="250">[No canvas support]</canvas> 
+    <canvas id="cvs11" width="250" height="250">[No canvas support]</canvas> 
+
+    <h1>Home</h1>
+    <canvas id="cvs1" width="200" height="250">[No canvas support]</canvas>
+    <canvas id="cvs3" width="200" height="250">[No canvas support]</canvas>
+    <canvas id="cvs6" width="200" height="250">[No canvas support]</canvas>
+    <canvas id="cvs5" width="200" height="250">[No canvas support]</canvas>
+    <canvas id="cvs8" width="200" height="250">[No canvas support]</canvas>
+    <canvas id="cvs7" width="200" height="250">[No canvas support]</canvas>
+    
+    <script>
+      window.onload = function ()
+      {
+        loadPachube();
+      }
+      
+      var intervalID = setInterval(function(){loadPachube();}, 20000);
+      
+      function loadPachube() 
+      { 
+        secure_sharing_key = "q1PY6QqB9jvSHGKhmCQNBRdCofeSAKxpKzliaHJGWUc5UT0g"; // use a GET, domain-locked API key here, NOT your master key
+        URL ='http://api.pachube.com/v2/feeds/63310.json?key='+secure_sharing_key+'&callback=processResults';	
+        var headID = document.getElementsByTagName("head")[0];         
+        var newScript = document.createElement('script');
+        newScript.type = 'text/javascript';
+        newScript.src = URL;
+        headID.appendChild(newScript);	
+      }
+      
+      function processResults(feed){
+        var val = feed.datastreams[2].current_value; //Bojler
+        var gauge1 = new RGraph.Gauge('cvs1', 0, 100, val);
+        gauge1.Set('chart.text.size', 8);
+        gauge1.Set('chart.labels.count', 10);
+        gauge1.Set('chart.title.top','Bojler');
+        gauge1.Set('chart.title.top.size', 8);
+        gauge1.Set('chart.title.bottom','°C');
+        gauge1.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge1.Set('chart.colors.ranges', [[0, 30, 'blue'], [30, 40, 'orange'], [40, 100, 'red']]);
+        gauge1.Draw();
+        
+        val = feed.datastreams[3].current_value; //Outdoor
+        var gauge2 = new RGraph.Gauge('cvs2', -25, 40, val);
+        gauge2.Set('chart.text.size', 8);
+        gauge2.Set('chart.labels.count', 10);
+        gauge2.Set('chart.title.top','Outdoor');
+        gauge2.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge2.Set('chart.title.bottom','°C');
+        gauge2.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge2.Set('chart.colors.ranges', [[-25, 0, 'blue'], [0, 20, 'green'], [20, 30, 'yellow'], [30, 40, 'red']]);
+        gauge2.Draw();
+
+        val = feed.datastreams[4].current_value; //Livingroom
+        var gauge3 = new RGraph.Gauge('cvs3', -10, 40, val);
+        gauge3.Set('chart.text.size', 8);
+        gauge3.Set('chart.labels.count', 10);
+        gauge3.Set('chart.title.top','Livingroom');
+        gauge3.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge3.Set('chart.title.bottom','°C');
+        gauge3.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge3.Set('chart.colors.ranges', [[-10, 0, 'blue'], [0, 20, 'lightgray'], [20, 30, 'green'], [30, 40, 'red']]);
+        gauge3.Draw();
+
+        val = feed.datastreams[5].current_value; //Hall
+        var gauge4 = new RGraph.Gauge('cvs5', -5, 40, val);
+        gauge4.Set('chart.text.size', 8);
+        gauge4.Set('chart.labels.count', 10);
+        gauge4.Set('chart.title.top','Hall');
+        gauge4.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge4.Set('chart.title.bottom','°C');
+        gauge4.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge4.Set('chart.colors.ranges', [[-5, 0, 'blue'], [0, 20, 'lightgray'], [20, 25, 'green'], [25, 40, 'red']]);
+        gauge4.Draw();
+
+        val = feed.datastreams[6].current_value; //Corridor
+        var gauge5 = new RGraph.Gauge('cvs6', -10, 40, val);
+        gauge5.Set('chart.text.size', 8);
+        gauge5.Set('chart.labels.count', 10);
+        gauge5.Set('chart.title.top','Corridor');
+        gauge5.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge5.Set('chart.title.bottom','°C');
+        gauge5.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge5.Set('chart.colors.ranges', [[-10, 0, 'blue'], [0, 20, 'lightgray'], [20, 30, 'green'], [30, 40, 'red']]);
+        gauge5.Draw();
+
+        val = feed.datastreams[7].current_value; //Workroom
+        var gauge6 = new RGraph.Gauge('cvs7', -5, 40, val);
+        gauge6.Set('chart.text.size', 8);
+        gauge6.Set('chart.labels.count', 10);
+        gauge6.Set('chart.title.top','Workroom');
+        gauge6.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge6.Set('chart.title.bottom','°C');
+        gauge6.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge6.Set('chart.colors.ranges', [[-5, 0, 'blue'], [0, 20, 'lightgray'], [20, 30, 'green'], [30, 40, 'red']]);
+        gauge6.Draw();
+
+        val = feed.datastreams[8].current_value; //Bedroom
+        var gauge7 = new RGraph.Gauge('cvs8', -5, 40, val);
+        gauge7.Set('chart.text.size', 8);
+        gauge7.Set('chart.labels.count', 10);
+        gauge7.Set('chart.title.top','Bedroom');
+        gauge7.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge7.Set('chart.title.bottom','°C');
+        gauge7.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge7.Set('chart.colors.ranges', [[-5, 0, 'blue'], [0, 20, 'lightgray'], [20, 25, 'green'], [25, 40, 'red']]);
+        gauge7.Draw();
+
+        val = feed.datastreams[0].current_value; //Humidity
+        var gauge8 = new RGraph.Gauge('cvs9', 0, 100, val);
+        gauge8.Set('chart.text.size', 8);
+        gauge8.Set('chart.labels.count', 10);
+        gauge8.Set('chart.title.top','Humidity');
+        gauge8.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge8.Set('chart.title.bottom','%RH');
+        gauge8.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge8.Set('chart.colors.ranges', [[0, 100, 'lightgray']]);
+        gauge8.Draw();
+
+        val = feed.datastreams[1].current_value; //Press
+        var gauge9 = new RGraph.Gauge('cvs4', 970, 1050, val/100);
+        gauge9.Set('chart.text.size', 8);
+        gauge9.Set('chart.labels.count', 10);
+        gauge9.Set('chart.title.top','Press');
+        gauge9.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge9.Set('chart.title.bottom','hPa');
+        gauge9.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge9.Set('chart.colors.ranges', [[0, 100, 'lightgray']]);
+        gauge9.Draw();
+
+        val = feed.datastreams[12].current_value; //WindDirection
+        var odo1 = new RGraph.Odometer('cvs10', 0, 360, val);
+        odo1.Set('chart.needle.thickness', 10);
+        odo1.Set('chart.green.max', 0);
+        odo1.Set('chart.red.min', 360);
+        /*gauge10.Set('chart.text.size', 8);
+        gauge10.Set('chart.labels.count', 10);
+        gauge10.Set('chart.title.top','Wind direction');
+        gauge10.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge10.Set('chart.title.bottom','°');
+        gauge10.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge10.Set('chart.colors.ranges', [[0, 100, 'lightgray']]);
+        gauge10.Draw();
+        */
+        odo1.Draw();
+
+        val = feed.datastreams[13].current_value; //Wind speed
+        var gauge10 = new RGraph.Gauge('cvs11', 0, 50, val);
+        gauge10.Set('chart.text.size', 8);
+        gauge10.Set('chart.labels.count', 10);
+        gauge10.Set('chart.title.top','Wind speed');
+        gauge10.Set('chart.title.top.size', 8);
+        //gauge.Set('chart.title.top.color', '#aaa');
+        gauge10.Set('chart.title.bottom','RPS*4');
+        gauge10.Set('chart.title.bottom.size', 8);
+        //gauge.Set('chart.title.bottom.color', '#aaa');
+        gauge10.Set('chart.colors.ranges', [[0, 100, 'lightgray']]);
+        gauge10.Draw();
+
+
+
+        /*
+        val = feed.datastreams[1].current_value; //Press
+        meter1 = new RGraph.Meter('cvs4', 970,1050, val/100);
+        meter1.Draw();
+        */
+      }
+  </script>
+   
+
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 D0 Rx
 D1 Tx
-D2 free
+D2 Rain sensor
 D3 Anemometer - Wind spped
 D4 free
 D5-D9 free
@@ -18,41 +18,39 @@ A4 SDA for Pressure BMP085
 A5 SCL fpr Pressure BMP085
 */
 
+#include <limits.h>
+
 //#define debug
 #define Ethernetdef
 #define DALLASdef 
 #define Anemodef
 #define BMP085def
+#define RainSensdef
 //#define SWI2C
 #define DHTdef //1022
 
-#include <limits.h>
-#include "Arduino.h"
-
 #ifdef Ethernetdef
 #include <Ethernet.h>
-// assign a MAC address for the ethernet controller.
-// Newer Ethernet shields have a MAC address printed on a sticker on the shield
-// fill in your address here:
 byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
-// fill in an available IP address on your network here,
-// for manual configuration:
-//IPAddress ip(192,168,1,1);
-// initialize the library instance:
 EthernetClient client;
-// if you don't want to use DNS (and reduce your sketch size)
-// use the numeric IP instead of the name for the server:
-//IPAddress server(216,52,233,121);      // numeric IP for api.cosm.com
 char server[] = "api.cosm.com";   // name address for cosm API
 bool checkConfigFlag = false;
 
 unsigned long lastSendTime;
-
 //COSM
 #define APIKEY         "q1PY6QqB9jvSHGKhmCQNBRdCofeSAKxpKzliaHJGWUc5UT0g" // your cosm api key
 #define FEEDID         63310 // your feed ID
 #define USERAGENT      "Meteo Arduino" // user agent is the project name
+
+//#define stringdef //26350 //use String class instead sprintf //24234
+#ifdef stringdef 
+String dataString1 = "";
+String dataString2 = "";
+#else
+char dataString[280];
 #endif
+#endif
+
 
 #ifdef DALLASdef
 #include <OneWire.h>
@@ -90,7 +88,6 @@ unsigned long dsLastPrintTime;
 unsigned int sample=0;
 unsigned int const dsPrintTimeDelay=4000; //interval to show results
 unsigned int const sendTimeDelay=20000; //to send to cosm.com
-
 
 #ifdef BMP085def
 #include <Wire.h>
@@ -138,22 +135,25 @@ const byte counterPin = 3;
 const byte counterInterrupt = 1; // = pin D3
 volatile unsigned int pulseCount=0;
 unsigned int pulseCountPrev=0;
-const unsigned int pulseDiff=100;      //rozdil mezi otackami v minule vterine a aktualnimi, pokud je vetsi nez pulseDiff jde o zakmit a otacky se neprictou
+const unsigned int pulseDiff=30;      //rozdil mezi otackami v minule vterine a aktualnimi, pokud je vetsi nez pulseDiff jde o zakmit a otacky se neprictou
 unsigned int pulseCountAll=0;
 unsigned int pulseCountMax=0;
 unsigned int windDirectionAll=0;
 unsigned long time=0;
 byte numberOfWindSamples=0;
-#define windDirPin A3
+#define windDirPin 3
 #endif 
 
-byte counterOverflow=0;
-unsigned int old_value=0;
-byte counter=0;
-String dataString1 = "";
-String dataString2 = "";
+#ifdef RainSensdef
+const byte counterPinRain = 2; 
+const byte counterInterruptRain = 0; // = pin D2
+volatile bool pulseCountRain=false;
+unsigned int pulseCountRainAll=0;
+#endif
 
-char versionSW[]="0.76";
+byte counter=0;
+
+char versionSW[]="0.77";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
@@ -163,21 +163,18 @@ void setup() {
   // start serial port:
   Serial.begin(115200);
 //  Serial.println();
-//  Serial.println(versionSW);
+  Serial.println(versionSW);
   
-  #ifdef debug
-  printDebugInfo();
-  #endif
-  Serial.println(F("SW inicialization"));
+  //Serial.println(F("SW inicialization"));
 
   #ifdef Ethernetdef
 //  Serial.print("waiting for net connection...");
-  if (Ethernet.begin(mac) == 0) {
-//    Serial.println("Failed using DHCP");
+  //if (Ethernet.begin(mac) == 0) {
+    Serial.println("Failed using DHCP");
     // DHCP failed, so use a fixed IP address:
-  }
+  //}
 
-//  Serial.println("Ethernet OK");
+  Serial.println("EthOK");
   
 //  Serial.print("\nIP:");
 //  Serial.println(Ethernet.localIP());
@@ -189,12 +186,12 @@ void setup() {
   Serial.println(Ethernet.dnsServerIP());
   Serial.println();
   */
+  lastSendTime = dsLastPrintTime = lastMeasTime = millis();
   #endif
   
   #ifdef DALLASdef
-  dsInit();
+  //dsInit();
   lastDisplayTempTime = millis();
-  lastSendTime = dsLastPrintTime = lastMeasTime = millis();
   dsSensors.requestTemperatures(); 
   #endif
   
@@ -202,6 +199,12 @@ void setup() {
   pinMode(counterPin, INPUT);      
   digitalWrite(counterPin, HIGH);
   attachInterrupt(counterInterrupt, counterISR, RISING);
+  #endif
+
+  #ifdef RainSensdef
+  pinMode(counterPinRain, INPUT);      
+  //digitalWrite(counterPinRain, HIGH);
+  attachInterrupt(counterInterruptRain, counterISRRain, RISING);
   #endif
 
   #ifdef BMP085def
@@ -218,13 +221,7 @@ void setup() {
 //  Serial.println("DHT N/A");
   #endif
 
-  #ifdef Anemodef
-  pinMode(counterPin, INPUT);      
-  digitalWrite(counterPin, HIGH);
-  attachInterrupt(counterInterrupt, counterISR, RISING);
-  #endif
-
-  //pinMode(ledPin, OUTPUT);
+   //pinMode(ledPin, OUTPUT);
   //Serial.println("End of SW initialization phase, I am starting measuring.");
 
 }
@@ -265,9 +262,12 @@ void loop() {
 
   #ifdef Anemodef
   if (millis() - time > 1000) {
-    numberOfWindSamples++;
     time = millis();
+    numberOfWindSamples++;
     int val=analogRead(windDirPin);
+    Serial.print(val);
+    Serial.print("-");
+    Serial.println(calculateWindDirectionDegrees(val));
     windDirectionAll+=calculateWindDirectionDegrees(val);
     if (abs(pulseCount-pulseCountPrev)<pulseDiff) {
       pulseCountAll+=pulseCount;
@@ -275,8 +275,18 @@ void loop() {
     }
     pulseCountPrev = pulseCount;
     pulseCount=0;
+  
+    #ifdef RainSensdef
+    if (pulseCountRain==true) {
+      pulseCountRainAll++;
+      //Serial.print(pulseCountRainAll);
+      pulseCountRain=false;
+    }
+    #endif
+
   }
   #endif
+
   
   #ifdef DALLASdef
   if (dsMeasStarted) {
@@ -349,86 +359,144 @@ void loop() {
   #endif
 }
 
-#ifdef Ethernetdef
 //-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
+#ifdef Ethernetdef
 void sendData() {
 
   //Serial.println("sending data");
-  dataString1="";
-
+  
   //prepare data to send
+  #ifdef stringdef
+  dataString1="";
   char buffer[3];
+  #endif
+
   //temperature from DALLAS
   //00 01 02 03 04 05 06 07
   //-----------------------
   //28 C9 B8 41 04 00 00 97
 
+  
+  #ifdef stringdef
   dataString1 += "V,";
   dataString1 += versionSW;
   dataString1 += "\n";
-
+  #else
+  int n; //data length
+  sprintf(dataString,"V,%s\n",versionSW);
+  #endif
+  
   #ifdef DALLASdef
   for(byte i=0;i<numberOfDevices; i++) {
+    #ifdef stringdef
     dataString1 += "T";
-
+    #else
+    sprintf(dataString,"%sT",dataString);
+    #endif
+    
     for (byte j=0; j<8; j++) {
+      #ifdef stringdef
       sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
+      #endif
       if (tempDeviceAddresses[i][j]<16) {
+        #ifdef stringdef
         dataString1 += "0";
         dataString1 += buffer[0];
+        #else
+        sprintf(dataString,"%s0",dataString);
+        #endif
       }
       else {
+        #ifdef stringdef
         dataString1 += buffer[0];
         dataString1 += buffer[1];
+        #endif
       }
+      #ifndef stringdef
+      sprintf (dataString, "%s%X", dataString, tempDeviceAddresses[i][j]);
+      #endif
     }
 
-    dataString1 += ",";
     int t = (int)(sensor[i]*10);
+    #ifdef stringdef
+    dataString1 += ",";
+    #else
+    sprintf(dataString,"%s,",dataString);
+    #endif
 
     if (t<0&&t>-10) {
+      #ifdef stringdef
       dataString1 += "-";
+      #else
+      sprintf(dataString,"%s-",dataString);
+      #endif
     }
+    #ifdef stringdef
     dataString1 += t/10;
     dataString1 += ".";
     dataString1 += abs(t%10);
     dataString1 += "\n";
+    #else
+    sprintf(dataString,"%s%d.%d\n",dataString,t/10,abs(t%10));
+    #endif
   }
   #endif
 
   #ifdef BMP085def
+  #ifdef stringdef
   //Pressure
   dataString1 += "Press,";
   dataString1 += Pressure;
-  dataString1 += "\n";
   //Temperature
-  dataString1 += "Temp085,";
+  dataString1 += "\nTemp085,";
   dataString1 += Temperature/10;
   dataString1 += ".";
   dataString1 += abs(Temperature%10);
-  dataString1 += "\n";
+  #else
+  sprintf(dataString,"%sPress,%ld\n",dataString,Pressure);
+  sprintf(dataString,"%sTemp085,%0d.%d\n",dataString,Temperature/10,abs(Temperature%10));
+  #endif
   #endif
 
   #ifdef DHTdef
-  dataString1 += "Humidity,";
+  #ifdef stringdef
+  dataString1 += "\nHumidity,";
   dataString1 += humidity;
-  dataString1 += "\n";
-  dataString1 += "TempDHT,";
+  dataString1 += "\nTempDHT,";
   dataString1 += tempDHT;
+  #else
+  sprintf(dataString,"%sHumidity,%u\nTempDHT,%u\n", dataString,humidity,tempDHT);
+  #endif
   #endif
   
+  #ifdef stringdef
   dataString2 = "";
+  #endif
   #ifdef Anemodef
-  dataString2 = "\nWindS,";
+  #ifdef stringdef
+  dataString2 = "WindS,";
   dataString2 += pulseCountAll/numberOfWindSamples;
   dataString2 += "\nWindSM,";
   dataString2 += pulseCountMax;
   dataString2 += "\nWindD,";
   dataString2 += windDirectionAll/numberOfWindSamples;
+  #else
+  sprintf(dataString,"%sWindS,%u\nWindSM,%u\nWindD,%u", dataString,pulseCountAll/numberOfWindSamples,pulseCountMax,windDirectionAll/numberOfWindSamples);
+  #endif
   pulseCountAll=0;
   pulseCountMax=0;
   windDirectionAll=0;
   numberOfWindSamples=0;
+  #endif
+
+  #ifdef RainSensdef
+  #ifdef stringdef
+  dataString2 += "\nRain,";
+  dataString2 += pulseCountRainAll;
+  #else
+  n=sprintf(dataString,"%s\nRain,%u", dataString,pulseCountRainAll);
+  #endif
+  pulseCountRainAll=0;
   #endif
 
   // if there's a successful connection:
@@ -444,7 +512,11 @@ void sendData() {
     client.print("User-Agent: ");
     client.println(USERAGENT);
     client.print("Content-Length: ");
+    #ifdef stringdef
     client.println(dataString1.length()+dataString2.length());
+    #else
+    client.println(n);
+    #endif
     //client.println(dataString2.length());
 
     // last pieces of the HTTP PUT request:
@@ -453,10 +525,12 @@ void sendData() {
     client.println();
 
     // here's the actual content of the PUT request:
-	//dataString1.trim();
-	//dataString2.trim();
+    #ifdef stringdef
     client.print(dataString1);
     client.print(dataString2);
+    #else
+    client.print(dataString);
+    #endif
   } 
   else {
     // if you couldn't make a connection:
@@ -466,36 +540,18 @@ void sendData() {
     client.stop();
   }
  
-/*  Serial.println("\nDATA:");
+  //Serial.println("\nDATA:");
+  #ifdef stringdef
   Serial.println(dataString1);
   Serial.println(dataString2);
-  Serial.println();
-*/  
-  // note the time that the connection was made or attempted:
+  #else
+  Serial.println(dataString);
+  #endif
 }
 #endif
 
 
 #ifdef DALLASdef
-/*void printTemperatureAll() {
-  // Loop through each device, print out temperature data
-  for(byte i=0;i<numberOfDevices; i++) {
-    // Search the wire for address
-      Serial.print("T");
-      Serial.print(i, DEC);
-      Serial.print("[");
-      for (byte j=0; j<8;j++) {
-        if (tempDeviceAddresses[i][j] < 16) Serial.print("0");
-        Serial.print(tempDeviceAddresses[i][j], HEX);
-      }
-      Serial.print("]");
-
-      Serial.print(sensor[i]);
-      Serial.println(" C ");
-  }
-}
-*/
-
 void dsInit(void) {
   dsSensors.begin();
   numberOfDevices = dsSensors.getDeviceCount();
@@ -584,5 +640,11 @@ unsigned int calculateWindDirectionDegrees(int adcValue) {
 
 void counterISR() { 
   pulseCount++;
+}
+#endif
+
+#ifdef RainSensdef
+void counterISRRain() { 
+  pulseCountRain=true;
 }
 #endif

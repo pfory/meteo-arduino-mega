@@ -29,6 +29,10 @@ A5 SCL fpr Pressure BMP085
 //#define SWI2C
 #define DHTdef //1022
 
+#ifndef dummy //this section prevent from error while program is compiling without Ethernetdef
+char a[0]; //do not delete this dummy variable
+#endif
+
 #ifdef Ethernetdef
 #include <Ethernet.h>
 byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
@@ -169,10 +173,10 @@ void setup() {
 
   #ifdef Ethernetdef
 //  Serial.print("waiting for net connection...");
-  //if (Ethernet.begin(mac) == 0) {
+  if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed using DHCP");
     // DHCP failed, so use a fixed IP address:
-  //}
+  }
 
   Serial.println("EthOK");
   
@@ -190,7 +194,7 @@ void setup() {
   #endif
   
   #ifdef DALLASdef
-  //dsInit();
+  dsInit();
   lastDisplayTempTime = millis();
   dsSensors.requestTemperatures(); 
   #endif

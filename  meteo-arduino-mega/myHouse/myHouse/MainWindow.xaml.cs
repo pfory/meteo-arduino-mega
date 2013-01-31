@@ -121,7 +121,7 @@ namespace myHouse
                     }
                     if (column[0] == "Press")
                     {
-                      hd.pressure = Convert.ToInt32(column[2]);
+                      hd.pressure = (float)Convert.ToDecimal(column[2].Replace(".", ","));
                     }
                     if (column[0] == "Temp085")
                     {
@@ -263,10 +263,11 @@ namespace myHouse
         private float     _humidity;
         private float     _temp085;
         private float     _tempDHT;
-        private int       _pressure;
+        private float      _pressure;
         private int       _windSpeed;
         private int       _windSpeedMax;
         private int       _windDirection;
+        private const int _pulsesPerRevolution=5;
 
         public HouseData()
         {
@@ -298,10 +299,12 @@ namespace myHouse
         public float humidity         { get { return _humidity; }                   set { _humidity           = value; NotifyPropertyChanged("humidity"); }}
         public float temp085          { get { return _temp085; }                    set { _temp085            = value; NotifyPropertyChanged("temp085"); }}
         public float tempDHT          { get { return _tempDHT; }                    set { _tempDHT            = value; NotifyPropertyChanged("tempDHT"); }}
-        public int   pressure         { get { return _pressure; }                   set { _pressure           = value; NotifyPropertyChanged("pressure"); }}
+        public float pressure         { get { return _pressure / 100; }             set { _pressure           = value; NotifyPropertyChanged("pressure"); }}
 
-        public int windSpeed          { get { return _windSpeed; }                  set { _windSpeed          = value; NotifyPropertyChanged("windSpeed"); } }
-        public int windSpeedMax       { get { return _windSpeedMax; }               set { _windSpeedMax       = value; NotifyPropertyChanged("windSpeedMax"); } }
+        public int windSpeed          { get { return (_windSpeed/_pulsesPerRevolution) * 60; }
+                                                                                    set { _windSpeed          = value; NotifyPropertyChanged("windSpeed"); } }
+        public int windSpeedMax       { get { return (_windSpeedMax/_pulsesPerRevolution) * 60; }
+                                                                                    set { _windSpeedMax       = value; NotifyPropertyChanged("windSpeedMax"); } }
         public int windDirection      { get { return _windDirection; }              set { _windDirection      = value; NotifyPropertyChanged("windDirection"); } }
 
         public DateTime lastUpdate    { get { return _lastUpdate; }                 set { _lastUpdate         = value; NotifyPropertyChanged("lastUpdate"); } }

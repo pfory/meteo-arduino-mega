@@ -26,7 +26,7 @@ A5 SCL fpr Pressure BMP085
 #define Anemodef
 #define BMP085def
 #define RainSensdef
-//#define SWI2C
+//#define SWI2C  - proverit zda funguje, kdyz ano tak pouzit protoze je uspornejsi
 #define DHTdef //1022
 
 #ifndef dummy //this section prevent from error while program is compiling without Ethernetdef

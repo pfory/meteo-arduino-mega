@@ -131,6 +131,18 @@ namespace myHouse
                     {
                       hd.tempDHT = (float)Convert.ToDecimal(column[2].Replace(".",","));
                     }
+                    if (column[0] == "WindS")
+                    {
+                      hd.windSpeed = (int)Convert.ToDecimal(column[2].Replace(".", ","));
+                    }
+                    if (column[0] == "WindSM")
+                    {
+                      hd.windSpeedMax = (int)Convert.ToDecimal(column[2].Replace(".", ","));
+                    }
+                    if (column[0] == "WindD")
+                    {
+                      hd.windDirection = (int)Convert.ToDecimal(column[2].Replace(".", ","));
+                    }
 
                     hd.lastUpdate = getDateTimeFromCosmString(column[1] + column[2]);
 
@@ -191,7 +203,7 @@ namespace myHouse
           }
         }
 
-        private void CheckBox_Click_1(object sender, RoutedEventArgs e)
+        private void cb2Floor_Click(object sender, RoutedEventArgs e)
         {
           CheckBox cb = (CheckBox)sender;
           if (cb.IsChecked == true)
@@ -204,6 +216,22 @@ namespace myHouse
           }
           lblBedroom.Visibility = tbBedRoomTemp.Visibility;
         }
+
+      private void roof_Click(object sender, RoutedEventArgs e)
+        {
+          CheckBox cb = (CheckBox)sender;
+          if (cb.IsChecked == true)
+          {
+            lblWindSpeed.Visibility = lblWindSpeedMax.Visibility = lblWindDirection.Visibility = Visibility.Visible;
+            tbWindSpeed.Visibility = tbWindSpeedMax.Visibility = tbWindDirection.Visibility = Visibility.Visible;
+          }
+          else
+          {
+            lblWindSpeed.Visibility = lblWindSpeedMax.Visibility = lblWindDirection.Visibility = Visibility.Hidden;
+            tbWindSpeed.Visibility = tbWindSpeedMax.Visibility = tbWindDirection.Visibility = Visibility.Hidden;
+          }
+        }
+
     }
 
 
@@ -236,6 +264,9 @@ namespace myHouse
         private float     _temp085;
         private float     _tempDHT;
         private int       _pressure;
+        private int       _windSpeed;
+        private int       _windSpeedMax;
+        private int       _windDirection;
 
         public HouseData()
         {
@@ -269,6 +300,9 @@ namespace myHouse
         public float tempDHT          { get { return _tempDHT; }                    set { _tempDHT            = value; NotifyPropertyChanged("tempDHT"); }}
         public int   pressure         { get { return _pressure; }                   set { _pressure           = value; NotifyPropertyChanged("pressure"); }}
 
+        public int windSpeed          { get { return _windSpeed; }                  set { _windSpeed          = value; NotifyPropertyChanged("windSpeed"); } }
+        public int windSpeedMax       { get { return _windSpeedMax; }               set { _windSpeedMax       = value; NotifyPropertyChanged("windSpeedMax"); } }
+        public int windDirection      { get { return _windDirection; }              set { _windDirection      = value; NotifyPropertyChanged("windDirection"); } }
 
         public DateTime lastUpdate    { get { return _lastUpdate; }                 set { _lastUpdate         = value; NotifyPropertyChanged("lastUpdate"); } }
 

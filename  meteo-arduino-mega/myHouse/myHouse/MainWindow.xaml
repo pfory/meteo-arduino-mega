@@ -35,6 +35,16 @@
       <Style x:Key="secondFloorCheckBox" TargetType="CheckBox">
         <Setter Property="Foreground" Value="DarkBlue"/>
       </Style>
+      <Style x:Key="roofCheckBox" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="Red"/>
+      </Style>
+      <Style x:Key="roofLabel" TargetType="Label">
+        <Setter Property="Foreground" Value="Red"/>
+      </Style>
+      <Style x:Key="roofTextBlock" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="Red"/>
+      </Style>
+
     </Grid.Resources>
 
     <TabControl HorizontalAlignment="Left" Margin="0,23,0,0" VerticalAlignment="Top" Height="755">
@@ -51,10 +61,10 @@
           <TextBlock x:Name="tbCorridorTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="90,420,0,0" VerticalAlignment="Top" Width="45" Text="{Binding corridorTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" />
           <Ellipse x:Name="status" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="10,10,0,0" Fill="{Binding Path=statusLEDColor}"/>
           <TextBlock x:Name="tbBedRoomTemp" Style="{StaticResource secondFloorTextBlock}" HorizontalAlignment="Left" Margin="331,493,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTemp, StringFormat=\{0:F1\}}" />
-          <TextBlock HorizontalAlignment="Left" Margin="25,10,0,0" TextWrapping="Wrap" Text="{Binding lastUpdate, StringFormat=\{0:F\}}" VerticalAlignment="Top" Width="226"/>
+          <TextBlock HorizontalAlignment="Left" Margin="25,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="226" Text="{Binding lastUpdate, StringFormat=\{0:R\}}"/>
           <CheckBox x:Name="cb1Floor" Style="{StaticResource firstFloorCheckBox}" Content="1st floor" HorizontalAlignment="Left" Margin="445,20,0,0" VerticalAlignment="Top" IsChecked="True" Click="cb1Floor_Click"/>
-          <CheckBox Content="2nd floor" Style="{StaticResource secondFloorCheckBox}" HorizontalAlignment="Left" Margin="445,41,0,0" VerticalAlignment="Top" IsChecked="True" Click="CheckBox_Click_1"/>
-          <CheckBox Content="Roof" HorizontalAlignment="Left" Margin="445,62,0,0" VerticalAlignment="Top" Foreground="Red"/>
+          <CheckBox x:Name="cb2Floor" Content="2nd floor" Style="{StaticResource secondFloorCheckBox}" HorizontalAlignment="Left" Margin="445,41,0,0" VerticalAlignment="Top" IsChecked="True" Click="cb2Floor_Click"/>
+          <CheckBox x:Name="roof" Content="Roof" Style="{StaticResource roofCheckBox}" HorizontalAlignment="Left" Margin="445,62,0,0" VerticalAlignment="Top" IsChecked="True" Click="roof_Click"/>
           <Label x:Name="lblBedroom" Style="{StaticResource secondFloorLabel}" Content="Bedroom 1:" HorizontalAlignment="Left" Margin="257,493,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
           <Label x:Name="lblHall" Style="{StaticResource firstFloorLabel}" Content="Hall:" HorizontalAlignment="Left" Margin="257,474,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right"/>
           <Label x:Name="lblLivingRoom" Style="{StaticResource firstFloorLabel}" Content="Livingroom:" HorizontalAlignment="Left" Margin="150,430,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" />
@@ -73,6 +83,12 @@
           <TextBlock x:Name="tbHallTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,473,0,0" VerticalAlignment="Top" Width="45" Text="{Binding hallTemp, StringFormat=\{0:F1\}}" />
           <Label x:Name="lblOutdoor" Style="{StaticResource firstFloorLabel}" Content="Outdoor:" HorizontalAlignment="Left" Margin="6,38,0,0" VerticalAlignment="Top"  Height="16" Width="45" Padding="0" HorizontalContentAlignment="Right"/>
           <TextBlock x:Name="tbOutdoorTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="56,38,0,0" VerticalAlignment="Top" Width="45" Text="{Binding outdoorTemp, StringFormat=\{0:F1\}}" />
+          <Label x:Name="lblWindSpeed" Style="{StaticResource roofLabel}" Content="Windspeed:" HorizontalAlignment="Left" VerticalAlignment="Top"  Height="16" Width="65" Padding="0" HorizontalContentAlignment="Right" Margin="225,10,0,0"/>
+          <TextBlock x:Name="tbWindSpeed" Style="{StaticResource roofTextBlock}" HorizontalAlignment="Left" Margin="295,10,0,0" VerticalAlignment="Top" Width="45" Text="{Binding windSpeed, StringFormat=\{0:F0\}}" />
+          <Label x:Name="lblWindSpeedMax" Style="{StaticResource roofLabel}" Content="Windspeed max:" HorizontalAlignment="Left" VerticalAlignment="Top"  Height="16" Width="96" Padding="0" HorizontalContentAlignment="Right" Margin="194,25,0,0"/>
+          <TextBlock x:Name="tbWindSpeedMax" Style="{StaticResource roofTextBlock}" HorizontalAlignment="Left" Margin="295,26,0,0" VerticalAlignment="Top" Width="45" Text="{Binding windSpeedMax, StringFormat=\{0:F0\}}" />
+          <Label x:Name="lblWindDirection" Style="{StaticResource roofLabel}" Content="Wind direction:" HorizontalAlignment="Left" VerticalAlignment="Top"  Height="16" Width="96" Padding="0" HorizontalContentAlignment="Right" Margin="194,41,0,0"/>
+          <TextBlock x:Name="tbWindDirection" Style="{StaticResource roofTextBlock}" HorizontalAlignment="Left" Margin="295,41,0,0" VerticalAlignment="Top" Width="45" Text="{Binding windDirection, StringFormat=\{0:F0\}}" />
         </Grid>
       </TabItem>
     </TabControl>

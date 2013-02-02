@@ -26,7 +26,7 @@ A5 SCL fpr Pressure BMP085
 #define Anemodef
 #define BMP085def
 #define RainSensdef
-//#define SWI2C  - proverit zda funguje, kdyz ano tak pouzit protoze je uspornejsi
+//#define SWI2C  // - proverit zda funguje, kdyz ano tak pouzit protoze je uspornejsi
 #define DHTdef //1022
 
 #ifndef dummy //this section prevent from error while program is compiling without Ethernetdef
@@ -157,7 +157,7 @@ unsigned int pulseCountRainAll=0;
 
 byte counter=0;
 
-char versionSW[]="0.77";
+char versionSW[]="0.78";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
@@ -257,6 +257,7 @@ void loop() {
     #ifdef SWI2C
     Pressure = bmp.readPressure();
     Pressure = getRealPressure(Pressure, high_above_sea);
+    Temperature = bmp.readTemperature();
     #else
     bmp.getPressure(&Pressure);
     bmp.getTemperature(&Temperature); 
@@ -269,9 +270,9 @@ void loop() {
     time = millis();
     numberOfWindSamples++;
     int val=analogRead(windDirPin);
-    Serial.print(val);
+    /*Serial.print(val);
     Serial.print("-");
-    Serial.println(calculateWindDirectionDegrees(val));
+    Serial.println(calculateWindDirectionDegrees(val));*/
     windDirectionAll+=calculateWindDirectionDegrees(val);
     if (abs(pulseCount-pulseCountPrev)<pulseDiff) {
       pulseCountAll+=pulseCount;
@@ -441,7 +442,7 @@ void sendData() {
     dataString1 += abs(t%10);
     dataString1 += "\n";
     #else
-    sprintf(dataString,"%s%d.%d\n",dataString,t/10,abs(t%10));
+    sprintf(dataString,"%s%d.%u\n",dataString,t/10,abs(t%10));
     #endif
   }
   #endif
@@ -458,7 +459,8 @@ void sendData() {
   dataString1 += abs(Temperature%10);
   #else
   sprintf(dataString,"%sPress,%ld\n",dataString,Pressure);
-  sprintf(dataString,"%sTemp085,%0d.%d\n",dataString,Temperature/10,abs(Temperature%10));
+  //sprintf(dataString,"%sTemp085,%d.%u\n",dataString,Temperature/10,abs(Temperature%10));
+  sprintf(dataString,"%sTemp085,%d.%u\n",dataString,(int)(Temperature/10),(int)(abs(Temperature%10)));
   #endif
   #endif
 
@@ -469,7 +471,7 @@ void sendData() {
   dataString1 += "\nTempDHT,";
   dataString1 += tempDHT;
   #else
-  sprintf(dataString,"%sHumidity,%u\nTempDHT,%u\n", dataString,humidity,tempDHT);
+  sprintf(dataString,"%sHumidity,%u\nTempDHT,%d\n", dataString,humidity,tempDHT);
   #endif
   #endif
   
@@ -478,7 +480,7 @@ void sendData() {
   #endif
   #ifdef Anemodef
   #ifdef stringdef
-  dataString2 = "WindS,";
+  dataString2 = "\nWindS,";
   dataString2 += pulseCountAll/numberOfWindSamples;
   dataString2 += "\nWindSM,";
   dataString2 += pulseCountMax;

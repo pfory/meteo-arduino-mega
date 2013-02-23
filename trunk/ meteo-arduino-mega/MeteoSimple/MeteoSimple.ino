@@ -156,8 +156,9 @@ unsigned int pulseCountRainAll=0;
 #endif
 
 byte counter=0;
+byte pila=0;
 
-char versionSW[]="0.78";
+char versionSW[]="0.79";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
@@ -504,6 +505,14 @@ void sendData() {
   #endif
   pulseCountRainAll=0;
   #endif
+  
+  #ifdef stringdef
+  dataString2 += "\nH,";
+  dataString2 += pila;
+  #else
+  n=sprintf(dataString,"%s\nH,%u", dataString,pila);
+  #endif
+  if (pila==0) pila=1; else pila=0;
 
   // if there's a successful connection:
   if (client.connect(server, 80)) {

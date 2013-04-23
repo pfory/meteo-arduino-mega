@@ -158,7 +158,7 @@ unsigned int pulseCountRainAll=0;
 byte counter=0;
 byte pila=0;
 
-char versionSW[]="0.79";
+char versionSW[]="0.80";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
@@ -236,13 +236,13 @@ void setup() {
 void loop() {
 
   //start sampling
-  if (millis() - lastMeasTime > dsMeassureInterval) {
+  if ((lastMeasTime = millis()) - lastMeasTime >= dsMeassureInterval) {
+    //lastMeasTime = millis();
+    lastDsMeasStartTime=lastMeasTime;
     sample++;
-    lastMeasTime = millis();
     //startTimer();
     #ifdef DALLASdef
     dsSensors.requestTemperatures(); 
-    lastDsMeasStartTime=millis();
     dsMeasStarted=true;
     #endif
     
@@ -267,8 +267,8 @@ void loop() {
   }
 
   #ifdef Anemodef
-  if (millis() - time > 1000) {
-    time = millis();
+  if ((time = millis()) - time >= 1000) {
+    //time = millis();
     numberOfWindSamples++;
     int val=analogRead(windDirPin);
     /*Serial.print(val);
@@ -296,7 +296,7 @@ void loop() {
   
   #ifdef DALLASdef
   if (dsMeasStarted) {
-    if (millis() - lastDsMeasStartTime>dsMeassureDelay) {
+    if (millis() - lastDsMeasStartTime >= dsMeassureDelay) {
       dsMeasStarted=false;
       //saving temperatures into variables
       for (byte i=0;i<numberOfDevices; i++) {
@@ -310,12 +310,25 @@ void loop() {
         }
         sensor[i]=tempTemp;
       } 
+      //obcas se vyskytne chyba a vsechna cidla prestanou merit
+      //zkusim restartovat sbernici
+      bool reset=true;
+      for (byte i=0; i<numberOfDevices; i++) {
+        if (sensor[i]!=0.0) {
+          reset=false;
+        }
+      }
+      if (reset) {
+        pila=2;
+        dsInit();
+      }
     }
   }
   #endif
   
     
-  if (millis() - dsLastPrintTime > dsPrintTimeDelay) {
+  //if ((dsLastPrintTime = millis()) - dsLastPrintTime >= dsPrintTimeDelay) {
+    //dsLastPrintTime = millis(); 
 
     /*Serial.println();
     #ifdef DALLASdef
@@ -339,8 +352,7 @@ void loop() {
     
     Serial.println("");
     */
-    dsLastPrintTime = millis(); 
-  }
+  //}
   
   #ifdef Ethernetdef
   if (sample==2) {
@@ -355,8 +367,8 @@ void loop() {
     checkConfigFlag = false;
   }
 
-  if(!client.connected() && (millis() - lastSendTime > sendTimeDelay)) {
-    lastSendTime = millis();
+  if(!client.connected() && ((lastSendTime = millis()) - lastSendTime >= sendTimeDelay)) {
+    //lastSendTime = millis();
     //digitalWrite(ledPin, HIGH);
     sendData();
     //digitalWrite(ledPin, LOW);

@@ -21,12 +21,12 @@ A5 SCL fpr Pressure BMP085
 #include <limits.h>
 
 //#define debug
+//#define serial
 #define Ethernetdef
 #define DALLASdef 
 #define Anemodef
 #define BMP085def
 #define RainSensdef
-//#define SWI2C  // - proverit zda funguje, kdyz ano tak pouzit protoze je uspornejsi
 #define DHTdef //1022
 
 #ifndef dummy //this section prevent from error while program is compiling without Ethernetdef
@@ -94,15 +94,11 @@ unsigned int const dsPrintTimeDelay=4000; //interval to show results
 unsigned int const sendTimeDelay=20000; //to send to cosm.com
 
 #ifdef BMP085def
-#include <Wire.h>
-#ifdef SWI2C
-#include <swI2C_BMP085.h>
-#include <I2cMaster.h>
-swI2C_BMP085 bmp;
-#else
+//#include <Wire.h>
 #include <BMP085.h> //558 bytes +
+#include "I2Cdev.h"
+#include "Wire.h"
 BMP085 bmp = BMP085();      // Digital Pressure Sensor 
-#endif
 unsigned long lastDisplayBMPTime;
 //unsigned long avgPressure=0;
 //unsigned long lastAvgPressure=0;
@@ -113,8 +109,8 @@ unsigned long lastPressureTime=0;
 #define PRESSDOWN     2
 //byte pressureChange=PRESSNOCHANGE;
 signed long         high_above_sea=36900;
-signed long Temperature = 0;
-long Pressure = 0;//, Altitude = 0;
+float Temperature = 0;
+float Pressure = 0;//, Altitude = 0;
 
 #endif
 
@@ -166,31 +162,35 @@ char versionSWString[] = "METEO Simple v"; //SW name & version
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
   // start serial port:
-  Serial.begin(115200);
+  #ifdef serial
+  Serial.begin(19200);
 //  Serial.println();
   Serial.println(versionSW);
-  
+  #endif
   //Serial.println(F("SW inicialization"));
 
   #ifdef Ethernetdef
-//  Serial.print("waiting for net connection...");
+  Serial.print("waiting for net connection...");
   if (Ethernet.begin(mac) == 0) {
+    #ifdef serial
     Serial.println("Failed using DHCP");
+    #endif
     // DHCP failed, so use a fixed IP address:
   }
 
+  #ifdef serial
   Serial.println("EthOK");
-  
-//  Serial.print("\nIP:");
-//  Serial.println(Ethernet.localIP());
-  /*Serial.print("Mask:");
+  Serial.print("\nIP:");
+  Serial.println(Ethernet.localIP());
+  Serial.print("Mask:");
   Serial.println(Ethernet.subnetMask());
   Serial.print("Gateway:");
   Serial.println(Ethernet.gatewayIP());
   Serial.print("DNS:");
   Serial.println(Ethernet.dnsServerIP());
   Serial.println();
-  */
+  #endif
+  
   lastSendTime = dsLastPrintTime = lastMeasTime = millis();
   #endif
   
@@ -254,15 +254,21 @@ void loop() {
 
     
     #ifdef BMP085def
-    //unsigned long oldPress=Pressure;
-    #ifdef SWI2C
-    Pressure = bmp.readPressure();
-    Pressure = getRealPressure(Pressure, high_above_sea);
-    Temperature = bmp.readTemperature();
-    #else
-    bmp.getPressure(&Pressure);
-    bmp.getTemperature(&Temperature); 
-    #endif
+    //bmpMin.getPressure(&Pressure);
+    bmp.setControl(BMP085_MODE_TEMPERATURE);
+    // wait appropriate time for conversion (4.5ms delay)
+    int32_t lastMicrosBMP = micros();
+    while (micros() - lastMicrosBMP < bmp.getMeasureDelayMicroseconds());
+    Temperature = bmp.getTemperatureC(); 
+    bmp.setControl(BMP085_MODE_PRESSURE_3);
+    lastMicrosBMP = micros();
+    while (micros() - lastMicrosBMP < bmp.getMeasureDelayMicroseconds());
+    Pressure = bmp.getPressure();
+    
+    Pressure = Pressure / pow((1 - (float)high_above_sea / 4433000), 5.255) + 0;
+
+    
+    //bmpMin.getTemperature(&Temperature); 
     #endif
   }
 
@@ -467,13 +473,15 @@ void sendData() {
   dataString1 += Pressure;
   //Temperature
   dataString1 += "\nTemp085,";
-  dataString1 += Temperature/10;
-  dataString1 += ".";
-  dataString1 += abs(Temperature%10);
+  dataString1 += Temperature;
+  //dataString1 += ".";
+  //dataString1 += abs(Temperature%10);
   #else
-  sprintf(dataString,"%sPress,%ld\n",dataString,Pressure);
+  //sprintf(dataString,"%sPress,%ld\n",dataString,Pressure);
+  //Pressure = 101000;
+  sprintf(dataString,"%sPress,%lu\n",dataString,(unsigned long)Pressure);
   //sprintf(dataString,"%sTemp085,%d.%u\n",dataString,Temperature/10,abs(Temperature%10));
-  sprintf(dataString,"%sTemp085,%d.%u\n",dataString,(int)(Temperature/10),(int)(abs(Temperature%10)));
+  sprintf(dataString,"%sTemp085,%d\n",dataString,(int)Temperature);
   #endif
   #endif
 
@@ -607,15 +615,12 @@ void dsInit(void) {
 
 #ifdef BMP085def
 void bmp085Init() {
-  #ifdef SWI2C
-  bmp.begin();
-  #else
-  Wire.begin();
   delay(1000);
-  bmp.init(MODE_ULTRA_HIGHRES, high_above_sea, true);  // 250 meters, true = using meter units
+  bmp.initialize();  // 250 meters, true = using meter units
+  //bmp.init(high_above_sea);  // 250 meters, true = using meter units
+  //bmp.init(MODE_ULTRA_HIGHRES, high_above_sea, true);  // 250 meters, true = using meter units
                   // this initialization is useful if current altitude is known,
                   // pressure will be calculated based on TruePressure and known altitude.
-  #endif
 }
 
 #ifdef SWI2C

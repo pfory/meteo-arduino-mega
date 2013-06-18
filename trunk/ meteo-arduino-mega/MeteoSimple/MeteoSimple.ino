@@ -57,6 +57,7 @@ char TemperatureID[] = "Temperature";
 char WindDirectionID[] = "Wind direction";
 char WindSpeedID[] = "Wind speed";
 char WindSpeedmaxID[] = "Wind speed max";
+char WindRatioID[] = "Wind ratio";
 
 //TODO add all streams
 // Define the strings for our datastream IDs
@@ -72,6 +73,7 @@ XivelyDatastream(TemperatureID, strlen(TemperatureID), DATASTREAM_FLOAT),
 XivelyDatastream(WindDirectionID, strlen(WindDirectionID), DATASTREAM_INT),
 XivelyDatastream(WindSpeedID, strlen(WindSpeedID), DATASTREAM_FLOAT),
 XivelyDatastream(WindSpeedmaxID, strlen(WindSpeedmaxID), DATASTREAM_FLOAT),
+XivelyDatastream(WindRatioID, strlen(WindRatioID), DATASTREAM_FLOAT),
 };
 // Finally, wrap the datastreams into a feed
 XivelyFeed feed(xivelyFeed, datastreams, 2 /* number of datastreams */);
@@ -81,6 +83,7 @@ XivelyClient xivelyclient(client);
 
 bool checkConfigFlag = false;
 unsigned long lastSendTime;
+float windRatio = 4;
 #endif
 
 
@@ -382,7 +385,7 @@ void loop() {
   }
 
   if (sample==5 && checkConfigFlag == false) {
-    //checkConfig();
+    checkConfig();
   }
 
   if (sample==8) {
@@ -410,8 +413,8 @@ void sendData() {
   pulseCountRainAll=0;
 
   datastreams[8].setInt(windDirectionAll/numberOfWindSamples);
-  datastreams[9].setFloat(pulseCountAll/numberOfWindSamples);
-  datastreams[10].setFloat(pulseCountMax);
+  datastreams[9].setFloat(((float)(pulseCountAll/numberOfWindSamples)))/windRatio;
+  datastreams[10].setFloat((float)pulseCountMax/windRatio);
 
   pulseCountAll=0;
   pulseCountMax=0;
@@ -627,6 +630,12 @@ void sendData() {
   Serial.println(dataString);
   #endif
 }*/
+
+
+void checkConfig() {
+  windRatio = datastreams[11].getFloat();  
+}
+
  #endif
 
 

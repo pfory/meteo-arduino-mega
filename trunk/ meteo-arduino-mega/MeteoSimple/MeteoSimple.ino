@@ -34,25 +34,53 @@ char a[0]; //do not delete this dummy variable
 #endif
 
 #ifdef Ethernetdef
+//#include <SPI.h>
 #include <Ethernet.h>
+#include <HttpClient.h>
+#include <Xively.h>
+
 byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
+
+// Your Xively key to let you upload data
+char xivelyKey[] = "azCLxsU4vKepKymGFFWVnXCvTQ6Ilze3euIsNrRKRRXuSPO8";
+//your xively feed ID
+#define xivelyFeed 538561447
+//datastreams
+String VersionID[] = "Version";
+char StatusID[] = "H";
+char DHTHumidityID[] = "Humidity";
+char DHTTemperatureID[] = "DHT temperature";
+char PressID[] = "Press";
+char PressTemperatureID[] = "BMP temperature";
+char RainID[] = "Rain";
+char TemperatureID[] = "Temperature";
+char WindDirectionID[] = "Wind direction";
+char WindSpeedID[] = "Wind speed";
+char WindSpeedmaxID[] = "Wind speed max";
+
+//TODO add all streams
+// Define the strings for our datastream IDs
+XivelyDatastream datastreams[] = {
+XivelyDatastream(*VersionID, DATASTREAM_STRING),
+XivelyDatastream(StatusID, strlen(StatusID), DATASTREAM_INT),
+XivelyDatastream(DHTHumidityID, strlen(DHTHumidityID), DATASTREAM_INT),
+XivelyDatastream(DHTTemperatureID, strlen(DHTTemperatureID), DATASTREAM_INT),
+XivelyDatastream(PressID, strlen(PressID), DATASTREAM_INT),
+XivelyDatastream(PressTemperatureID, strlen(PressTemperatureID), DATASTREAM_FLOAT),
+XivelyDatastream(RainID, strlen(RainID), DATASTREAM_INT),
+XivelyDatastream(TemperatureID, strlen(TemperatureID), DATASTREAM_FLOAT),
+XivelyDatastream(WindDirectionID, strlen(WindDirectionID), DATASTREAM_INT),
+XivelyDatastream(WindSpeedID, strlen(WindSpeedID), DATASTREAM_FLOAT),
+XivelyDatastream(WindSpeedmaxID, strlen(WindSpeedmaxID), DATASTREAM_FLOAT),
+};
+// Finally, wrap the datastreams into a feed
+XivelyFeed feed(xivelyFeed, datastreams, 2 /* number of datastreams */);
+
 EthernetClient client;
-char server[] = "api.cosm.com";   // name address for cosm API
+XivelyClient xivelyclient(client);
+
 bool checkConfigFlag = false;
-
 unsigned long lastSendTime;
-//COSM
-#define APIKEY         "q1PY6QqB9jvSHGKhmCQNBRdCofeSAKxpKzliaHJGWUc5UT0g" // your cosm api key
-#define FEEDID         63310 // your feed ID
-#define USERAGENT      "Meteo Arduino" // user agent is the project name
-
-//#define stringdef //26350 //use String class instead sprintf //24234
-#ifdef stringdef 
-String dataString1 = "";
-String dataString2 = "";
-#else
-char dataString[280];
-#endif
 #endif
 
 
@@ -73,7 +101,7 @@ DallasTemperature dsSensors(&onewire);
 #endif
 DeviceAddress tempDeviceAddress;
 #ifndef NUMBER_OF_DEVICES
-#define NUMBER_OF_DEVICES 20
+#define NUMBER_OF_DEVICES 2
 #endif
 DeviceAddress tempDeviceAddresses[NUMBER_OF_DEVICES];
 //int  resolution = 12;
@@ -154,8 +182,8 @@ unsigned int pulseCountRainAll=0;
 byte counter=0;
 byte pila=0;
 
-char versionSW[]="0.80";
-char versionSWString[] = "METEO Simple v"; //SW name & version
+String versionSW="0.81";
+String versionSWString = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
 
@@ -170,27 +198,13 @@ void setup() {
   //Serial.println(F("SW inicialization"));
 
   #ifdef Ethernetdef
-  Serial.print("waiting for net connection...");
-  if (Ethernet.begin(mac) == 0) {
-    #ifdef serial
-    Serial.println("Failed using DHCP");
-    #endif
-    // DHCP failed, so use a fixed IP address:
+  while (Ethernet.begin(mac) != 1)
+  {
+    Serial.println("Error getting IP address via DHCP, trying again...");
+    delay(15000);
   }
-
-  #ifdef serial
-  Serial.println("EthOK");
-  Serial.print("\nIP:");
-  Serial.println(Ethernet.localIP());
-  Serial.print("Mask:");
-  Serial.println(Ethernet.subnetMask());
-  Serial.print("Gateway:");
-  Serial.println(Ethernet.gatewayIP());
-  Serial.print("DNS:");
-  Serial.println(Ethernet.dnsServerIP());
-  Serial.println();
-  #endif
   
+  lastSendTime = dsLastPrintTime = lastMeasTime = millis();
   lastSendTime = dsLastPrintTime = lastMeasTime = millis();
   #endif
   
@@ -249,7 +263,9 @@ void loop() {
     #ifdef DHTdef
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
     humidity = dht.readHumidity();
+    datastreams[2].setInt(humidity);
     tempDHT = dht.readTemperature();
+    datastreams[3].setInt(tempDHT);
     #endif
 
     
@@ -260,15 +276,14 @@ void loop() {
     int32_t lastMicrosBMP = micros();
     while (micros() - lastMicrosBMP < bmp.getMeasureDelayMicroseconds());
     Temperature = bmp.getTemperatureC(); 
+    datastreams[5].setInt(Temperature);
     bmp.setControl(BMP085_MODE_PRESSURE_3);
     lastMicrosBMP = micros();
     while (micros() - lastMicrosBMP < bmp.getMeasureDelayMicroseconds());
     Pressure = bmp.getPressure();
     
     Pressure = Pressure / pow((1 - (float)high_above_sea / 4433000), 5.255) + 0;
-
-    
-    //bmpMin.getTemperature(&Temperature); 
+    datastreams[4].setInt(Pressure);
     #endif
   }
 
@@ -316,6 +331,7 @@ void loop() {
         }
         sensor[i]=tempTemp;
       } 
+      datastreams[7].setInt(sensor[0]);
       //obcas se vyskytne chyba a vsechna cidla prestanou merit
       //zkusim restartovat sbernici
       bool reset=true;
@@ -386,6 +402,34 @@ void loop() {
 //-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
 #ifdef Ethernetdef
 void sendData() {
+  datastreams[0].setString(versionSW);
+  if (pila==0) pila=1; else pila=0;
+  datastreams[1].setString(versionSW);
+
+  datastreams[6].setInt(pulseCountRainAll);
+  pulseCountRainAll=0;
+
+  datastreams[8].setInt(windDirectionAll/numberOfWindSamples);
+  datastreams[9].setFloat(pulseCountAll/numberOfWindSamples);
+  datastreams[10].setFloat(pulseCountMax);
+
+  pulseCountAll=0;
+  pulseCountMax=0;
+  windDirectionAll=0;
+  numberOfWindSamples=0;
+
+  
+   //send value to xively
+  //Serial.println("Uploading it to Xively");
+  int ret = xivelyclient.put(feed, xivelyKey);
+  //return message
+  //Serial.print("xivelyclient.put returned ");
+  //Serial.println(ret);
+  //Serial.println("");
+}
+
+
+/* void sendData() {
 
   //Serial.println("sending data");
   
@@ -582,8 +626,8 @@ void sendData() {
   #else
   Serial.println(dataString);
   #endif
-}
-#endif
+}*/
+ #endif
 
 
 #ifdef DALLASdef

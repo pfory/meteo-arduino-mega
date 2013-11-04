@@ -46,37 +46,37 @@ char xivelyKey[] = "azCLxsU4vKepKymGFFWVnXCvTQ6Ilze3euIsNrRKRRXuSPO8";
 //your xively feed ID
 #define xivelyFeed 538561447
 //datastreams
-String VersionID[] = "Version";
+char VersionID[] = "V";
 char StatusID[] = "H";
 char DHTHumidityID[] = "Humidity";
-char DHTTemperatureID[] = "DHT temperature";
+char DHTTemperatureID[] = "TempDHT";
 char PressID[] = "Press";
-char PressTemperatureID[] = "BMP temperature";
+char PressTemperatureID[] = "Temp085";
 char RainID[] = "Rain";
-char TemperatureID[] = "Temperature";
-char WindDirectionID[] = "Wind direction";
-char WindSpeedID[] = "Wind speed";
-char WindSpeedmaxID[] = "Wind speed max";
-char WindRatioID[] = "Wind ratio";
+char TemperatureID[] = "T2899BDCF02000076";
+char WindDirectionID[] = "WindD";
+char WindSpeedID[] = "WindS";
+char WindSpeedmaxID[] = "WindSM";
+
 
 //TODO add all streams
 // Define the strings for our datastream IDs
 XivelyDatastream datastreams[] = {
-XivelyDatastream(*VersionID, DATASTREAM_STRING),
+XivelyDatastream(VersionID, strlen(VersionID), DATASTREAM_FLOAT),
 XivelyDatastream(StatusID, strlen(StatusID), DATASTREAM_INT),
 XivelyDatastream(DHTHumidityID, strlen(DHTHumidityID), DATASTREAM_INT),
 XivelyDatastream(DHTTemperatureID, strlen(DHTTemperatureID), DATASTREAM_INT),
 XivelyDatastream(PressID, strlen(PressID), DATASTREAM_INT),
-XivelyDatastream(PressTemperatureID, strlen(PressTemperatureID), DATASTREAM_FLOAT),
+XivelyDatastream(PressTemperatureID, strlen(PressTemperatureID), DATASTREAM_INT),
 XivelyDatastream(RainID, strlen(RainID), DATASTREAM_INT),
 XivelyDatastream(TemperatureID, strlen(TemperatureID), DATASTREAM_FLOAT),
 XivelyDatastream(WindDirectionID, strlen(WindDirectionID), DATASTREAM_INT),
-XivelyDatastream(WindSpeedID, strlen(WindSpeedID), DATASTREAM_FLOAT),
-XivelyDatastream(WindSpeedmaxID, strlen(WindSpeedmaxID), DATASTREAM_FLOAT),
-XivelyDatastream(WindRatioID, strlen(WindRatioID), DATASTREAM_FLOAT),
+XivelyDatastream(WindSpeedID, strlen(WindSpeedID), DATASTREAM_INT),
+XivelyDatastream(WindSpeedmaxID, strlen(WindSpeedmaxID), DATASTREAM_INT),
+//XivelyDatastream(WindRatioID, strlen(WindRatioID), DATASTREAM_FLOAT),
 };
 // Finally, wrap the datastreams into a feed
-XivelyFeed feed(xivelyFeed, datastreams, 2 /* number of datastreams */);
+XivelyFeed feed(xivelyFeed, datastreams, 11 /* number of datastreams */);
 
 EthernetClient client;
 XivelyClient xivelyclient(client);
@@ -405,21 +405,25 @@ void loop() {
 //-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
 #ifdef Ethernetdef
 void sendData() {
-  datastreams[0].setString(versionSW);
-  if (pila==0) pila=1; else pila=0;
-  datastreams[1].setString(versionSW);
+  datastreams[0].setFloat(versionSW);
+  datastreams[1].setInt(pila);
+  if (pila>0) pila=0; else pila=1;
 
-  datastreams[6].setInt(pulseCountRainAll);
+  datastreams[2].setInt(); //Humidity
+  datastreams[3].setInt(); //TempDHT
+  datastreams[4].setInt(); //Press
+  datastreams[5].setInt(); //Temp085
+  datastreams[6].setInt(pulseCountRainAll); //Rain
   pulseCountRainAll=0;
-
-  datastreams[8].setInt(windDirectionAll/numberOfWindSamples);
-  datastreams[9].setFloat(((float)(pulseCountAll/numberOfWindSamples)))/windRatio;
-  datastreams[10].setFloat((float)pulseCountMax/windRatio);
-
-  pulseCountAll=0;
-  pulseCountMax=0;
+  datastreams[7].setFloat(); //T2899BDCF02000076
+  datastreams[8].setInt(windDirectionAll/numberOfWindSamples); //WindD
   windDirectionAll=0;
   numberOfWindSamples=0;
+  datastreams[9].setInt((float)(pulseCountAll/numberOfWindSamples/windRatio)); //WindS
+  datastreams[10].setInt((float)pulseCountMax/windRatio);  //WindSM
+  
+  pulseCountAll=0;
+  pulseCountMax=0;
 
   
    //send value to xively

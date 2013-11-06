@@ -185,7 +185,7 @@ unsigned int pulseCountRainAll=0;
 byte counter=0;
 byte pila=0;
 
-String versionSW="0.81";
+float versionSW=0.82;
 String versionSWString = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
@@ -409,13 +409,13 @@ void sendData() {
   datastreams[1].setInt(pila);
   if (pila>0) pila=0; else pila=1;
 
-  datastreams[2].setInt(); //Humidity
-  datastreams[3].setInt(); //TempDHT
-  datastreams[4].setInt(); //Press
-  datastreams[5].setInt(); //Temp085
+  datastreams[2].setInt(0); //Humidity
+  datastreams[3].setInt(0); //TempDHT
+  datastreams[4].setInt(0); //Press
+  datastreams[5].setInt(0); //Temp085
   datastreams[6].setInt(pulseCountRainAll); //Rain
   pulseCountRainAll=0;
-  datastreams[7].setFloat(); //T2899BDCF02000076
+  datastreams[7].setFloat(0.0); //T2899BDCF02000076
   datastreams[8].setInt(windDirectionAll/numberOfWindSamples); //WindD
   windDirectionAll=0;
   numberOfWindSamples=0;

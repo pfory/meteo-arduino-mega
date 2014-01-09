@@ -13,6 +13,9 @@
       <Setter Property="Foreground" Value="LightCoral"/>
       <!--<Setter Property="Background" Value="AntiqueWhite"/>-->
     </Style>
+    <Style x:Key="secondFloorTextBlock" TargetType="{x:Type TextBlock}">
+      <Setter Property="Foreground" Value="DarkBlue"/>
+    </Style>
   </Window.Resources>
   <Grid Margin="0,0,2,1">
     <Grid.Resources>
@@ -47,8 +50,8 @@
 
     </Grid.Resources>
 
-    <TabControl HorizontalAlignment="Left" Margin="26,22,0,0" VerticalAlignment="Top" Height="765" BorderThickness="5">
-      <TabItem Header="View">
+    <TabControl HorizontalAlignment="Left" Margin="26,22,0,0" VerticalAlignment="Top" Height="765" BorderThickness="5" Width="592">
+      <TabItem Header="House">
         <Grid Width="575">
           <Rectangle x:Name="hallRect" HorizontalAlignment="Left" Height="250" Margin="155,463,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=hallColor}" ToolTip="Hall (first floor), Bedroom (second floor)"/>
           <Rectangle x:Name="livingRoomRect" HorizontalAlignment="Left" Height="400" Margin="155,58,0,0" Stroke="Black" VerticalAlignment="Top" Width="250" Fill="{Binding Path=livingRoomColor}" ToolTip="Livingroom"/>
@@ -58,17 +61,29 @@
           <TextBlock x:Name="tbBojlerTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="206,619,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bojlerTemp, StringFormat=\{0:F1\}}" Tag="" ToolTip="Bojler temperature (°C)" />
           <TextBlock x:Name="tbLivingRoomTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="225,430,0,0" VerticalAlignment="Top" Text="{Binding livingRoomTemp, StringFormat=\{0:F1\}}" Width="45" ToolTip="Living room temperature (°C)" />
           <TextBlock x:Name="tbCorridorTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="90,420,0,0" VerticalAlignment="Top" Width="45" Text="{Binding corridorTemp, StringFormat=\{0:F1\}}" TextAlignment="Right" ToolTip="Corridor temperature (°C)" />
-          <Ellipse x:Name="status" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="4,5,0,0" Fill="{Binding Path=statusLEDColor}"/>
-          <TextBlock x:Name="tbBedRoomTemp" Style="{StaticResource secondFloorTextBlock}" HorizontalAlignment="Left" Margin="331,493,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTemp, StringFormat=\{0:F1\}}" ToolTip="Bedroom temperature (°C)" />
-          <TextBlock HorizontalAlignment="Left" Margin="6,15,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="169" Text="{Binding lastUpdate, StringFormat=\{0:R\}}"/>
+          <Ellipse x:Name="statusHouse" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="4,5,0,0" Fill="{Binding Path=statusLEDHouseColor}"/>
+          <TextBlock x:Name="tbBedRoomTempOld" Style="{StaticResource secondFloorTextBlock}" HorizontalAlignment="Left" Margin="331,493,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTempOld, StringFormat=\{0:F1\}}" ToolTip="Bedroom old temperature (°C)" />
+          <TextBlock HorizontalAlignment="Left" Margin="6,15,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="169" Text="{Binding lastUpdateHouse, StringFormat=\{0:R\}}"/>
           <CheckBox x:Name="cb1Floor" Style="{StaticResource firstFloorCheckBox}" Content="1st floor" HorizontalAlignment="Left" Margin="445,20,0,0" VerticalAlignment="Top" IsChecked="True" Click="cb1Floor_Click"/>
           <CheckBox x:Name="cb2Floor" Content="2nd floor" Style="{StaticResource secondFloorCheckBox}" HorizontalAlignment="Left" Margin="445,41,0,0" VerticalAlignment="Top" IsChecked="True" Click="cb2Floor_Click"/>
           <CheckBox x:Name="roof" Content="Roof" Style="{StaticResource roofCheckBox}" HorizontalAlignment="Left" Margin="445,62,0,0" VerticalAlignment="Top" IsChecked="True" Click="roof_Click"/>
-          <Label x:Name="lblBedroom" Style="{StaticResource secondFloorLabel}" Content="Bedroom 1:" HorizontalAlignment="Left" Margin="257,493,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" ToolTip="Bedroom temperature (°C)"/>
+          <Label x:Name="lblBedroomOld" Style="{StaticResource secondFloorLabel}" Content="Bedroom Old:" HorizontalAlignment="Left" Margin="246,493,0,0" VerticalAlignment="Top"  Height="16" Width="80" Padding="0" HorizontalContentAlignment="Right" ToolTip="Bedroom temperature (°C)"/>
           <Label x:Name="lblHall" Style="{StaticResource firstFloorLabel}" Content="Hall:" HorizontalAlignment="Left" Margin="257,474,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" ToolTip="Hall temperature (°C)"/>
           <Label x:Name="lblLivingRoom" Style="{StaticResource firstFloorLabel}" Content="Livingroom:" HorizontalAlignment="Left" Margin="150,430,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" ToolTip="Living room temperature (°C)" />
           <Label x:Name="lblWorkRoom" Style="{StaticResource firstFloorLabel}" Content="Workroom:" HorizontalAlignment="Left" Margin="66,474,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" ToolTip="Workroom temperature (°C)"/>
           <Label x:Name="lblCorridor" Style="{StaticResource firstFloorLabel}" Content="Corridor:" HorizontalAlignment="Left" Margin="66,404,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" ToolTip="Corridor temperature (°C)"/>
+          <Ellipse Fill="{Binding Path=bojlerColor}" HorizontalAlignment="Left" Height="35" Margin="165,578,0,0" Stroke="Black" VerticalAlignment="Top" Width="35" ToolTip="Bojler"/>
+          <Label x:Name="lblBojler" Style="{StaticResource firstFloorLabel}" Content="Bojler:" HorizontalAlignment="Left" Margin="165,618,0,0" VerticalAlignment="Top"  Height="16" Width="35" Padding="0" HorizontalContentAlignment="Right" ToolTip="Bojler temperature (°C)"/>
+          <TextBlock x:Name="tbHallTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,473,0,0" VerticalAlignment="Top" Width="45" Text="{Binding hallTemp, StringFormat=\{0:F1\}}" ToolTip="Hall temperature (°C)" />
+          <Rectangle x:Name="teraceRect" HorizontalAlignment="Left" Height="250" Margin="410,463,-0.302,0" Stroke="Black" VerticalAlignment="Top" Width="150" ToolTip="Terrase"/>
+          <Label x:Name="lblBedroomNew" Style="{StaticResource secondFloorLabel}" Content="Bedroom New:" HorizontalAlignment="Left" Margin="264,225,0,0" VerticalAlignment="Top"  Height="16" Width="80" Padding="0" HorizontalContentAlignment="Right" ToolTip="Bedroom temperature (°C)" RenderTransformOrigin="-0.088,0.438"/>
+          <TextBlock x:Name="tbBedRoomTempNew" Style="{StaticResource secondFloorTextBlock}" HorizontalAlignment="Left" Margin="344,225,0,0" VerticalAlignment="Top" Width="45" Text="{Binding bedRoomTempNew, StringFormat=\{0:F1\}}" ToolTip="Bedroom new temperature (°C)" />
+        </Grid>
+      </TabItem>
+      <TabItem Header="Meteo">
+        <Grid Width="575">
+          <Ellipse x:Name="statusMeteo" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="4,5,0,0" Fill="{Binding Path=statusLEDMeteoColor}"/>
+          <TextBlock HorizontalAlignment="Left" Margin="6,15,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="169" Text="{Binding lastUpdateMeteo, StringFormat=\{0:R\}}"/>
           <Label x:Name="lblHumidity" Style="{StaticResource firstFloorLabel}" Content="Humidity:" HorizontalAlignment="Left" Margin="275,415,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" ToolTip="Humidity (%RH)"/>
           <Label x:Name="lblPressure" Style="{StaticResource firstFloorLabel}" Content="Pressure:" HorizontalAlignment="Left" Margin="257,517,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" ToolTip="Pressure (hPa)"/>
           <Label x:Name="lblTemp085" Style="{StaticResource firstFloorLabel}" Content="Temp085:" HorizontalAlignment="Left" Margin="257,538,0,0" VerticalAlignment="Top"  Height="16" Width="69" Padding="0" HorizontalContentAlignment="Right" ToolTip="Temperature from Pressure sensor (°C)"/>
@@ -77,15 +92,12 @@
           <TextBlock x:Name="tbPressure" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,517,0,0" VerticalAlignment="Top" Width="45" Text="{Binding pressure, StringFormat=\{0:F2\}}" ToolTip="Pressure (hPa)" />
           <TextBlock x:Name="tbTemp085" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,537,0,0" VerticalAlignment="Top" Width="45" Text="{Binding temp085, StringFormat=\{0:F1\}}" ToolTip="Temperature from Pressure sensor (°C)" />
           <TextBlock x:Name="tbTempDHT" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="349,431,0,0" VerticalAlignment="Top" Width="45" Text="{Binding tempDHT, StringFormat=\{0:F0\}}" ToolTip="Temperature from humidity sensor (°C)" />
-          <Ellipse Fill="{Binding Path=bojlerColor}" HorizontalAlignment="Left" Height="35" Margin="165,578,0,0" Stroke="Black" VerticalAlignment="Top" Width="35" ToolTip="Bojler"/>
-          <Label x:Name="lblBojler" Style="{StaticResource firstFloorLabel}" Content="Bojler:" HorizontalAlignment="Left" Margin="165,618,0,0" VerticalAlignment="Top"  Height="16" Width="35" Padding="0" HorizontalContentAlignment="Right" ToolTip="Bojler temperature (°C)"/>
-          <TextBlock x:Name="tbHallTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="331,473,0,0" VerticalAlignment="Top" Width="45" Text="{Binding hallTemp, StringFormat=\{0:F1\}}" ToolTip="Hall temperature (°C)" />
           <Label x:Name="lblOutdoor" Style="{StaticResource firstFloorLabel}" Content="Outdoor:" HorizontalAlignment="Left" Margin="6,38,0,0" VerticalAlignment="Top"  Height="16" Width="45" Padding="0" HorizontalContentAlignment="Right" ToolTip="Outdoor temperature (°C)"/>
           <TextBlock x:Name="tbOutdoorTemp" Style="{StaticResource firstFloorTextBlock}" HorizontalAlignment="Left" Margin="56,38,0,0" VerticalAlignment="Top" Width="45" Text="{Binding outdoorTemp, StringFormat=\{0:F1\}}" ToolTip="Outdoor temperature (°C)" />
           <Label x:Name="lblWindSpeed" Style="{StaticResource roofLabel}" Content="Windspeed:" HorizontalAlignment="Left" VerticalAlignment="Top"  Height="16" Width="65" Padding="0" HorizontalContentAlignment="Right" Margin="225,10,0,0" ToolTip="Wind speed in RPM (Revolution Per Minutes)"/>
           <TextBlock x:Name="tbWindSpeed" Style="{StaticResource roofTextBlock}" HorizontalAlignment="Left" Margin="295,10,0,0" VerticalAlignment="Top" Width="81" ToolTip="Wind speed in RPM (Revolution Per Minutes)"> 
             <Run Text="{Binding windSpeed, StringFormat=\{0:F0\}}" /> 
-            <Run Text="RPM"/> 
+            <Run Text="RPM"/>
           </TextBlock>
           <Label x:Name="lblWindSpeedMax" Style="{StaticResource roofLabel}" Content="Windspeed max:" HorizontalAlignment="Left" VerticalAlignment="Top"  Height="16" Width="96" Padding="0" HorizontalContentAlignment="Right" Margin="194,25,0,0" ToolTip="Maximal wind speed in RPM (Revolution Per Minutes)"/>
           <TextBlock x:Name="tbWindSpeedMax" Style="{StaticResource roofTextBlock}" HorizontalAlignment="Left" Margin="295,26,0,0" VerticalAlignment="Top" Width="81" ToolTip="Maximal wind speed in RPM (Revolution Per Minutes)">
@@ -94,7 +106,25 @@
           </TextBlock>
           <Label x:Name="lblWindDirection" Style="{StaticResource roofLabel}" Content="Wind direction:" HorizontalAlignment="Left" VerticalAlignment="Top"  Height="16" Width="96" Padding="0" HorizontalContentAlignment="Right" Margin="194,41,0,0" ToolTip="Wind direction (degrees)"/>
           <TextBlock x:Name="tbWindDirection" Style="{StaticResource roofTextBlock}" HorizontalAlignment="Left" Margin="295,41,0,0" VerticalAlignment="Top" Width="45" Text="{Binding windDirection, StringFormat=\{0:F0\}}" ToolTip="Wind direction (degrees)" />
-          <Rectangle x:Name="teraceRect" HorizontalAlignment="Left" Height="250" Margin="410,463,-0.302,0" Stroke="Black" VerticalAlignment="Top" Width="150" ToolTip="Terrase"/>
+        </Grid>
+      </TabItem>
+      <TabItem Header="Solar">
+        <Grid Width="575">
+          <Ellipse x:Name="statusSolar" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="4,5,0,0" Fill="{Binding Path=statusLEDSolarColor}"/>
+          <TextBlock HorizontalAlignment="Left" Margin="6,15,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="169" Text="{Binding lastUpdateSolar, StringFormat=\{0:R\}}"/>
+          <Label x:Name="lblTemperatureIN" Content="Input Temperature:" HorizontalAlignment="Left" Margin="6,39,0,0" VerticalAlignment="Top"  Height="16" Width="121" Padding="0" HorizontalContentAlignment="Right" ToolTip="Input temperature (°C)"/>
+          <Label x:Name="lblTemperatureOUT" Content="Output Temperature:" HorizontalAlignment="Left" Margin="6,59,0,0" VerticalAlignment="Top"  Height="16" Width="121" Padding="0" HorizontalContentAlignment="Right" ToolTip="Output temperature (°C)"/>
+          <Label x:Name="lblTemperatureROOM" Content="Room Temperature:" HorizontalAlignment="Left" Margin="6,79,0,0" VerticalAlignment="Top"  Height="16" Width="121" Padding="0" HorizontalContentAlignment="Right" ToolTip="Room temperature (°C)"/>
+          <Label x:Name="lblSolarPower" Content="Solar power:" HorizontalAlignment="Left" Margin="6,99,0,0" VerticalAlignment="Top"  Height="16" Width="121" Padding="0" HorizontalContentAlignment="Right" ToolTip="Solar power (W)"/>
+          <Label x:Name="lblEnergyADay" Content="Energy a day:" HorizontalAlignment="Left" Margin="6,119,0,0" VerticalAlignment="Top"  Height="16" Width="121" Padding="0" HorizontalContentAlignment="Right" ToolTip="Energy a day (kWh)"/>
+          <Label x:Name="lblEnergyTotal" Content="Total energy:" HorizontalAlignment="Left" Margin="6,139,0,0" VerticalAlignment="Top"  Height="16" Width="121" Padding="0" HorizontalContentAlignment="Right" ToolTip="Total energy (kWh)"/>
+          <TextBlock x:Name="tbINTemp" HorizontalAlignment="Left" Margin="141,39,0,0" VerticalAlignment="Top" Width="45" Text="{Binding solarINTemp, StringFormat=\{0:F2\}}" ToolTip="Input temperature (°C)" />
+          <TextBlock x:Name="tbOUTTemp" HorizontalAlignment="Left" Margin="141,59,0,0" VerticalAlignment="Top" Width="45" Text="{Binding solarOUTTemp, StringFormat=\{0:F2\}}" ToolTip="Output temperature (°C)" RenderTransformOrigin="-3.111,-23" />
+          <TextBlock x:Name="tbROOMTemp" HorizontalAlignment="Left" Margin="141,79,0,0" VerticalAlignment="Top" Width="45" Text="{Binding solarROOMTemp, StringFormat=\{0:F2\}}" ToolTip="Room temperature (°C)" RenderTransformOrigin="-3.111,-23" />
+          <TextBlock x:Name="tbSolarPower" HorizontalAlignment="Left" Margin="141,99,0,0" VerticalAlignment="Top" Width="45" Text="{Binding solarPower, StringFormat=\{0:F2\}}" ToolTip="Solar power (W)" RenderTransformOrigin="-3.111,-23" />
+          <TextBlock x:Name="tbEnergyADay" HorizontalAlignment="Left" Margin="141,119,0,0" VerticalAlignment="Top" Width="45" Text="{Binding energyADay, StringFormat=\{0:F4\}}" ToolTip="Energy a day (kWh)" RenderTransformOrigin="-3.111,-23" />
+          <TextBlock x:Name="tbEnergyTotal" HorizontalAlignment="Left" Margin="141,139,0,0" VerticalAlignment="Top" Width="45" Text="{Binding energyTotal, StringFormat=\{0:F4\}}" ToolTip="Toatal energy (kWh)" RenderTransformOrigin="-3.111,-23" />
+
         </Grid>
       </TabItem>
     </TabControl>

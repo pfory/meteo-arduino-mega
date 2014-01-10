@@ -296,6 +296,9 @@ namespace myHouse
               if (column[0] == "DifOFF") {
                 hd.difOFF = (float)Convert.ToDecimal(column[2].Replace(".", ","));
               }
+              if (column[0] == "Status") {
+                hd.statusSolar = column[2];
+              }
 
               hd.lastUpdateSolar = getDateTimeFromCosmString(column[1] + column[2]);
             }
@@ -436,6 +439,7 @@ namespace myHouse
         private float     _energyTotal;
         private float     _difON;
         private float     _difOFF;
+        private byte      _statusSolar;
 
         public HouseData()
         {
@@ -495,7 +499,8 @@ namespace myHouse
         public float energyTotal      { get { return _energyTotal; }                set { _energyTotal        = value; NotifyPropertyChanged("energyTotal"); } }
         public float difOFF           { get { return _difOFF; }                     set { _difOFF             = value; NotifyPropertyChanged("difOFF"); } }
         public float difON            { get { return _difON; }                      set { _difON              = value; NotifyPropertyChanged("difON"); } }
-
-
+        public string statusSolar     { get { if (_statusSolar == 0) { return "OFF"; } else { return "ON"; } } 
+                                                                                    set { if (value=="0") { _statusSolar = 0; } else { _statusSolar = 1; } ;
+                                                                                                                       NotifyPropertyChanged("statusSolar"); } }
     }
 }

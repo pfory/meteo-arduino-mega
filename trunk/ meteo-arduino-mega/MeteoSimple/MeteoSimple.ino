@@ -21,12 +21,12 @@ A5 SCL fpr Pressure BMP085
 #include <limits.h>
 
 //#define debug
-//#define serial
 #define Ethernetdef
 #define DALLASdef 
 #define Anemodef
 #define BMP085def
 #define RainSensdef
+//#define SWI2C  // - proverit zda funguje, kdyz ano tak pouzit protoze je uspornejsi
 #define DHTdef //1022
 
 #ifndef dummy //this section prevent from error while program is compiling without Ethernetdef
@@ -34,56 +34,25 @@ char a[0]; //do not delete this dummy variable
 #endif
 
 #ifdef Ethernetdef
-//#include <SPI.h>
 #include <Ethernet.h>
-#include <HttpClient.h>
-#include <Xively.h>
-
 byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
-
-// Your Xively key to let you upload data
-char xivelyKey[] = "q1PY6QqB9jvSHGKhmCQNBRdCofeSAKxpKzliaHJGWUc5UT0g";
-//your xively feed ID
-#define xivelyFeed 63310
-//datastreams
-char VersionID[] = "V";
-char StatusID[] = "H";
-char DHTHumidityID[] = "Humidity";
-char DHTTemperatureID[] = "TempDHT";
-char PressID[] = "Press";
-char PressTemperatureID[] = "Temp085";
-char RainID[] = "Rain";
-char TemperatureID[] = "T2899BDCF02000076";
-char WindDirectionID[] = "WindD";
-char WindSpeedID[] = "WindS";
-char WindSpeedmaxID[] = "WindSM";
-
-
-//TODO add all streams
-// Define the strings for our datastream IDs
-XivelyDatastream datastreams[] = {
-XivelyDatastream(VersionID, strlen(VersionID), DATASTREAM_FLOAT),
-XivelyDatastream(StatusID, strlen(StatusID), DATASTREAM_INT),
-XivelyDatastream(DHTHumidityID, strlen(DHTHumidityID), DATASTREAM_INT),
-XivelyDatastream(DHTTemperatureID, strlen(DHTTemperatureID), DATASTREAM_INT),
-XivelyDatastream(PressID, strlen(PressID), DATASTREAM_INT),
-XivelyDatastream(PressTemperatureID, strlen(PressTemperatureID), DATASTREAM_INT),
-XivelyDatastream(RainID, strlen(RainID), DATASTREAM_INT),
-XivelyDatastream(TemperatureID, strlen(TemperatureID), DATASTREAM_FLOAT),
-XivelyDatastream(WindDirectionID, strlen(WindDirectionID), DATASTREAM_INT),
-XivelyDatastream(WindSpeedID, strlen(WindSpeedID), DATASTREAM_INT),
-XivelyDatastream(WindSpeedmaxID, strlen(WindSpeedmaxID), DATASTREAM_INT),
-//XivelyDatastream(WindRatioID, strlen(WindRatioID), DATASTREAM_FLOAT),
-};
-// Finally, wrap the datastreams into a feed
-XivelyFeed feed(xivelyFeed, datastreams, 11 /* number of datastreams */);
-
 EthernetClient client;
-XivelyClient xivelyclient(client);
-
+char server[] = "api.cosm.com";   // name address for cosm API
 bool checkConfigFlag = false;
+
 unsigned long lastSendTime;
-float windRatio = 4;
+//COSM
+#define APIKEY         "q1PY6QqB9jvSHGKhmCQNBRdCofeSAKxpKzliaHJGWUc5UT0g" // your cosm api key
+#define FEEDID         63310 // your feed ID
+#define USERAGENT      "Meteo Arduino" // user agent is the project name
+
+//#define stringdef //26350 //use String class instead sprintf //24234
+#ifdef stringdef 
+String dataString1 = "";
+String dataString2 = "";
+#else
+char dataString[280];
+#endif
 #endif
 
 
@@ -104,7 +73,7 @@ DallasTemperature dsSensors(&onewire);
 #endif
 DeviceAddress tempDeviceAddress;
 #ifndef NUMBER_OF_DEVICES
-#define NUMBER_OF_DEVICES 2
+#define NUMBER_OF_DEVICES 20
 #endif
 DeviceAddress tempDeviceAddresses[NUMBER_OF_DEVICES];
 //int  resolution = 12;
@@ -125,11 +94,15 @@ unsigned int const dsPrintTimeDelay=4000; //interval to show results
 unsigned int const sendTimeDelay=20000; //to send to cosm.com
 
 #ifdef BMP085def
-//#include <Wire.h>
+#include <Wire.h>
+#ifdef SWI2C
+#include <swI2C_BMP085.h>
+#include <I2cMaster.h>
+swI2C_BMP085 bmp;
+#else
 #include <BMP085.h> //558 bytes +
-#include "I2Cdev.h"
-#include "Wire.h"
 BMP085 bmp = BMP085();      // Digital Pressure Sensor 
+#endif
 unsigned long lastDisplayBMPTime;
 //unsigned long avgPressure=0;
 //unsigned long lastAvgPressure=0;
@@ -140,8 +113,8 @@ unsigned long lastPressureTime=0;
 #define PRESSDOWN     2
 //byte pressureChange=PRESSNOCHANGE;
 signed long         high_above_sea=36900;
-float Temperature = 0;
-float Pressure = 0;//, Altitude = 0;
+signed long Temperature = 0;
+long Pressure = 0;//, Altitude = 0;
 
 #endif
 
@@ -185,30 +158,29 @@ unsigned int pulseCountRainAll=0;
 byte counter=0;
 byte pila=0;
 
-float versionSW=0.83;
-String versionSWString = "METEO Simple v"; //SW name & version
+char versionSW[]="0.80";
+char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
   // start serial port:
-  #ifdef serial
-  Serial.begin(19200);
+  Serial.begin(115200);
 //  Serial.println();
   Serial.println(versionSW);
-  #endif
+  
   //Serial.println(F("SW inicialization"));
 
   #ifdef Ethernetdef
-  while (Ethernet.begin(mac) != 1)
-  {
-    Serial.println("Error getting IP address via DHCP, trying again...");
-    delay(15000);
+//  Serial.print("waiting for net connection...");
+  if (Ethernet.begin(mac) == 0) {
+    Serial.println("Failed using DHCP");
+    // DHCP failed, so use a fixed IP address:
   }
-	
-	#ifdef serial
+
   Serial.println("EthOK");
+  /*
   Serial.print("\nIP:");
   Serial.println(Ethernet.localIP());
   Serial.print("Mask:");
@@ -218,9 +190,7 @@ void setup() {
   Serial.print("DNS:");
   Serial.println(Ethernet.dnsServerIP());
   Serial.println();
-  #endif
-  
-  lastSendTime = dsLastPrintTime = lastMeasTime = millis();
+  */
   lastSendTime = dsLastPrintTime = lastMeasTime = millis();
   #endif
   
@@ -244,7 +214,6 @@ void setup() {
 
   #ifdef BMP085def
   bmp085Init();
-	Serial.println("BMP085");
   lastDisplayBMPTime = millis();
   #endif
   
@@ -253,7 +222,6 @@ void setup() {
   lastDHTMeasTime=millis();
   dht.startMeas();
   lastDisplayDHTTime = millis();
-	Serial.println("DHT");
   #else
 //  Serial.println("DHT N/A");
   #endif
@@ -266,6 +234,7 @@ void setup() {
 //-------------------------------------------------------------------------LOOP------------------------------------------------------------------------------
 
 void loop() {
+
   //start sampling
   if ((millis()) - lastMeasTime >= dsMeassureInterval) {
     lastMeasTime = millis();
@@ -274,38 +243,27 @@ void loop() {
     //startTimer();
     #ifdef DALLASdef
     dsSensors.requestTemperatures(); 
-		dsMeasStarted=true;
+    dsMeasStarted=true;
     #endif
     
     #ifdef DHTdef
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
     humidity = dht.readHumidity();
-    datastreams[2].setInt(humidity);
- 		Serial.print("Humidity:");
-    Serial.println(humidity);
-		tempDHT = dht.readTemperature();
-    datastreams[3].setInt(tempDHT);
+    tempDHT = dht.readTemperature();
     #endif
 
     
     #ifdef BMP085def
-    //bmpMin.getPressure(&Pressure);
-    bmp.setControl(BMP085_MODE_TEMPERATURE);
-    // wait appropriate time for conversion (4.5ms delay)
-    int32_t lastMicrosBMP = micros();
-    while (micros() - lastMicrosBMP < bmp.getMeasureDelayMicroseconds());
-    Temperature = bmp.getTemperatureC(); 
-    datastreams[5].setInt(Temperature);
-    bmp.setControl(BMP085_MODE_PRESSURE_3);
-    lastMicrosBMP = micros();
-    while (micros() - lastMicrosBMP < bmp.getMeasureDelayMicroseconds());
-    Pressure = bmp.getPressure();
-    
-    Pressure = Pressure / pow((1 - (float)high_above_sea / 4433000), 5.255) + 0;
-    datastreams[4].setInt(Pressure);
- 		Serial.print("Press:");
-    Serial.println(Pressure);
-#endif
+    //unsigned long oldPress=Pressure;
+    #ifdef SWI2C
+    Pressure = bmp.readPressure();
+    Pressure = getRealPressure(Pressure, high_above_sea);
+    Temperature = bmp.readTemperature();
+    #else
+    bmp.getPressure(&Pressure);
+    bmp.getTemperature(&Temperature); 
+    #endif
+    #endif
   }
 
   #ifdef Anemodef
@@ -352,9 +310,6 @@ void loop() {
         }
         sensor[i]=tempTemp;
       } 
-      datastreams[7].setInt(sensor[0]);
-			Serial.print("Temp:");
-			Serial.println(sensor[0]);
       //obcas se vyskytne chyba a vsechna cidla prestanou merit
       //zkusim restartovat sbernici
       bool reset=true;
@@ -370,9 +325,48 @@ void loop() {
     }
   }
   #endif
+  
     
+  //if ((dsLastPrintTime = millis()) - dsLastPrintTime >= dsPrintTimeDelay) {
+    //dsLastPrintTime = millis(); 
+
+    /*Serial.println();
+    #ifdef DALLASdef
+    printTemperatureAll();
+    #endif
+
+    #ifdef BMP085def
+    Serial.print("Press(Pa):");
+    Serial.println(Pressure);
+    Serial.print("Temp:");
+    Serial.print(Temperature/10);
+    Serial.print(".");
+    Serial.println(abs(Temperature%10));
+    #endif
+    #ifdef DHTdef
+    Serial.print("Humidity:");
+    Serial.println(humidity);
+    Serial.print("Temp:");
+    Serial.println(tempDHT);
+    #endif
     
+    Serial.println("");
+    */
+  //}
+  
   #ifdef Ethernetdef
+  if (sample==2) {
+    client.stop();
+  }
+
+  if (sample==5 && checkConfigFlag == false) {
+    //checkConfig();
+  }
+
+  if (sample==8) {
+    checkConfigFlag = false;
+  }
+
   if(!client.connected() && ((millis()) - lastSendTime >= sendTimeDelay)) {
     lastSendTime = millis();
     //digitalWrite(ledPin, HIGH);
@@ -386,42 +380,202 @@ void loop() {
 //-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
 #ifdef Ethernetdef
 void sendData() {
-  datastreams[0].setFloat(versionSW);
-  datastreams[1].setInt(pila);
-  if (pila>0) pila=0; else pila=1;
 
-  datastreams[2].setInt(0); //Humidity
-  datastreams[3].setInt(0); //TempDHT
-  datastreams[4].setInt(0); //Press
-  datastreams[5].setInt(0); //Temp085
-  datastreams[6].setInt(pulseCountRainAll); //Rain
-  pulseCountRainAll=0;
-  datastreams[7].setFloat(0.0); //T2899BDCF02000076
-  datastreams[8].setInt(windDirectionAll/numberOfWindSamples); //WindD
-  windDirectionAll=0;
-  numberOfWindSamples=0;
-  datastreams[9].setInt((float)(pulseCountAll/numberOfWindSamples/windRatio)); //WindS
-  datastreams[10].setInt((float)pulseCountMax/windRatio);  //WindSM
+  //Serial.println("sending data");
   
+  //prepare data to send
+  #ifdef stringdef
+  dataString1="";
+  char buffer[3];
+  #endif
+
+  //temperature from DALLAS
+  //00 01 02 03 04 05 06 07
+  //-----------------------
+  //28 C9 B8 41 04 00 00 97
+
+  
+  #ifdef stringdef
+  dataString1 += "V,";
+  dataString1 += versionSW;
+  dataString1 += "\n";
+  #else
+  int n; //data length
+  sprintf(dataString,"V,%s\n",versionSW);
+  #endif
+  
+  #ifdef DALLASdef
+  for(byte i=0;i<numberOfDevices; i++) {
+    #ifdef stringdef
+    dataString1 += "T";
+    #else
+    sprintf(dataString,"%sT",dataString);
+    #endif
+    
+    for (byte j=0; j<8; j++) {
+      #ifdef stringdef
+      sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
+      #endif
+      if (tempDeviceAddresses[i][j]<16) {
+        #ifdef stringdef
+        dataString1 += "0";
+        dataString1 += buffer[0];
+        #else
+        sprintf(dataString,"%s0",dataString);
+        #endif
+      }
+      else {
+        #ifdef stringdef
+        dataString1 += buffer[0];
+        dataString1 += buffer[1];
+        #endif
+      }
+      #ifndef stringdef
+      sprintf (dataString, "%s%X", dataString, tempDeviceAddresses[i][j]);
+      #endif
+    }
+
+    int t = (int)(sensor[i]*10);
+    #ifdef stringdef
+    dataString1 += ",";
+    #else
+    sprintf(dataString,"%s,",dataString);
+    #endif
+
+    if (t<0&&t>-10) {
+      #ifdef stringdef
+      dataString1 += "-";
+      #else
+      sprintf(dataString,"%s-",dataString);
+      #endif
+    }
+    #ifdef stringdef
+    dataString1 += t/10;
+    dataString1 += ".";
+    dataString1 += abs(t%10);
+    dataString1 += "\n";
+    #else
+    sprintf(dataString,"%s%d.%u\n",dataString,t/10,abs(t%10));
+    #endif
+  }
+  #endif
+
+  #ifdef BMP085def
+  #ifdef stringdef
+  //Pressure
+  dataString1 += "Press,";
+  dataString1 += Pressure;
+  //Temperature
+  dataString1 += "\nTemp085,";
+  dataString1 += Temperature/10;
+  dataString1 += ".";
+  dataString1 += abs(Temperature%10);
+  #else
+  sprintf(dataString,"%sPress,%ld\n",dataString,Pressure);
+  //sprintf(dataString,"%sTemp085,%d.%u\n",dataString,Temperature/10,abs(Temperature%10));
+  sprintf(dataString,"%sTemp085,%d.%u\n",dataString,(int)(Temperature/10),(int)(abs(Temperature%10)));
+  #endif
+  #endif
+
+  #ifdef DHTdef
+  #ifdef stringdef
+  dataString1 += "\nHumidity,";
+  dataString1 += humidity;
+  dataString1 += "\nTempDHT,";
+  dataString1 += tempDHT;
+  #else
+  sprintf(dataString,"%sHumidity,%u\nTempDHT,%d\n", dataString,humidity,tempDHT);
+  #endif
+  #endif
+  
+  #ifdef stringdef
+  dataString2 = "";
+  #endif
+  #ifdef Anemodef
+  #ifdef stringdef
+  dataString2 = "\nWindS,";
+  dataString2 += pulseCountAll/numberOfWindSamples;
+  dataString2 += "\nWindSM,";
+  dataString2 += pulseCountMax;
+  dataString2 += "\nWindD,";
+  dataString2 += windDirectionAll/numberOfWindSamples;
+  #else
+  sprintf(dataString,"%sWindS,%u\nWindSM,%u\nWindD,%u", dataString,pulseCountAll/numberOfWindSamples,pulseCountMax,windDirectionAll/numberOfWindSamples);
+  #endif
   pulseCountAll=0;
   pulseCountMax=0;
+  windDirectionAll=0;
+  numberOfWindSamples=0;
+  #endif
 
+  #ifdef RainSensdef
+  #ifdef stringdef
+  dataString2 += "\nRain,";
+  dataString2 += pulseCountRainAll;
+  #else
+  n=sprintf(dataString,"%s\nRain,%u", dataString,pulseCountRainAll);
+  #endif
+  pulseCountRainAll=0;
+  #endif
   
-   //send value to xively
-  #ifdef serial
-	Serial.println("Uploading it to Xively");
-	#endif
-  int ret = xivelyclient.put(feed, xivelyKey);
-  //return message
-  #ifdef serial
-  Serial.print("xivelyclient.put returned ");
-  Serial.println(ret);
-  Serial.println("");
-	#endif
+  #ifdef stringdef
+  dataString2 += "\nH,";
+  dataString2 += pila;
+  #else
+  n=sprintf(dataString,"%s\nH,%u", dataString,pila);
+  #endif
+  if (pila==0) pila=1; else pila=0;
+
+  // if there's a successful connection:
+  if (client.connect(server, 80)) {
+    //Serial.println("connected");
+    // send the HTTP PUT request:
+    client.print("PUT /v2/feeds/");
+    client.print(FEEDID);
+    client.println(".csv HTTP/1.1");
+    client.println("Host: api.cosm.com");
+    client.print("X-ApiKey: ");
+    client.println(APIKEY);
+    client.print("User-Agent: ");
+    client.println(USERAGENT);
+    client.print("Content-Length: ");
+    #ifdef stringdef
+    client.println(dataString1.length()+dataString2.length());
+    #else
+    client.println(n);
+    #endif
+    //client.println(dataString2.length());
+
+    // last pieces of the HTTP PUT request:
+    client.println("Content-Type: text/csv");
+    client.println("Connection: close");
+    client.println();
+
+    // here's the actual content of the PUT request:
+    #ifdef stringdef
+    client.print(dataString1);
+    client.print(dataString2);
+    #else
+    client.print(dataString);
+    #endif
+  } 
+  else {
+    // if you couldn't make a connection:
+    //Serial.println("failed");
+//    Serial.println();
+//    Serial.println("disconnecting.");
+    client.stop();
+  }
+ 
+  //Serial.println("\nDATA:");
+  #ifdef stringdef
+  //Serial.println(dataString1);
+  //Serial.println(dataString2);
+  #else
+  //Serial.println(dataString);
+  #endif
 }
-
-
- #endif
+#endif
 
 
 #ifdef DALLASdef
@@ -429,10 +583,6 @@ void dsInit(void) {
   dsSensors.begin();
   numberOfDevices = dsSensors.getDeviceCount();
 
-	#ifdef serial
-	Serial.print("DALLAS sensor(s):");
-	Serial.println(numberOfDevices);
-	#endif
   // Loop through each device, print out address
   for (byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
@@ -457,12 +607,15 @@ void dsInit(void) {
 
 #ifdef BMP085def
 void bmp085Init() {
+  #ifdef SWI2C
+  bmp.begin();
+  #else
+  Wire.begin();
   delay(1000);
-  bmp.initialize();  // 250 meters, true = using meter units
-  //bmp.init(high_above_sea);  // 250 meters, true = using meter units
-  //bmp.init(MODE_ULTRA_HIGHRES, high_above_sea, true);  // 250 meters, true = using meter units
+  bmp.init(MODE_ULTRA_HIGHRES, high_above_sea, true);  // 250 meters, true = using meter units
                   // this initialization is useful if current altitude is known,
                   // pressure will be calculated based on TruePressure and known altitude.
+  #endif
 }
 
 #ifdef SWI2C

@@ -15,44 +15,19 @@ namespace myHouse
     public partial class MainWindow : Window
     {
 
-      private static int downloadIntervalMeteo = 20000; //in ms
-      private static int downloadIntervalHouse = 15000; //in ms
-      private static int downloadIntervalSolar = 5000; //in ms
-      private Timer timerMeteo = new Timer(downloadIntervalMeteo);
-      private Timer timerHouse = new Timer(downloadIntervalHouse);
-      private Timer timerSolar = new Timer(downloadIntervalSolar);
+
       service srv = new service();
 
       public MainWindow()
       {
         InitializeComponent();
+
         this.Language = XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag);
         DataContext = srv.hd;
-        timerMeteo.Elapsed += new ElapsedEventHandler(OnTimedEventMeteo);
         srv.showDataMeteo();
-        timerMeteo.Enabled = true;
-        timerHouse.Elapsed += new ElapsedEventHandler(OnTimedEventHouse);
         srv.showDataHouse();
-        timerHouse.Enabled = true;
-        timerSolar.Elapsed += new ElapsedEventHandler(OnTimedEventSolar);
-        srv.showDataSolar();
-        timerSolar.Enabled = true;
-      }
-
-      private void OnTimedEventMeteo(object source, ElapsedEventArgs e)
-      {
-        srv.showDataMeteo();
-      }
-      private void OnTimedEventHouse(object source, ElapsedEventArgs e)
-      {
-        srv.showDataHouse();
-      }
-      private void OnTimedEventSolar(object source, ElapsedEventArgs e)
-      {
         srv.showDataSolar();
       }
-
-
 
       private void cb1Floor_Click(object sender, RoutedEventArgs e)
         {

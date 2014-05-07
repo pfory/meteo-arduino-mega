@@ -57,7 +57,6 @@ namespace myHouse
     private float _energyTotal;
     private float _difON;
     private float _difOFF;
-    private byte _statusSolar;
 
     public HouseData()
     {
@@ -128,6 +127,8 @@ namespace myHouse
     public float energyTotal { get { return _energyTotal; } set { _energyTotal = value; NotifyPropertyChanged("energyTotal"); } }
     public float difOFF { get { return _difOFF; } set { _difOFF = value; NotifyPropertyChanged("difOFF"); } }
     public float difON { get { return _difON; } set { _difON = value; NotifyPropertyChanged("difON"); } }
+
+    private byte _statusSolar;
     public string statusSolar
     {
       get { if (_statusSolar == 0) { return "OFF"; } else { return "ON"; } }
@@ -135,6 +136,26 @@ namespace myHouse
       {
         if (value == "0") { _statusSolar = 0; } else { _statusSolar = 1; };
         NotifyPropertyChanged("statusSolar");
+      }
+    }
+    private Brush _statusSolarBackGround;
+    public Brush statusSolarBackGround
+    {
+      get { if (_statusSolar == 0) { return new SolidColorBrush(Colors.Red); } else { return new SolidColorBrush(Colors.Green); } }
+      set
+      {
+        _statusSolarBackGround = value;
+        NotifyPropertyChanged("statusSolarBackGround");
+      }
+    }
+    private Brush _statusSolarForeGround;
+    public Brush statusSolarForeGround
+    {
+      get { if (_statusSolar == 0) {return new SolidColorBrush(Colors.White); } else { return new SolidColorBrush(Colors.Black); } }
+      set
+      {
+        _statusSolarForeGround = value;
+        NotifyPropertyChanged("statusSolarForeGround");
       }
     }
   }

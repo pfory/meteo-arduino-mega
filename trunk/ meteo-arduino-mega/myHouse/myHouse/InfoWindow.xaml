@@ -1,8 +1,35 @@
 ﻿<Window x:Class="myHouse.Window1"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Window1" Height="300" Width="300">
-    <Grid>
-        
-    </Grid>
+        Title="Solar" Height="70" Width="295" ResizeMode="NoResize" Topmost="True">
+  <Grid Height="41" VerticalAlignment="Top">
+    <Ellipse x:Name="statusSolar" HorizontalAlignment="Left" Height="10" Stroke="Black" VerticalAlignment="Top" Width="10" Margin="0,0,0,0" Fill="{Binding Path=statusLEDSolarColor}" RenderTransformOrigin="0.5,0.5">
+      <Ellipse.RenderTransform>
+        <TransformGroup>
+          <ScaleTransform/>
+          <SkewTransform/>
+          <RotateTransform Angle="-2.906"/>
+          <TranslateTransform/>
+        </TransformGroup>
+      </Ellipse.RenderTransform>
+    </Ellipse>
+    <!--<TextBlock HorizontalAlignment="Left" Margin="444,35,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="169" Text="{Binding lastUpdateSolar, StringFormat=\{0:R\}}"/>-->
+    <Label x:Name="lblTemperatureIN" Content="IN" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"  Height="16" Width="30" Padding="0" HorizontalContentAlignment="Right" ToolTip="Input temperature (°C)" FontFamily="Tahoma" FontSize="9"/>
+    <Label x:Name="lblTemperatureOUT" Content="OUT" HorizontalAlignment="Left" Margin="35,0,0,0" VerticalAlignment="Top"  Height="16" Width="30" Padding="0" HorizontalContentAlignment="Right" ToolTip="Output temperature (°C)" FontFamily="Tahoma" FontSize="9" Background="{x:Null}"/>
+    <Label x:Name="lblTemperatureROOM" Content="ROOM" HorizontalAlignment="Left" Margin="70,0,0,0" VerticalAlignment="Top"  Height="16" Width="30" Padding="0" HorizontalContentAlignment="Right" ToolTip="Room temperature (°C)" FontFamily="Tahoma" FontSize="9"/>
+    <Label x:Name="lblBojler2" Content="Bojler" HorizontalAlignment="Left" Margin="105,0,0,0" VerticalAlignment="Top"  Height="16" Width="30" Padding="0" HorizontalContentAlignment="Right" ToolTip="Bojler temperature (°C)" FontFamily="Tahoma" FontSize="9" Background="{x:Null}"/>
+    <Label x:Name="lblSolarPower" Content="Power" HorizontalAlignment="Left" Margin="140,0,0,0" VerticalAlignment="Top"  Height="16" Width="30" Padding="0" HorizontalContentAlignment="Right" ToolTip="Solar power (W)" FontFamily="Tahoma" FontSize="9"/>
+    <Label x:Name="lblEnergyADay" Content="DE" HorizontalAlignment="Left" Margin="175,0,0,0" VerticalAlignment="Top"  Height="16" Width="30" Padding="0" HorizontalContentAlignment="Right" ToolTip="Energy a day (kWh)" FontFamily="Tahoma" FontSize="9"/>
+    <Label x:Name="lblEnergyTotal" Content="TE" HorizontalAlignment="Left" Margin="210,0,0,0" VerticalAlignment="Top"  Height="16" Width="30" Padding="0" HorizontalContentAlignment="Right" ToolTip="Total energy (kWh)" FontFamily="Tahoma" FontSize="9"/>
+    <Label x:Name="lblStatusSolar" Content="Status" HorizontalAlignment="Left" Margin="245,0,0,0" VerticalAlignment="Top"  Height="16" Width="30" Padding="0" HorizontalContentAlignment="Right" ToolTip="Status (ON/OFF)" RenderTransformOrigin="1.848,0.625" FontFamily="Tahoma" FontSize="9"/>
+    <TextBlock x:Name="tbINTemp" HorizontalAlignment="Left" TextAlignment="Right" Margin="0,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding solarINTemp, StringFormat=\{0:F2\}}" ToolTip="Input temperature (°C)" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbOUTTemp" HorizontalAlignment="Left" TextAlignment="Right" Margin="35,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding solarOUTTemp, StringFormat=\{0:F2\}}" ToolTip="Output temperature (°C)" RenderTransformOrigin="-3.111,-23" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbROOMTemp" HorizontalAlignment="Left" TextAlignment="Right" Margin="70,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding solarROOMTemp, StringFormat=\{0:F2\}}" ToolTip="Room temperature (°C)" RenderTransformOrigin="-3.111,-23" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbBojler" HorizontalAlignment="Left" TextAlignment="Right" Margin="105,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding bojler2Temp}" ToolTip="Bojler temperature (°C)" RenderTransformOrigin="-3.111,-23" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbSolarPower" HorizontalAlignment="Left" TextAlignment="Right" Margin="140,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding solarPower, StringFormat=\{0:F2\}}" ToolTip="Solar power (W)" RenderTransformOrigin="-3.111,-23" Grid.Column="1" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbEnergyADay" HorizontalAlignment="Left" TextAlignment="Right" Margin="175,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding energyADay, StringFormat=\{0:F2\}}" ToolTip="Energy a day (kWh)" RenderTransformOrigin="-3.111,-23" Grid.Column="1" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbEnergyTotal" HorizontalAlignment="Left" TextAlignment="Right" Margin="210,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding energyTotal, StringFormat=\{0:F2\}}" ToolTip="Total energy (kWh)" RenderTransformOrigin="-3.111,-23" Grid.Column="1" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbStatusSolar" HorizontalAlignment="Left" TextAlignment="Right" Margin="245,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding statusSolar}" ToolTip="Status (ON/OFF)" RenderTransformOrigin="-3.111,-23" Grid.Column="1" FontFamily="Tahoma" FontSize="9" />
+
+  </Grid>
 </Window>

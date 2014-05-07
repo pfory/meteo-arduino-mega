@@ -25,6 +25,7 @@ namespace myHouse
     private float _bedRoomTempNew;
     private float _bojlerTemp;
     private float _bojler2Temp;
+    private float _bojler2TempDiff;
     private float _outdoorTemp;
     private string _corridorColor;
     private string _hallColor;
@@ -52,6 +53,9 @@ namespace myHouse
     private float _solarINTemp;
     private float _solarOUTTemp;
     private float _solarROOMTemp;
+    private float _solarINTempDiff;
+    private float _solarOUTTempDiff;
+    private float _solarROOMTempDiff;
     private float _solarPower;
     private float _energyADay;
     private float _energyTotal;
@@ -81,11 +85,135 @@ namespace myHouse
     public float bedRoomTempOld { get { return _bedRoomTempOld; } set { _bedRoomTempOld = value; NotifyPropertyChanged("bedRoomTempOld"); } }
     public float bedRoomTempNew { get { return _bedRoomTempNew; } set { _bedRoomTempNew = value; NotifyPropertyChanged("bedRoomTempNew"); } }
     public float bojlerTemp { get { return _bojlerTemp; } set { _bojlerTemp = value; NotifyPropertyChanged("bojlerTemp"); } }
-    public float bojler2Temp { get { return _bojler2Temp; } set { _bojler2Temp = value; NotifyPropertyChanged("bojler2Temp"); } }
     public float outdoorTemp { get { return _outdoorTemp; } set { _outdoorTemp = value; NotifyPropertyChanged("outdoorTemp"); } }
-    public float solarINTemp { get { return _solarINTemp; } set { _solarINTemp = value; NotifyPropertyChanged("solarINTemp"); } }
-    public float solarOUTTemp { get { return _solarOUTTemp; } set { _solarOUTTemp = value; NotifyPropertyChanged("solarOUTTemp"); } }
-    public float solarROOMTemp { get { return _solarROOMTemp; } set { _solarROOMTemp = value; NotifyPropertyChanged("solarROOMTemp"); } }
+    public float solarINTemp { get { return _solarINTemp; } 
+      set {
+        _solarINTempDiff = _solarINTemp - value;
+        _solarINTemp = value; 
+        NotifyPropertyChanged("solarINTemp");
+        NotifyPropertyChanged("solarINTempForeGround");
+      } 
+    }
+    private Brush _solarINTempForeGround;
+    public Brush solarINTempForeGround
+    {
+      get { 
+        if (_solarINTempDiff > 0) { 
+          return new SolidColorBrush(Colors.Red); 
+        } 
+        else if (_solarINTempDiff < 0) { 
+          return new SolidColorBrush(Colors.Blue); 
+        } 
+        else { 
+          return new SolidColorBrush(Colors.Black); 
+        } 
+      }
+      set
+      {
+        _solarINTempForeGround = value;
+      }
+    }
+
+    private Brush _solarOUTTempForeGround;
+    public Brush solarOUTTempForeGround
+    {
+      get
+      {
+        if (_solarOUTTempDiff > 0)
+        {
+          return new SolidColorBrush(Colors.Red);
+        }
+        else if (_solarOUTTempDiff < 0)
+        {
+          return new SolidColorBrush(Colors.Blue);
+        }
+        else
+        {
+          return new SolidColorBrush(Colors.Black);
+        }
+      }
+      set
+      {
+        _solarOUTTempForeGround = value;
+      }
+    }
+    public float solarOUTTemp
+    {
+      get { return _solarOUTTemp; } 
+      set {
+        _solarOUTTempDiff = _solarOUTTemp - value;
+        _solarOUTTemp = value; 
+        NotifyPropertyChanged("solarOUTTemp");
+        NotifyPropertyChanged("solarOUTTempForeGround");
+      } 
+    }
+    private Brush _solarROOMTempForeGround;
+    public Brush solarROOMTempForeGround
+    {
+      get
+      {
+        if (_solarROOMTempDiff > 0)
+        {
+          return new SolidColorBrush(Colors.Red);
+        }
+        else if (_solarROOMTempDiff < 0)
+        {
+          return new SolidColorBrush(Colors.Blue);
+        }
+        else
+        {
+          return new SolidColorBrush(Colors.Black);
+        }
+      }
+      set
+      {
+        _solarROOMTempForeGround = value;
+      }
+    }
+    public float solarROOMTemp
+    {
+      get { return _solarROOMTemp; } 
+      set {
+        _solarROOMTempDiff = _solarROOMTemp - value;
+        _solarROOMTemp = value; 
+        NotifyPropertyChanged("solarROOMTemp");
+        NotifyPropertyChanged("solarROOMTempForeGround");
+      } 
+    }
+    private Brush _bojler2TempForeGround;
+    public Brush bojler2TempForeGround
+    {
+      get
+      {
+        if (_bojler2TempDiff > 0)
+        {
+          return new SolidColorBrush(Colors.Red);
+        }
+        else if (_bojler2TempDiff < 0)
+        {
+          return new SolidColorBrush(Colors.Blue);
+        }
+        else
+        {
+          return new SolidColorBrush(Colors.Black);
+        }
+      }
+      set
+      {
+        _bojler2TempForeGround = value;
+      }
+    }
+    public float bojler2Temp
+    {
+      get { return _bojler2Temp; }
+      set
+      {
+        _bojler2TempDiff = _bojler2Temp - value;
+        _bojler2Temp = value;
+        NotifyPropertyChanged("bojler2Temp");
+        NotifyPropertyChanged("bojler2TempForeGround");
+      }
+    }
 
     public string corridorColor { get { return _corridorColor.ToString(); } set { _corridorColor = value; NotifyPropertyChanged("corridorColor"); } }
     public string hallColor { get { return _hallColor.ToString(); } set { _hallColor = value; NotifyPropertyChanged("hallColor"); } }

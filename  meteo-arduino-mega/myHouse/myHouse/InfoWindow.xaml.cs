@@ -29,8 +29,6 @@ namespace myHouse
 
       this.Language = XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag);
       DataContext = srv.hd;
-      srv.showDataMeteo();
-      srv.showDataHouse();
       srv.showDataSolar();
     }
   }

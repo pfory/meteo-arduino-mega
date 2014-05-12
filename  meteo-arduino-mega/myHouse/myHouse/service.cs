@@ -47,7 +47,9 @@ namespace myHouse
     }
     private void OnTimedEventSolar(object source, ElapsedEventArgs e)
     {
+      timerSolar.Enabled=false;
       showDataSolar();
+      timerSolar.Enabled=true;
     }
 
 
@@ -276,11 +278,11 @@ namespace myHouse
           {
             hd.energyTotal = (float)Convert.ToDecimal(column[2].Replace(".", ","));
           }
-          if (column[0] == "DifON")
+          if (column[0] == "DiffON")
           {
             hd.difON = (float)Convert.ToDecimal(column[2].Replace(".", ","));
           }
-          if (column[0] == "DifOFF")
+          if (column[0] == "DiffOFF")
           {
             hd.difOFF = (float)Convert.ToDecimal(column[2].Replace(".", ","));
           }
@@ -339,10 +341,15 @@ namespace myHouse
     }
     public void showDataSolar()
     {
-      hd.statusLEDSolarColor = Colors.Yellow.ToString();
+      hd.statusLEDSolarColor = Colors.GreenYellow.ToString();
       parseDataSolar(getDataSolar());
       hd.statusLEDSolarColor = Colors.Green.ToString();
     }
 
+    internal static float max(float a, float b)
+    {
+      if (a > b) return a;
+      else return b;
+    }
   }
 }

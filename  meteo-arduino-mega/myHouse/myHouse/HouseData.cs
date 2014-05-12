@@ -50,9 +50,6 @@ namespace myHouse
     private int _windSpeedMax;
     private int _windDirection;
     private const int _pulsesPerRevolution = 5;
-    private float _solarINTemp;
-    private float _solarOUTTemp;
-    private float _solarROOMTemp;
     private float _solarINTempDiff;
     private float _solarOUTTempDiff;
     private float _solarROOMTempDiff;
@@ -68,14 +65,15 @@ namespace myHouse
 
     public void resetHouse()
     {
-      bedRoomTempOld = corridorTemp = hallTemp = workRoomTemp = livingRoomTemp = _bojlerTemp = _outdoorTemp = bedRoomTempNew = _bojler2Temp = -127;
-      bedRoomOldColor = bedRoomNewColor = corridorColor = hallColor = workRoomColor = livingRoomColor = outdoorColor = _bojlerColor = _bojler2Color = Colors.Red.ToString();
+      bedRoomTempOld = corridorTemp = hallTemp = workRoomTemp = livingRoomTemp = bojlerTemp = outdoorTemp = bedRoomTempNew = -127;
+      bedRoomOldColor = bedRoomNewColor = corridorColor = hallColor = workRoomColor = livingRoomColor = outdoorColor = bojlerColor = Colors.Red.ToString();
     }
     public void resetMeteo()
     {
     }
     public void resetSolar()
     {
+      //bojler2Temp = -127;
     }
 
     public float corridorTemp { get { return _corridorTemp; } set { _corridorTemp = value; NotifyPropertyChanged("corridorTemp"); } }
@@ -86,117 +84,128 @@ namespace myHouse
     public float bedRoomTempNew { get { return _bedRoomTempNew; } set { _bedRoomTempNew = value; NotifyPropertyChanged("bedRoomTempNew"); } }
     public float bojlerTemp { get { return _bojlerTemp; } set { _bojlerTemp = value; NotifyPropertyChanged("bojlerTemp"); } }
     public float outdoorTemp { get { return _outdoorTemp; } set { _outdoorTemp = value; NotifyPropertyChanged("outdoorTemp"); } }
-    public float solarINTemp { get { return _solarINTemp; } 
+
+    private float _solarINTemp = float.MinValue;
+    public float solarINTemp
+    {
+      get { return _solarINTemp; } 
       set {
-        _solarINTempDiff = _solarINTemp - value;
-        _solarINTemp = value; 
+        solarINTempDiff = value - solarINTemp;
+        _solarINTemp = value;
+        dON = float.NaN;
+        dOFF = float.NaN;
         NotifyPropertyChanged("solarINTemp");
         NotifyPropertyChanged("solarINTempForeGround");
       } 
     }
-    private Brush _solarINTempForeGround;
+    private Brush _solarINTempForeGround = new SolidColorBrush(Colors.Black);
     public Brush solarINTempForeGround
     {
-      get { 
-        if (_solarINTempDiff > 0) { 
-          return new SolidColorBrush(Colors.Red); 
-        } 
-        else if (_solarINTempDiff < 0) { 
-          return new SolidColorBrush(Colors.Blue); 
-        } 
-        else { 
-          return new SolidColorBrush(Colors.Black); 
-        } 
-      }
+      get {
+        Brush oldBrush = _solarINTempForeGround;
+        if (solarINTempDiff > 0.01) 
+        { 
+          _solarINTempForeGround = new SolidColorBrush(Colors.Red); 
+        }
+        else if (solarINTempDiff < -0.01)
+        {
+          _solarINTempForeGround = new SolidColorBrush(Colors.Blue);
+        } else
+        { _solarINTempForeGround = oldBrush; }
+        return _solarINTempForeGround;
+      } 
       set
       {
         _solarINTempForeGround = value;
       }
     }
 
-    private Brush _solarOUTTempForeGround;
+    private Brush _solarOUTTempForeGround = new SolidColorBrush(Colors.Black);
     public Brush solarOUTTempForeGround
     {
       get
       {
-        if (_solarOUTTempDiff > 0)
+        Brush oldBrush = _solarOUTTempForeGround;
+        if (solarOUTTempDiff > 0.01)
         {
-          return new SolidColorBrush(Colors.Red);
+          _solarOUTTempForeGround = new SolidColorBrush(Colors.Red);
         }
-        else if (_solarOUTTempDiff < 0)
+        else if (solarOUTTempDiff < -0.01)
         {
-          return new SolidColorBrush(Colors.Blue);
-        }
-        else
-        {
-          return new SolidColorBrush(Colors.Black);
-        }
+          _solarOUTTempForeGround = new SolidColorBrush(Colors.Blue);
+        } else
+        { _solarOUTTempForeGround = oldBrush; }
+        return _solarOUTTempForeGround;
       }
       set
       {
         _solarOUTTempForeGround = value;
       }
     }
+
+    private float _solarOUTTemp = float.NaN;
     public float solarOUTTemp
     {
       get { return _solarOUTTemp; } 
       set {
-        _solarOUTTempDiff = _solarOUTTemp - value;
-        _solarOUTTemp = value; 
+        solarOUTTempDiff = value - solarOUTTemp;
+        _solarOUTTemp = value;
+        dON = float.NaN;
+        dOFF = float.NaN;
         NotifyPropertyChanged("solarOUTTemp");
         NotifyPropertyChanged("solarOUTTempForeGround");
       } 
     }
-    private Brush _solarROOMTempForeGround;
+    private Brush _solarROOMTempForeGround = new SolidColorBrush(Colors.Black);
     public Brush solarROOMTempForeGround
     {
       get
       {
-        if (_solarROOMTempDiff > 0)
+        Brush oldBrush = _solarROOMTempForeGround;
+        if (solarROOMTempDiff > 0.01)
         {
-          return new SolidColorBrush(Colors.Red);
+          _solarROOMTempForeGround  = new SolidColorBrush(Colors.Red);
         }
-        else if (_solarROOMTempDiff < 0)
+        else if (solarROOMTempDiff < -0.01)
         {
-          return new SolidColorBrush(Colors.Blue);
-        }
-        else
-        {
-          return new SolidColorBrush(Colors.Black);
-        }
+          _solarROOMTempForeGround = new SolidColorBrush(Colors.Blue);
+        } else
+        { _solarROOMTempForeGround = oldBrush; }
+        return _solarROOMTempForeGround;
       }
       set
       {
         _solarROOMTempForeGround = value;
       }
     }
+
+    private float _solarROOMTemp = float.NaN;
     public float solarROOMTemp
     {
       get { return _solarROOMTemp; } 
       set {
-        _solarROOMTempDiff = _solarROOMTemp - value;
-        _solarROOMTemp = value; 
+        solarROOMTempDiff = value - solarROOMTemp;
+        _solarROOMTemp = value;
         NotifyPropertyChanged("solarROOMTemp");
         NotifyPropertyChanged("solarROOMTempForeGround");
       } 
     }
-    private Brush _bojler2TempForeGround;
+    private Brush _bojler2TempForeGround = new SolidColorBrush(Colors.Black);
     public Brush bojler2TempForeGround
     {
       get
       {
-        if (_bojler2TempDiff > 0)
+        Brush oldBrush = _bojler2TempForeGround;
+        if (bojler2TempDiff > 0.01)
         {
-          return new SolidColorBrush(Colors.Red);
+          _bojler2TempForeGround = new SolidColorBrush(Colors.Red);
         }
-        else if (_bojler2TempDiff < 0)
+        else if (bojler2TempDiff < -0.01)
         {
-          return new SolidColorBrush(Colors.Blue);
-        }
-        else
-        {
-          return new SolidColorBrush(Colors.Black);
-        }
+          _bojler2TempForeGround = new SolidColorBrush(Colors.Blue);
+        } else
+        { _bojler2TempForeGround = oldBrush; }
+        return _bojler2TempForeGround;
       }
       set
       {
@@ -208,11 +217,73 @@ namespace myHouse
       get { return _bojler2Temp; }
       set
       {
-        _bojler2TempDiff = _bojler2Temp - value;
+        bojler2TempDiff = value - bojler2Temp;
         _bojler2Temp = value;
+        dON = float.NaN;
+        dOFF = float.NaN;
         NotifyPropertyChanged("bojler2Temp");
         NotifyPropertyChanged("bojler2TempForeGround");
       }
+    }
+
+    private System.Windows.Visibility _tbOnVisible = System.Windows.Visibility.Hidden;
+    public System.Windows.Visibility tbOnVisible
+    {
+      set { _tbOnVisible = value; }
+      get { return _tbOnVisible; }
+    }
+
+    private System.Windows.Visibility _tbOffVisible = System.Windows.Visibility.Hidden;
+    public System.Windows.Visibility tbOffVisible
+    {
+      set { _tbOffVisible = value; }
+      get { return _tbOffVisible; }
+    }
+
+    private float _dON = 0;
+    public float dON
+    {
+      get { return _dON; }
+      set
+      {
+        _dON = difON + bojler2Temp - service.max(solarOUTTemp, solarINTemp);
+        NotifyPropertyChanged("dON"); 
+      }
+    }
+
+    private float _dOFF = 0;
+    public float dOFF
+    {
+      get { return _dOFF; }
+      set
+      {
+        _dOFF = difOFF + bojler2Temp - solarOUTTemp;
+        NotifyPropertyChanged("dOFF");
+      }
+    }
+
+    public float bojler2TempDiff
+    {
+      get { return _bojler2TempDiff; }
+      set { _bojler2TempDiff = value ; }
+    }
+
+    public float solarROOMTempDiff
+    {
+      get { return _solarROOMTempDiff; }
+      set { _solarROOMTempDiff = value; }
+    }
+
+    public float solarOUTTempDiff
+    {
+      get { return _solarOUTTempDiff; }
+      set { _solarOUTTempDiff = value; }
+    }
+
+    public float solarINTempDiff
+    {
+      get { return _solarINTempDiff; }
+      set { _solarINTempDiff = value; }
     }
 
     public string corridorColor { get { return _corridorColor.ToString(); } set { _corridorColor = value; NotifyPropertyChanged("corridorColor"); } }
@@ -262,28 +333,31 @@ namespace myHouse
       get { if (_statusSolar == 0) { return "OFF"; } else { return "ON"; } }
       set
       {
-        if (value == "0") { _statusSolar = 0; } else { _statusSolar = 1; };
+        if (value == "0") { _statusSolar = 0; tbOnVisible = System.Windows.Visibility.Visible; tbOffVisible = System.Windows.Visibility.Hidden; }
+        else { _statusSolar = 1; tbOffVisible = System.Windows.Visibility.Visible; tbOnVisible = System.Windows.Visibility.Hidden; }
         NotifyPropertyChanged("statusSolar");
+        NotifyPropertyChanged("statusSolarBackGround");
+        NotifyPropertyChanged("statusSolarForeGround");
+        NotifyPropertyChanged("tbOnVisible");
+        NotifyPropertyChanged("tbOffVisible");
       }
     }
     private Brush _statusSolarBackGround;
     public Brush statusSolarBackGround
     {
-      get { if (_statusSolar == 0) { return new SolidColorBrush(Colors.Red); } else { return new SolidColorBrush(Colors.Green); } }
+      get { if (statusSolar == "OFF") { return new SolidColorBrush(Colors.Red); } else { return new SolidColorBrush(Colors.Green); } }
       set
       {
         _statusSolarBackGround = value;
-        NotifyPropertyChanged("statusSolarBackGround");
       }
     }
     private Brush _statusSolarForeGround;
     public Brush statusSolarForeGround
     {
-      get { if (_statusSolar == 0) {return new SolidColorBrush(Colors.White); } else { return new SolidColorBrush(Colors.Black); } }
+      get { if (statusSolar == "ON") {return new SolidColorBrush(Colors.White); } else { return new SolidColorBrush(Colors.White); } }
       set
       {
         _statusSolarForeGround = value;
-        NotifyPropertyChanged("statusSolarForeGround");
       }
     }
   }

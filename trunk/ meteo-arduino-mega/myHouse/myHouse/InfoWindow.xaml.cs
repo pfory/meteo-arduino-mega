@@ -27,7 +27,7 @@ namespace myHouse
     {
       InitializeComponent();
 
-      this.Language = XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag);
+      //this.Language = XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag);
       DataContext = srv.hd;
       srv.showDataSolar();
     }

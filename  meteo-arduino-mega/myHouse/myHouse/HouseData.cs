@@ -58,9 +58,11 @@ namespace myHouse
     private float _energyTotal;
     private float _difON;
     private float _difOFF;
-
+    private TimeZoneInfo tzi = TimeZoneInfo.Local;
+    private TimeSpan _timespan;
     public HouseData()
     {
+      _timespan = tzi.GetUtcOffset(DateTime.Now);
     }
 
     public void resetHouse()
@@ -319,7 +321,7 @@ namespace myHouse
 
     public DateTime lastUpdateHouse { get { return _lastUpdateHouse; } set { _lastUpdateHouse = value; NotifyPropertyChanged("lastUpdateHouse"); } }
     public DateTime lastUpdateMeteo { get { return _lastUpdateMeteo; } set { _lastUpdateMeteo = value; NotifyPropertyChanged("lastUpdateMeteo"); } }
-    public DateTime lastUpdateSolar { get { return _lastUpdateSolar; } set { _lastUpdateSolar = value; NotifyPropertyChanged("lastUpdateSolar"); } }
+    public DateTime lastUpdateSolar { get { return _lastUpdateSolar; } set { _lastUpdateSolar = value.Add(_timespan); NotifyPropertyChanged("lastUpdateSolar"); } }
 
     public float solarPower { get { return _solarPower; } set { _solarPower = value; NotifyPropertyChanged("solarPower"); } }
     public float energyADay { get { return _energyADay; } set { _energyADay = value; NotifyPropertyChanged("energyADay"); } }

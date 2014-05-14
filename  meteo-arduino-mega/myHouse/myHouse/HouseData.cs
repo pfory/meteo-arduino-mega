@@ -5,7 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
-
+using System.Net.Mail;
+using System.Net;
 namespace myHouse
 {
   public class HouseData : INotifyPropertyChanged
@@ -342,8 +343,44 @@ namespace myHouse
         NotifyPropertyChanged("statusSolarForeGround");
         NotifyPropertyChanged("tbOnVisible");
         NotifyPropertyChanged("tbOffVisible");
+        //sendEmail(_statusSolar);
       }
     }
+
+    public void sendEmail(byte status)
+    {
+      MailAddress address = new MailAddress("pfory@seznam.cz");
+      StringBuilder zprava = new StringBuilder();
+      MailMessage msg = new MailMessage();
+      SmtpClient client = new SmtpClient("smtp.seznam.cz", 465);
+      client.EnableSsl = true;
+      CredentialCache.DefaultNetworkCredentials.Password = "hanka12";
+      CredentialCache.DefaultNetworkCredentials.UserName = "pfory";
+      client.Credentials = CredentialCache.DefaultNetworkCredentials;
+      msg.From = new MailAddress("pfory@seznam.cz");
+      if (status == 0)
+      {
+        msg.Subject = "Solar VYP";
+      }
+      else
+      {
+        msg.Subject = "Solar ZAP";
+      }
+      zprava.AppendLine("Tesovací mail Solar");
+      msg.Body = zprava.ToString();
+      msg.To.Add("pfory@seznam.cz");
+      msg.IsBodyHtml = true;
+      msg.Priority = MailPriority.High;
+      try
+      {
+        client.Send(msg);
+      }
+      catch (Exception ex)
+      {
+        throw ex;
+      }
+    }
+
     private Brush _statusSolarBackGround;
     public Brush statusSolarBackGround
     {

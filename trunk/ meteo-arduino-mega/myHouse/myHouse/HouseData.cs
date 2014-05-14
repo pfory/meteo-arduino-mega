@@ -343,7 +343,7 @@ namespace myHouse
         NotifyPropertyChanged("statusSolarForeGround");
         NotifyPropertyChanged("tbOnVisible");
         NotifyPropertyChanged("tbOffVisible");
-        //sendEmail(_statusSolar);
+        sendEmail(_statusSolar);
       }
     }
 
@@ -352,11 +352,10 @@ namespace myHouse
       MailAddress address = new MailAddress("pfory@seznam.cz");
       StringBuilder zprava = new StringBuilder();
       MailMessage msg = new MailMessage();
-      SmtpClient client = new SmtpClient("smtp.seznam.cz", 465);
-      client.EnableSsl = true;
-      CredentialCache.DefaultNetworkCredentials.Password = "hanka12";
-      CredentialCache.DefaultNetworkCredentials.UserName = "pfory";
-      client.Credentials = CredentialCache.DefaultNetworkCredentials;
+      SmtpClient client = new SmtpClient("smtp.gmail.com", 587) {
+        Credentials = new NetworkCredential("mr.datel@gmail.com", "hanka123"),
+        EnableSsl = true
+      };
       msg.From = new MailAddress("pfory@seznam.cz");
       if (status == 0)
       {

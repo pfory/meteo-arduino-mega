@@ -284,7 +284,7 @@ namespace myHouse {
       get { if (_statusSolar == 0) { return "OFF"; } else { return "ON"; } }
       set {
         if (value != _statusSolar.ToString()) {
-          sendEmail(_statusSolar);
+          //sendEmail(_statusSolar);
         }
         if (value == "0") { _statusSolar = 0; tbOnVisible = System.Windows.Visibility.Visible; tbOffVisible = System.Windows.Visibility.Hidden; } else { _statusSolar = 1; tbOffVisible = System.Windows.Visibility.Visible; tbOnVisible = System.Windows.Visibility.Hidden; }
         NotifyPropertyChanged("statusSolar");

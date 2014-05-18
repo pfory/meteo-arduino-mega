@@ -295,43 +295,69 @@ namespace myHouse {
       }
     }
 
-    public void sendEmail(byte status) {
+    //public void sendEmail(byte status) {
+    //  MailAddress address = new MailAddress("pfory@seznam.cz");
+    //  StringBuilder zprava = new StringBuilder();
+    //  MailMessage msg = new MailMessage();
+    //  String mailServer = String.Empty;
+    //  Int16 mailPort = 0;
+    //  String mailUserName = String.Empty;
+    //  String mailPassword = String.Empty;
+    //  bool enableSSL = false;
+
+    //  String mailType = "GMAIL";
+
+    //  if (mailType == "GMAIL")
+    //  {
+    //    mailServer = "smtp.gmail.com";
+    //    mailPort = 587;
+    //    mailUserName = "mr.datel@gmail.com";
+    //    mailPassword = "hanka123";
+    //    enableSSL = true;
+
+    //  }
+    //  if (mailType == "SEZNAM")
+    //  {
+    //    mailServer = "smtp.seznam.cz";
+    //    mailPort = 465;
+    //    mailUserName = "pfory";
+    //    mailPassword = "hanka123";
+    //    enableSSL = true;
+    //  }
+    //  SmtpClient client = new SmtpClient(mailServer, mailPort)
+    //  //SmtpClient client = new SmtpClient()
+    //  {
+    //    Credentials = new NetworkCredential(mailUserName, mailPassword),
+    //    EnableSsl = enableSSL,
+    //    UseDefaultCredentials = false,
+    //    //DeliveryMethod = SmtpDeliveryMethod.PickupDirectoryFromIis,
+    //    //PickupDirectoryLocation = "..."
+    //  };
+    //  msg.From = new MailAddress("pfory@seznam.cz");
+    //  if (status == 0) {
+    //    msg.Subject = "Solar VYP";
+    //  } else {
+    //    msg.Subject = "Solar ZAP";
+    //  }
+    //  zprava.AppendLine("Tesovací mail Solar");
+    //  msg.Body = zprava.ToString();
+    //  msg.To.Add("pfory@seznam.cz");
+    //  msg.IsBodyHtml = true;
+    //  msg.Priority = MailPriority.High;
+    //  try {
+    //    client.Send(msg);
+    //  } catch (Exception ex) {
+    //    throw ex;
+    //  }
+    //}
+
+       public void sendEmail(byte status) {
       MailAddress address = new MailAddress("pfory@seznam.cz");
       StringBuilder zprava = new StringBuilder();
       MailMessage msg = new MailMessage();
-      String mailServer = String.Empty;
-      Int16 mailPort = 0;
-      String mailUserName = String.Empty;
-      String mailPassword = String.Empty;
-      bool enableSSL = false;
-
-      String mailType = "SEZNAM";
-
-      if (mailType == "GMAIL")
-      {
-        mailServer = "smtp.gmail.com";
-        mailPort = 587;
-        mailUserName = "mr.datel@gmail.com";
-        mailPassword = "hanka123";
-        enableSSL = true;
-
-      }
-      if (mailType == "SEZNAM")
-      {
-        mailServer = "localhost";
-        mailPort = 2525;
-        mailUserName = "pfory";
-        mailPassword = "hanka123";
-        enableSSL = false;
-      }
-      SmtpClient client = new SmtpClient(mailServer, mailPort)
-      //SmtpClient client = new SmtpClient()
-      {
-        //Credentials = new NetworkCredential(mailUserName, mailPassword),
-        //EnableSsl = enableSSL,
-        //UseDefaultCredentials = false,
-        //DeliveryMethod = SmtpDeliveryMethod.PickupDirectoryFromIis,
-        //PickupDirectoryLocation = "..."
+      SmtpClient client = new SmtpClient("localhost", 25) {
+        Credentials = new NetworkCredential("pfory@pfory.cz", "hanka12"),
+        //EnableSsl = true
       };
       msg.From = new MailAddress("pfory@seznam.cz");
       if (status == 0) {

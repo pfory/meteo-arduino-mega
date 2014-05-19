@@ -62,6 +62,7 @@ namespace myHouse {
     public HouseData() {
       _timespan = tzi.GetUtcOffset(DateTime.Now);
     }
+    
 
     public void resetHouse() {
       bedRoomTempOld = corridorTemp = hallTemp = workRoomTemp = livingRoomTemp = bojlerTemp = outdoorTemp = bedRoomTempNew = -127;
@@ -300,7 +301,7 @@ namespace myHouse {
       get { if (_statusSolar == 0) { return "OFF"; } else { return "ON"; } }
       set {
         if (value != _statusSolar.ToString()) {
-          //sendEmail(_statusSolar);
+          sendEmail(_statusSolar);
         }
         if (value == "0") { _statusSolar = 0; tbOnVisible = System.Windows.Visibility.Visible; tbOffVisible = System.Windows.Visibility.Hidden; } else { _statusSolar = 1; tbOffVisible = System.Windows.Visibility.Visible; tbOnVisible = System.Windows.Visibility.Hidden; }
         NotifyPropertyChanged("statusSolar");
@@ -387,13 +388,13 @@ namespace myHouse {
       msg.IsBodyHtml = true;
       msg.Priority = MailPriority.High;
       zprava.AppendLine("<h3>Temperatures:</h3>");
-      zprava.AppendLine("<b>Bojler:</b>" + bojler2Temp + "°C</br>");
-      zprava.AppendLine("<b>IN:</b>" + solarINTemp + "°C</br>");
-      zprava.AppendLine("<b>OUT:</b>" + solarOUTTemp + "°C</br>");
-      zprava.AppendLine("<b>Room:</b>" + solarROOMTemp + "°C</br>");
+      zprava.AppendLine("<b>Bojler:</b> " + bojler2Temp + " &degC</br>");
+      zprava.AppendLine("<b>IN:</b> " + solarINTemp + " &degC</br>");
+      zprava.AppendLine("<b>OUT:</b> " + solarOUTTemp + " &degC</br>");
+      zprava.AppendLine("<b>Room:</b> " + solarROOMTemp + " &degC</br>");
       zprava.AppendLine("<h3>Energy:</h3>");
-      zprava.AppendLine("<b>Energy a day:</b>" + energyADay + "kWh</br>");
-      zprava.AppendLine("<b>Energy total:</b>" + energyTotal + "kWh</br>");
+      zprava.AppendLine("<b>Day:</b> " + energyADay + " kWh</br>");
+      zprava.AppendLine("<b>Total:</b> " + energyTotal + " kWh</br>");
       msg.Body = zprava.ToString();
 
       try {

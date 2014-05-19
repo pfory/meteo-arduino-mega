@@ -39,6 +39,7 @@ namespace myHouse {
     private string _statusLEDSolarColor;
     private DateTime _lastUpdateHouse;
     private DateTime _lastUpdateSolar;
+    private int _lastUpdateSolarDiff;
     private DateTime _lastUpdateMeteo;
     private float _humidity;
     private float _temp085;
@@ -271,7 +272,22 @@ namespace myHouse {
 
     public DateTime lastUpdateHouse { get { return _lastUpdateHouse; } set { _lastUpdateHouse = value; NotifyPropertyChanged("lastUpdateHouse"); } }
     public DateTime lastUpdateMeteo { get { return _lastUpdateMeteo; } set { _lastUpdateMeteo = value; NotifyPropertyChanged("lastUpdateMeteo"); } }
-    public DateTime lastUpdateSolar { get { return _lastUpdateSolar; } set { _lastUpdateSolar = value.Add(_timespan); NotifyPropertyChanged("lastUpdateSolar"); } }
+    public DateTime lastUpdateSolar { get { return _lastUpdateSolar; } set { _lastUpdateSolar = value.Add(_timespan); lastUpdateSolarDiff = 0; NotifyPropertyChanged("lastUpdateSolar"); } }
+    public int lastUpdateSolarDiff { get { return _lastUpdateSolarDiff; } 
+      set { 
+        TimeSpan t = lastUpdateSolar - DateTime.Now;
+        _lastUpdateSolarDiff = t.Seconds;
+        NotifyPropertyChanged("lastUpdateSolarDiff");
+        NotifyPropertyChanged("solarTitle");
+      } 
+    }
+    public String solarTitle
+    {
+      get
+      {
+        return lastUpdateSolar.ToString("dddd dd.MM.yyyy HH:mm:ss") + " dif:" + lastUpdateSolarDiff + "s";
+      }
+    }
 
     public float solarPower { get { return _solarPower; } set { _solarPower = value; NotifyPropertyChanged("solarPower"); } }
     public float energyADay { get { return _energyADay; } set { _energyADay = value; NotifyPropertyChanged("energyADay"); } }
@@ -355,21 +371,31 @@ namespace myHouse {
       MailAddress address = new MailAddress("pfory@seznam.cz");
       StringBuilder zprava = new StringBuilder();
       MailMessage msg = new MailMessage();
-      SmtpClient client = new SmtpClient("localhost", 25) {
-        Credentials = new NetworkCredential("pfory@pfory.cz", "hanka12"),
+      SmtpClient client = new SmtpClient();
+      //SmtpClient client = new SmtpClient("smtp.bcas.cz", 25) {
+        //Credentials = new NetworkCredential("petr.fory@bcas.cz", "eljo3v"),
         //EnableSsl = true
-      };
+      //};
       msg.From = new MailAddress("pfory@seznam.cz");
       if (status == 0) {
         msg.Subject = "Solar VYP";
       } else {
         msg.Subject = "Solar ZAP";
       }
-      zprava.AppendLine("Tesovací mail Solar");
       msg.Body = zprava.ToString();
       msg.To.Add("pfory@seznam.cz");
       msg.IsBodyHtml = true;
       msg.Priority = MailPriority.High;
+      zprava.AppendLine("<h3>Temperatures:</h3>");
+      zprava.AppendLine("<b>Bojler:</b>" + bojler2Temp + "°C</br>");
+      zprava.AppendLine("<b>IN:</b>" + solarINTemp + "°C</br>");
+      zprava.AppendLine("<b>OUT:</b>" + solarOUTTemp + "°C</br>");
+      zprava.AppendLine("<b>Room:</b>" + solarROOMTemp + "°C</br>");
+      zprava.AppendLine("<h3>Energy:</h3>");
+      zprava.AppendLine("<b>Energy a day:</b>" + energyADay + "kWh</br>");
+      zprava.AppendLine("<b>Energy total:</b>" + energyTotal + "kWh</br>");
+      msg.Body = zprava.ToString();
+
       try {
         client.Send(msg);
       } catch (Exception ex) {
@@ -391,5 +417,6 @@ namespace myHouse {
         _statusSolarForeGround = value;
       }
     }
+
   }
 }

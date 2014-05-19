@@ -30,7 +30,7 @@ namespace myHouse
       //this.Language = XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag);
       DataContext = srv.hd;
       srv.showDataSolar();
-      srv.hd.sendEmail(0);
+      //srv.hd.sendEmail(0);
     }
   }
 }

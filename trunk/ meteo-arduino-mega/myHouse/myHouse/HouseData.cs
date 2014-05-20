@@ -1,14 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Net.Mail;
-using System.Net;
 namespace myHouse {
+  /// <summary>
+  /// service class
+  /// </summary>
   public class HouseData : INotifyPropertyChanged {
+    /// <summary>
+    /// 
+    /// </summary>
     public event PropertyChangedEventHandler PropertyChanged;
     private void NotifyPropertyChanged(string info) {
       if (PropertyChanged != null)
@@ -58,23 +60,44 @@ namespace myHouse {
     private float _difON;
     private float _difOFF;
     private TimeZoneInfo tzi = TimeZoneInfo.Local;
-    private TimeSpan _timespan;
-    public HouseData() {
-      _timespan = tzi.GetUtcOffset(DateTime.Now);
+    private TimeSpan _timeSpan;
+    public TimeSpan timeSpan {
+      get { return _timeSpan; }
+      set { _timeSpan = value; }
     }
-    
+    /// <summary>
+    /// 
+    /// </summary>
+    public HouseData() {
+      timeSpan = tzi.GetUtcOffset(DateTime.Now);
+    }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public void resetHouse() {
       bedRoomTempOld = corridorTemp = hallTemp = workRoomTemp = livingRoomTemp = bojlerTemp = outdoorTemp = bedRoomTempNew = -127;
       bedRoomOldColor = bedRoomNewColor = corridorColor = hallColor = workRoomColor = livingRoomColor = outdoorColor = bojlerColor = Colors.Red.ToString();
     }
+    /// <summary>
+    /// 
+    /// </summary>
     public void resetMeteo() {
     }
+    /// <summary>
+    /// 
+    /// </summary>
     public void resetSolar() {
       //bojler2Temp = -127;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public float corridorTemp { get { return _corridorTemp; } set { _corridorTemp = value; NotifyPropertyChanged("corridorTemp"); } }
+    /// <summary>
+    /// 
+    /// </summary>
     public float hallTemp { get { return _hallTemp; } set { _hallTemp = value; NotifyPropertyChanged("hallTemp"); } }
     public float livingRoomTemp { get { return _livingRoomTemp; } set { _livingRoomTemp = value; NotifyPropertyChanged("livingRoomTemp"); } }
     public float workRoomTemp { get { return _workRoomTemp; } set { _workRoomTemp = value; NotifyPropertyChanged("workRoomTemp"); } }
@@ -92,6 +115,7 @@ namespace myHouse {
         dON = float.NaN;
         dOFF = float.NaN;
         NotifyPropertyChanged("solarINTemp");
+        NotifyPropertyChanged("solarINTempHist");
         NotifyPropertyChanged("solarINTempForeGround");
       }
     }
@@ -136,6 +160,7 @@ namespace myHouse {
         dON = float.NaN;
         dOFF = float.NaN;
         NotifyPropertyChanged("solarOUTTemp");
+        NotifyPropertyChanged("solarOUTTempHist");
         NotifyPropertyChanged("solarOUTTempForeGround");
       }
     }
@@ -162,6 +187,7 @@ namespace myHouse {
         solarROOMTempDiff = value - solarROOMTemp;
         _solarROOMTemp = value;
         NotifyPropertyChanged("solarROOMTemp");
+        NotifyPropertyChanged("solarROOMTempHist");
         NotifyPropertyChanged("solarROOMTempForeGround");
       }
     }
@@ -188,6 +214,7 @@ namespace myHouse {
         dON = float.NaN;
         dOFF = float.NaN;
         NotifyPropertyChanged("bojler2Temp");
+        NotifyPropertyChanged("bojler2TempHist");
         NotifyPropertyChanged("bojler2TempForeGround");
       }
     }
@@ -273,19 +300,18 @@ namespace myHouse {
 
     public DateTime lastUpdateHouse { get { return _lastUpdateHouse; } set { _lastUpdateHouse = value; NotifyPropertyChanged("lastUpdateHouse"); } }
     public DateTime lastUpdateMeteo { get { return _lastUpdateMeteo; } set { _lastUpdateMeteo = value; NotifyPropertyChanged("lastUpdateMeteo"); } }
-    public DateTime lastUpdateSolar { get { return _lastUpdateSolar; } set { _lastUpdateSolar = value.Add(_timespan); lastUpdateSolarDiff = 0; NotifyPropertyChanged("lastUpdateSolar"); } }
-    public int lastUpdateSolarDiff { get { return _lastUpdateSolarDiff; } 
-      set { 
+    public DateTime lastUpdateSolar { get { return _lastUpdateSolar; } set { _lastUpdateSolar = value.Add(_timeSpan); lastUpdateSolarDiff = 0; NotifyPropertyChanged("lastUpdateSolar"); } }
+    public int lastUpdateSolarDiff {
+      get { return _lastUpdateSolarDiff; }
+      set {
         TimeSpan t = lastUpdateSolar - DateTime.Now;
         _lastUpdateSolarDiff = t.Seconds;
         NotifyPropertyChanged("lastUpdateSolarDiff");
         NotifyPropertyChanged("solarTitle");
-      } 
+      }
     }
-    public String solarTitle
-    {
-      get
-      {
+    public String solarTitle {
+      get {
         return lastUpdateSolar.ToString("dddd dd.MM.yyyy HH:mm:ss") + " dif:" + lastUpdateSolarDiff + "s";
       }
     }
@@ -296,14 +322,18 @@ namespace myHouse {
     public float difOFF { get { return _difOFF; } set { _difOFF = value; NotifyPropertyChanged("difOFF"); } }
     public float difON { get { return _difON; } set { _difON = value; NotifyPropertyChanged("difON"); } }
 
-    private byte _statusSolar;
+    private byte _statusSolar = byte.MaxValue;
     public string statusSolar {
       get { if (_statusSolar == 0) { return "OFF"; } else { return "ON"; } }
       set {
-        if (value != _statusSolar.ToString()) {
-          sendEmail(_statusSolar);
+        if (_statusSolar != byte.MaxValue && value != _statusSolar.ToString()) {
+          sendEmail(Convert.ToByte(value));
         }
-        if (value == "0") { _statusSolar = 0; tbOnVisible = System.Windows.Visibility.Visible; tbOffVisible = System.Windows.Visibility.Hidden; } else { _statusSolar = 1; tbOffVisible = System.Windows.Visibility.Visible; tbOnVisible = System.Windows.Visibility.Hidden; }
+        _statusSolar = Convert.ToByte(value);
+
+        if (value == "0") { tbOnVisible = System.Windows.Visibility.Visible; tbOffVisible = System.Windows.Visibility.Hidden; } 
+        else { tbOffVisible = System.Windows.Visibility.Visible; tbOnVisible = System.Windows.Visibility.Hidden; }
+        
         NotifyPropertyChanged("statusSolar");
         NotifyPropertyChanged("statusSolarBackGround");
         NotifyPropertyChanged("statusSolarForeGround");
@@ -312,89 +342,39 @@ namespace myHouse {
       }
     }
 
-    //public void sendEmail(byte status) {
-    //  MailAddress address = new MailAddress("pfory@seznam.cz");
-    //  StringBuilder zprava = new StringBuilder();
-    //  MailMessage msg = new MailMessage();
-    //  String mailServer = String.Empty;
-    //  Int16 mailPort = 0;
-    //  String mailUserName = String.Empty;
-    //  String mailPassword = String.Empty;
-    //  bool enableSSL = false;
-
-    //  String mailType = "GMAIL";
-
-    //  if (mailType == "GMAIL")
-    //  {
-    //    mailServer = "smtp.gmail.com";
-    //    mailPort = 587;
-    //    mailUserName = "mr.datel@gmail.com";
-    //    mailPassword = "hanka123";
-    //    enableSSL = true;
-
-    //  }
-    //  if (mailType == "SEZNAM")
-    //  {
-    //    mailServer = "smtp.seznam.cz";
-    //    mailPort = 465;
-    //    mailUserName = "pfory";
-    //    mailPassword = "hanka123";
-    //    enableSSL = true;
-    //  }
-    //  SmtpClient client = new SmtpClient(mailServer, mailPort)
-    //  //SmtpClient client = new SmtpClient()
-    //  {
-    //    Credentials = new NetworkCredential(mailUserName, mailPassword),
-    //    EnableSsl = enableSSL,
-    //    UseDefaultCredentials = false,
-    //    //DeliveryMethod = SmtpDeliveryMethod.PickupDirectoryFromIis,
-    //    //PickupDirectoryLocation = "..."
-    //  };
-    //  msg.From = new MailAddress("pfory@seznam.cz");
-    //  if (status == 0) {
-    //    msg.Subject = "Solar VYP";
-    //  } else {
-    //    msg.Subject = "Solar ZAP";
-    //  }
-    //  zprava.AppendLine("Tesovací mail Solar");
-    //  msg.Body = zprava.ToString();
-    //  msg.To.Add("pfory@seznam.cz");
-    //  msg.IsBodyHtml = true;
-    //  msg.Priority = MailPriority.High;
-    //  try {
-    //    client.Send(msg);
-    //  } catch (Exception ex) {
-    //    throw ex;
-    //  }
-    //}
-
-       public void sendEmail(byte status) {
+    public void sendEmail(byte status) {
       MailAddress address = new MailAddress("pfory@seznam.cz");
       StringBuilder zprava = new StringBuilder();
       MailMessage msg = new MailMessage();
       SmtpClient client = new SmtpClient();
       //SmtpClient client = new SmtpClient("smtp.bcas.cz", 25) {
-        //Credentials = new NetworkCredential("petr.fory@bcas.cz", "eljo3v"),
-        //EnableSsl = true
+      //Credentials = new NetworkCredential("petr.fory@bcas.cz", "eljo3v"),
+      //EnableSsl = true
       //};
       msg.From = new MailAddress("pfory@seznam.cz");
       if (status == 0) {
         msg.Subject = "Solar VYP";
-      } else {
+      } else if (status == 1) {
         msg.Subject = "Solar ZAP";
+      } else if (status == 2) {
+        msg.Subject = "Solar START";
       }
       msg.Body = zprava.ToString();
       msg.To.Add("pfory@seznam.cz");
       msg.IsBodyHtml = true;
       msg.Priority = MailPriority.High;
       zprava.AppendLine("<h3>Temperatures:</h3>");
-      zprava.AppendLine("<b>Bojler:</b> " + bojler2Temp + " &degC</br>");
-      zprava.AppendLine("<b>IN:</b> " + solarINTemp + " &degC</br>");
-      zprava.AppendLine("<b>OUT:</b> " + solarOUTTemp + " &degC</br>");
-      zprava.AppendLine("<b>Room:</b> " + solarROOMTemp + " &degC</br>");
+      zprava.AppendFormat("<b>Bojler:</b> {0:F2} &degC</br>", bojler2Temp);
+      zprava.AppendLine();
+      zprava.AppendFormat("<b>IN:</b> {0:F2} &degC</br>", solarINTemp);
+      zprava.AppendLine();
+      zprava.AppendFormat("<b>OUT:</b> {0:F2} &degC</br>", solarOUTTemp);
+      zprava.AppendLine();
+      zprava.AppendFormat("<b>Room:</b> {0:F2} &degC</br>", solarROOMTemp);
       zprava.AppendLine("<h3>Energy:</h3>");
-      zprava.AppendLine("<b>Day:</b> " + energyADay + " kWh</br>");
-      zprava.AppendLine("<b>Total:</b> " + energyTotal + " kWh</br>");
+      zprava.AppendFormat("<b>Day:</b> {0:F2} kWh</br>", energyADay);
+      zprava.AppendLine();
+      zprava.AppendFormat("<b>Total:</b> {0:F2} kWh</br>", energyTotal);
       msg.Body = zprava.ToString();
 
       try {
@@ -412,6 +392,8 @@ namespace myHouse {
       }
     }
     private Brush _statusSolarForeGround;
+
+
     public Brush statusSolarForeGround {
       get { if (statusSolar == "ON") { return new SolidColorBrush(Colors.White); } else { return new SolidColorBrush(Colors.White); } }
       set {
@@ -419,5 +401,13 @@ namespace myHouse {
       }
     }
 
+    private float _solarINTempHist;
+    public float solarINTempHist { get { return _solarINTempHist; } set { _solarINTempHist = value - _solarOUTTemp; } }
+    private float _solarOUTTempHist;
+    public float solarOUTTempHist { get { return _solarOUTTempHist; } set { _solarOUTTempHist = value - _solarOUTTemp; } }
+    private float _solarROOMTempHist;
+    public float solarROOMTempHist { get { return _solarROOMTempHist; } set { _solarROOMTempHist = value - _solarROOMTemp; } }
+    private float _bojler2TempHist;
+    public float bojler2TempHist { get { return _bojler2TempHist; } set { _bojler2TempHist = value - _bojler2Temp; } }
   }
 }

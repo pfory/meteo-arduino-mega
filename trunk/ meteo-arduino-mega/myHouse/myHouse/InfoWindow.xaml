@@ -1,8 +1,8 @@
 ﻿<Window x:Class="myHouse.Window1"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="{Binding solarTitle}" Height="70" Width="340" ResizeMode="NoResize" Topmost="True" Icon="pack://siteoforigin:,,,/Resources/home.ico">
-  <Grid Height="41" VerticalAlignment="Top">
+        Title="{Binding solarTitle}" Height="75" Width="340" ResizeMode="NoResize" Topmost="True" Icon="pack://siteoforigin:,,,/Resources/home.ico">
+  <Grid Height="40" VerticalAlignment="Top">
     <Ellipse x:Name="statusSolar" HorizontalAlignment="Left" Height="7" Stroke="Black" VerticalAlignment="Top" Width="7" Margin="0,0,0,0" Fill="{Binding Path=statusLEDSolarColor}" RenderTransformOrigin="0.5,0.5">
       <Ellipse.RenderTransform>
         <TransformGroup>
@@ -34,5 +34,9 @@
     <TextBlock x:Name="tbStatusSolar" HorizontalAlignment="Left" TextAlignment="Center" Margin="245,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding statusSolar}" Background="{Binding statusSolarBackGround}" Foreground="{Binding statusSolarForeGround}" ToolTip="Status (ON/OFF)" RenderTransformOrigin="-3.111,-23" Grid.Column="1" FontFamily="Tahoma" FontSize="9" />
     <TextBlock x:Name="tbdON" HorizontalAlignment="Left" TextAlignment="Center" Margin="280,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding dON, StringFormat=\{0:F2\}}" ToolTip="Diference do zapnutí" RenderTransformOrigin="-3.111,-23" Grid.Column="1" FontFamily="Tahoma" FontSize="9" Visibility="{Binding tbOnVisible}" />
     <TextBlock x:Name="tbdOFF" HorizontalAlignment="Left" TextAlignment="Center" Margin="280,15,0,0" VerticalAlignment="Top" Width="30" Text="{Binding dOFF, StringFormat=\{0:F2\}}" ToolTip="Diference do vypnutí" RenderTransformOrigin="-3.111,-23" Grid.Column="1" FontFamily="Tahoma" FontSize="9" Visibility="{Binding tbOffVisible}"/>
+    <TextBlock x:Name="tbINTempHist" HorizontalAlignment="Left" TextAlignment="Center" Margin="0,25,0,0" VerticalAlignment="Top" Width="30" Text="{Binding solarINTempHist, StringFormat=\{0:+0.00;-0.00;0\}}" ToolTip="Input temperature difference one hour ago(°C)" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbOUTTempHist" HorizontalAlignment="Left" TextAlignment="Center" Margin="35,25,0,0" VerticalAlignment="Top" Width="30" Text="{Binding solarOUTTempHist, StringFormat=\{0:+0.00;-0.00;0\}}" ToolTip="Output temperature difference one hour ago(°C)" RenderTransformOrigin="-3.111,-23" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbROOMTempHist" HorizontalAlignment="Left" TextAlignment="Center" Margin="70,25,0,0" VerticalAlignment="Top" Width="30" Text="{Binding solarROOMTempHist, StringFormat=\{0:+0.00;-0.00;0\}}" ToolTip="Room temperature difference one hour ago(°C)" RenderTransformOrigin="-3.111,-23" FontFamily="Tahoma" FontSize="9" />
+    <TextBlock x:Name="tbBojlerHist" HorizontalAlignment="Left" TextAlignment="Center" Margin="105,25,0,0" VerticalAlignment="Top" Width="30" Text="{Binding bojler2TempHist, StringFormat=\{0:+0.00;-0.00;0\}}" ToolTip="Bojler temperature difference one hour ago(°C)" RenderTransformOrigin="-3.111,-23" FontFamily="Tahoma" FontSize="9" />
   </Grid>
 </Window>

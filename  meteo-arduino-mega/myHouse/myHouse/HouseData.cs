@@ -110,7 +110,7 @@ namespace myHouse {
     public float solarINTemp {
       get { return _solarINTemp; }
       set {
-        solarINTempDiff = value - solarINTemp;
+        solarINTempDiff = solarINTemp - value;
         _solarINTemp = value;
         dON = float.NaN;
         dOFF = float.NaN;
@@ -155,7 +155,7 @@ namespace myHouse {
     public float solarOUTTemp {
       get { return _solarOUTTemp; }
       set {
-        solarOUTTempDiff = value - solarOUTTemp;
+        solarOUTTempDiff = solarOUTTemp - value;
         _solarOUTTemp = value;
         dON = float.NaN;
         dOFF = float.NaN;
@@ -184,7 +184,7 @@ namespace myHouse {
     public float solarROOMTemp {
       get { return _solarROOMTemp; }
       set {
-        solarROOMTempDiff = value - solarROOMTemp;
+        solarROOMTempDiff = solarROOMTemp - value;
         _solarROOMTemp = value;
         NotifyPropertyChanged("solarROOMTemp");
         NotifyPropertyChanged("solarROOMTempHist");
@@ -209,7 +209,7 @@ namespace myHouse {
     public float bojler2Temp {
       get { return _bojler2Temp; }
       set {
-        bojler2TempDiff = value - bojler2Temp;
+        bojler2TempDiff = bojler2Temp - value;
         _bojler2Temp = value;
         dON = float.NaN;
         dOFF = float.NaN;

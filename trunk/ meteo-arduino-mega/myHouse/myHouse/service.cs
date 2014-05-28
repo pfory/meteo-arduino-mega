@@ -77,7 +77,7 @@ namespace myHouse {
         dt = dt.Add(-hd.timeSpan);
         url += "?start=" + dt.ToString("yyyy-MM-ddThh:mm:ssZ") + "&end=" + dt.AddSeconds(5).ToString("yyyy-MM-ddThh:mm:ssZ");
       }
-      url = "";
+      
       string htmlCode = String.Empty;
       try {
         HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);

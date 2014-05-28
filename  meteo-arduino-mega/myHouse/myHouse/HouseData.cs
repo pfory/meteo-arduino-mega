@@ -231,10 +231,27 @@ namespace myHouse {
       get { return _tbOffVisible; }
     }
 
+    private float _dDiff = 0;
+    public float dDiff {
+      get { return _dDiff; }
+      set {
+        if (statusSolar == "ON") {
+          _dDiff = value - dON;
+        } else {
+          _dDiff = value - dOFF;
+        }
+        NotifyPropertyChanged("dDiff");
+      }
+    }
+
+    
     private float _dON = 0;
     public float dON {
       get { return _dON; }
       set {
+        if (statusSolar == "ON") {
+          dDiff = _dON;
+        }
         _dON = difON + bojler2Temp - service.max(solarOUTTemp, solarINTemp);
         NotifyPropertyChanged("dON");
       }
@@ -244,6 +261,9 @@ namespace myHouse {
     public float dOFF {
       get { return _dOFF; }
       set {
+        if (statusSolar == "OFF") {
+          dDiff = dOFF;
+        }
         _dOFF = difOFF + bojler2Temp - solarOUTTemp;
         NotifyPropertyChanged("dOFF");
       }

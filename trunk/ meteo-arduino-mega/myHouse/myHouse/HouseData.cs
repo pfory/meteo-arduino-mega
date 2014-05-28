@@ -363,7 +363,7 @@ namespace myHouse {
       msg.To.Add("pfory@seznam.cz");
       msg.IsBodyHtml = true;
       msg.Priority = MailPriority.High;
-      zprava.AppendLine("<h3>Temperatures:</h3>");
+      zprava.AppendLine("<h3>Temperatures at " + lastUpdateSolar + " :</h3>");
       zprava.AppendFormat("<b>Bojler:</b> {0:F2} &degC</br>", bojler2Temp);
       zprava.AppendLine();
       zprava.AppendFormat("<b>IN:</b> {0:F2} &degC</br>", solarINTemp);

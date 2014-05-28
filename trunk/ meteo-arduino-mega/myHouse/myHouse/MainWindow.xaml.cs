@@ -12,7 +12,7 @@ namespace myHouse
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, IDisposable
     {
 
 
@@ -83,5 +83,10 @@ namespace myHouse
             tbWindSpeed.Visibility = tbWindSpeedMax.Visibility = tbWindDirection.Visibility = Visibility.Hidden;
           }
         }
+
+      public void Dispose() {
+        srv.Dispose();
+        GC.SuppressFinalize(this);
+      }
     }
 }

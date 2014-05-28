@@ -19,7 +19,7 @@ namespace myHouse
   /// <summary>
   /// Interaction logic for Window1.xaml
   /// </summary>
-  public partial class Window1 : Window
+  public partial class Window1 : Window,IDisposable
   {
     service srv = new service();
 
@@ -31,6 +31,11 @@ namespace myHouse
       DataContext = srv.hd;
       srv.showDataSolar();
       //srv.hd.sendEmail(2);
+    }
+
+    public void Dispose() {
+      srv.Dispose();
+      GC.SuppressFinalize(this);
     }
   }
 }

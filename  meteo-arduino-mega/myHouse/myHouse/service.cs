@@ -5,7 +5,7 @@ using System.Windows.Media;
 
 namespace myHouse {
 
-  class service {
+  class service : IDisposable {
     public HouseData hd;
     public int downloadIntervalMeteo = 20000; //in ms
     public int downloadIntervalHouse = 15000; //in ms
@@ -77,7 +77,7 @@ namespace myHouse {
         dt = dt.Add(-hd.timeSpan);
         url += "?start=" + dt.ToString("yyyy-MM-ddThh:mm:ssZ") + "&end=" + dt.AddSeconds(5).ToString("yyyy-MM-ddThh:mm:ssZ");
       }
-
+      url = "";
       string htmlCode = String.Empty;
       try {
         HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
@@ -85,8 +85,9 @@ namespace myHouse {
         client.Credentials = new NetworkCredential("datel", "mrdatel");
         htmlCode = client.DownloadString(url);
         return htmlCode;
-      } catch (WebException ex) {
-        return "Error fetch data " + ex.Message;
+      } catch (Exception ex) {
+        //return "Error fetch data " + ex.Message;
+        return String.Empty;
       }
     }
 
@@ -125,7 +126,7 @@ namespace myHouse {
             hd.bojlerColor = getRoomColor(hd.bojlerTemp);
           }
           hd.lastUpdateHouse = getDateTimeFromCosmString(column[1] + column[2]);
-        } catch (FormatException ex) {
+        } catch (Exception ex) {
 
         }
         //lastUpdate = getDateTimeFromCosmString(column[1] + column[2]);
@@ -169,7 +170,7 @@ namespace myHouse {
 
           hd.lastUpdateMeteo = getDateTimeFromCosmString(column[1] + column[2]);
 
-        } catch (FormatException ex) {
+        } catch (Exception ex) {
 
         }
         //lastUpdate = getDateTimeFromCosmString(column[1] + column[2]);
@@ -255,7 +256,7 @@ namespace myHouse {
           if (!hist) {
             hd.lastUpdateSolar = getDateTimeFromCosmString(column[1] + column[2]);
           }
-        } catch (FormatException ex) {
+        } catch (Exception ex) {
 
         }
       }
@@ -293,15 +294,23 @@ namespace myHouse {
       hd.statusLEDHouseColor = Colors.Green.ToString();
     }
     public void showDataSolar() {
-      hd.statusLEDSolarColor = Colors.GreenYellow.ToString();
+      hd.statusLEDSolarColor = Colors.Red.ToString();
       parseDataSolar(getDataSolar());
-      parseDataSolar(getDataSolarHist(DateTime.Now.AddHours(-1)),true);
+      hd.statusLEDSolarColor = Colors.Yellow.ToString();
+      parseDataSolar(getDataSolarHist(DateTime.Now.AddHours(-1)), true);
       hd.statusLEDSolarColor = Colors.Green.ToString();
     }
 
     internal static float max(float a, float b) {
       if (a > b) return a;
       else return b;
+    }
+
+    public void Dispose() {
+      timerSolar.Dispose();
+      timerMeteo.Dispose();
+      timerHouse.Dispose();
+      GC.SuppressFinalize(this);
     }
   }
 }

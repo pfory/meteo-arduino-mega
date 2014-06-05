@@ -124,9 +124,9 @@ namespace myHouse {
       get {
         Brush oldBrush = _solarINTempForeGround;
         if (solarINTempDiff > 0.01) {
-          _solarINTempForeGround = new SolidColorBrush(Colors.Red);
-        } else if (solarINTempDiff < -0.01) {
           _solarINTempForeGround = new SolidColorBrush(Colors.Blue);
+        } else if (solarINTempDiff < -0.01) {
+          _solarINTempForeGround = new SolidColorBrush(Colors.Red);
         } else { _solarINTempForeGround = oldBrush; }
         return _solarINTempForeGround;
       }
@@ -140,9 +140,9 @@ namespace myHouse {
       get {
         Brush oldBrush = _solarOUTTempForeGround;
         if (solarOUTTempDiff > 0.01) {
-          _solarOUTTempForeGround = new SolidColorBrush(Colors.Red);
-        } else if (solarOUTTempDiff < -0.01) {
           _solarOUTTempForeGround = new SolidColorBrush(Colors.Blue);
+        } else if (solarOUTTempDiff < -0.01) {
+          _solarOUTTempForeGround = new SolidColorBrush(Colors.Red);
         } else { _solarOUTTempForeGround = oldBrush; }
         return _solarOUTTempForeGround;
       }
@@ -169,9 +169,9 @@ namespace myHouse {
       get {
         Brush oldBrush = _solarROOMTempForeGround;
         if (solarROOMTempDiff > 0.01) {
-          _solarROOMTempForeGround = new SolidColorBrush(Colors.Red);
-        } else if (solarROOMTempDiff < -0.01) {
           _solarROOMTempForeGround = new SolidColorBrush(Colors.Blue);
+        } else if (solarROOMTempDiff < -0.01) {
+          _solarROOMTempForeGround = new SolidColorBrush(Colors.Red);
         } else { _solarROOMTempForeGround = oldBrush; }
         return _solarROOMTempForeGround;
       }
@@ -196,9 +196,9 @@ namespace myHouse {
       get {
         Brush oldBrush = _bojler2TempForeGround;
         if (bojler2TempDiff > 0.01) {
-          _bojler2TempForeGround = new SolidColorBrush(Colors.Red);
-        } else if (bojler2TempDiff < -0.01) {
           _bojler2TempForeGround = new SolidColorBrush(Colors.Blue);
+        } else if (bojler2TempDiff < -0.01) {
+          _bojler2TempForeGround = new SolidColorBrush(Colors.Red);
         } else { _bojler2TempForeGround = oldBrush; }
         return _bojler2TempForeGround;
       }

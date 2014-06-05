@@ -234,13 +234,13 @@ namespace myHouse {
               hd.energyTotal = (float)Convert.ToDecimal(column[2].Replace(".", ","));
             }
           }
-          if (column[0] == "DiffON") {
+          if (column[0] == "_DiffON") {
             if (hist) {
             } else {
               hd.difON = (float)Convert.ToDecimal(column[2].Replace(".", ","));
             }
           }
-          if (column[0] == "DiffOFF") {
+          if (column[0] == "_DiffOFF") {
             if (hist) {
             } else {
               hd.difOFF = (float)Convert.ToDecimal(column[2].Replace(".", ","));

@@ -75,7 +75,7 @@ namespace myHouse {
       String url = apiURLbase + feedID.ToString() + ".csv";
       if (dt != DateTime.MaxValue) {
         dt = dt.Add(-hd.timeSpan);
-        url += "?start=" + dt.ToString("yyyy-MM-ddThh:mm:ssZ") + "&end=" + dt.AddSeconds(5).ToString("yyyy-MM-ddThh:mm:ssZ");
+        url += "?start=" + dt.ToString("yyyy-MM-ddTHH:mm:ssZ") + "&end=" + dt.AddSeconds(5).ToString("yyyy-MM-ddTHH:mm:ssZ");
       }
       
       string htmlCode = String.Empty;

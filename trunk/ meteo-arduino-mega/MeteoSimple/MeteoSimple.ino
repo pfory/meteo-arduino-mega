@@ -40,7 +40,7 @@ char a[0]; //do not delete this dummy variable
 
 #ifdef Ethernetdef
 #include <Ethernet.h>
-byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
+byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F };
 EthernetClient client;
 char server[] = "api.cosm.com";   // name address for cosm API
 bool checkConfigFlag = false;
@@ -59,6 +59,7 @@ String dataString2 = "";
 char dataString[280];
 #endif
 #endif
+int ethOK=false;
 
 
 #ifdef DALLASdef
@@ -163,19 +164,58 @@ unsigned int pulseCountRainAll=0;
 byte counter=0;
 byte pila=0;
 
-char versionSW[]="0.80";
+char versionSW[]="0.91";
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
+unsigned int const SERIAL_SPEED=9600;
+#define verbose
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
   // start serial port:
-  Serial.begin(115200);
+  Serial.begin(SERIAL_SPEED);
 //  Serial.println();
   Serial.println(versionSW);
-  
-  //Serial.println(F("SW inicialization"));
+ 
+#ifdef verbose
+	//delay(5000);
+  Serial.println("waiting for net...");
+#endif
+	//lcd.setCursor(0,0);
+  //lcd.print("waiting for net");
+	//Ethernet.begin(mac, ip, dnServer, gateway, subnet);
+  byte cyklus=0;
+  while (ethOK==false && cyklus++<10) {
+    if (Ethernet.begin(mac) == 1) {
+      Serial.println("EthOK");
+      ethOK = true;
+    } else {
+#ifdef verbose
+    Serial.println("Error getting IP address via DHCP, trying again...");
+#endif
+    }
+    delay(2000);
+  }
+
+#ifdef verbose
+  if (ethOK) {
+    /*Serial.println("EthOK");
+    Serial.print("\nIP:");
+    Serial.println(Ethernet.localIP());
+    Serial.print("Mask:");
+    Serial.println(Ethernet.subnetMask());
+    Serial.print("Gateway:");
+    Serial.println(Ethernet.gatewayIP());
+    Serial.print("DNS:");
+    Serial.println(Ethernet.dnsServerIP());
+    Serial.println();
+  } else {
+    Serial.println("No internet!");*/
+  }
+#endif
+ 
+/*  //Serial.println(F("SW inicialization"));
 
 #ifdef Ethernetdef
 //  Serial.print("waiting for net connection...");
@@ -185,7 +225,7 @@ void setup() {
   }
 
   Serial.println("EthOK");
-  /*
+  
   Serial.print("\nIP:");
   Serial.println(Ethernet.localIP());
   Serial.print("Mask:");
@@ -195,9 +235,11 @@ void setup() {
   Serial.print("DNS:");
   Serial.println(Ethernet.dnsServerIP());
   Serial.println();
-  */
-  lastSendTime = dsLastPrintTime = lastMeasTime = millis();
+  
 #endif
+*/
+  lastSendTime = dsLastPrintTime = lastMeasTime = millis();
+
   
 #ifdef watchdog
 	wdt_enable(WDTO_8S);
@@ -443,7 +485,7 @@ void sendData() {
         dataString1 += buffer[1];
 #endif
       }
-      #ifndef stringdef
+#ifndef stringdef
       sprintf (dataString, "%s%X", dataString, tempDeviceAddresses[i][j]);
 #endif
     }
@@ -513,7 +555,7 @@ void sendData() {
   dataString2 += "\nWindD,";
   dataString2 += windDirectionAll/numberOfWindSamples;
 #else
-  sprintf(dataString,"%sWindS,%u\nWindSM,%u\nWindD,%u", dataString,pulseCountAll/numberOfWindSamples,pulseCountMax,windDirectionAll/numberOfWindSamples);
+  sprintf(dataString,"%sWindS,%u\nWindSM,%u\nWindD,%u\n", dataString,pulseCountAll/numberOfWindSamples,pulseCountMax,windDirectionAll/numberOfWindSamples);
   sprintf(dataString,"%sWindSpeed,%u\nWindSpeedMax,%u", dataString,pulseCountAll/numberOfWindSamples/4,pulseCountMax/4);
 #endif
   pulseCountAll=0;

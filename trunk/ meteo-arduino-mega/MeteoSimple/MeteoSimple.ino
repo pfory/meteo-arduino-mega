@@ -44,23 +44,52 @@ byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F };
 EthernetClient client;
 char server[] = "api.cosm.com";   // name address for cosm API
 bool checkConfigFlag = false;
+IPAddress ip(192,168,1,102);
+
+//XIVELY
+#include <Xively.h>
+#include <HttpClient.h>
+
+
+char xivelyKey[] 			= "q1PY6QqB9jvSHGKhmCQNBRdCofeSAKxpKzliaHJGWUc5UT0g";
+
+#define xivelyFeed 				63310
+
+char VersionID[]	 	    = "V";
+char StatusID[]	 	      = "H";
+char TempID[]	 	        = "T2899BDCF02000076";
+char HumidityID[]	 	    = "Humidity";
+char PressID[]	 	      = "Press";
+char RainID[]	 	        = "Rain";
+char Temp085ID[]	 	    = "Temp085";
+char TempDHTID[]	 	    = "TempDHT";
+char WindSpeedID[]	    = "WindS";
+char WindSpeedMaxID[]	  = "WindSM";
+char WindDirectionID[]	= "WindDir";
+char PulseLengthID[]	  = "Pulse";
+
+
+XivelyDatastream datastreams[] = {
+	XivelyDatastream(VersionID, 		    strlen(VersionID), 	      DATASTREAM_FLOAT),
+	XivelyDatastream(StatusID, 		      strlen(StatusID), 		    DATASTREAM_INT),
+	XivelyDatastream(TempID,  		      strlen(TempID), 		      DATASTREAM_FLOAT),
+	XivelyDatastream(HumidityID, 		    strlen(HumidityID), 		  DATASTREAM_INT),
+	XivelyDatastream(PressID, 		      strlen(PressID), 		      DATASTREAM_FLOAT),
+	XivelyDatastream(RainID, 		        strlen(RainID), 		      DATASTREAM_INT),
+	XivelyDatastream(Temp085ID, 		    strlen(Temp085ID), 		    DATASTREAM_FLOAT),
+	XivelyDatastream(TempDHTID, 		    strlen(TempDHTID), 		    DATASTREAM_INT),
+	XivelyDatastream(WindSpeedID, 		  strlen(StatusID), 		    DATASTREAM_INT),
+	XivelyDatastream(WindSpeedMaxID, 		strlen(WindSpeedMaxID),   DATASTREAM_INT),
+	XivelyDatastream(WindDirectionID, 	strlen(WindDirectionID), 	DATASTREAM_INT),
+	XivelyDatastream(PulseLengthID, 	  strlen(PulseLengthID), 	  DATASTREAM_INT)
+};
+
+XivelyFeed feed(xivelyFeed, 			datastreams, 			12);
+XivelyClient xivelyclient(client);
 
 unsigned long lastSendTime;
-//COSM
-#define APIKEY         "q1PY6QqB9jvSHGKhmCQNBRdCofeSAKxpKzliaHJGWUc5UT0g" // your cosm api key
-#define FEEDID         63310 // your feed ID
-#define USERAGENT      "Meteo Arduino" // user agent is the project name
-
-//#define stringdef //26350 //use String class instead sprintf //24234
-#ifdef stringdef 
-String dataString1 = "";
-String dataString2 = "";
-#else
-char dataString[280];
-#endif
-#endif
 int ethOK=false;
-
+#endif
 
 #ifdef DALLASdef
 #include <OneWire.h>
@@ -79,7 +108,7 @@ DallasTemperature dsSensors(&onewire);
 #endif
 DeviceAddress tempDeviceAddress;
 #ifndef NUMBER_OF_DEVICES
-#define NUMBER_OF_DEVICES 20
+#define NUMBER_OF_DEVICES 1
 #endif
 DeviceAddress tempDeviceAddresses[NUMBER_OF_DEVICES];
 //int  resolution = 12;
@@ -155,21 +184,26 @@ byte numberOfWindSamples=0;
 #endif 
 
 #ifdef RainSensdef
+//1 klapnutí 5,235ml = 0.2mm/m2
+//překlopení trvá 45 a 77ms
+//plocha 2,925dm2
 const byte counterPinRain = 2; 
 const byte counterInterruptRain = 0; // = pin D2
 volatile bool pulseCountRain=false;
-unsigned int pulseCountRainAll=0;
+byte pulseCountRainAll=0;
+unsigned long startRain=0;
+unsigned int pulseLength=0;
 #endif
 
 byte counter=0;
-byte pila=0;
+byte status=0;
 
-char versionSW[]="0.91";
+float versionSW=1.0;
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
 unsigned int const SERIAL_SPEED=9600;
-#define verbose
+////#define verbose
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
@@ -185,9 +219,12 @@ void setup() {
 	//lcd.setCursor(0,0);
   //lcd.print("waiting for net");
 	//Ethernet.begin(mac, ip, dnServer, gateway, subnet);
-  byte cyklus=0;
-  while (ethOK==false && cyklus++<10) {
-    if (Ethernet.begin(mac) == 1) {
+ 
+  Ethernet.begin(mac, ip);
+  ethOK = true;
+
+/*  while (ethOK==false && cyklus++<10) {
+    if (Ethernet.begin(mac) == 0) {
       Serial.println("EthOK");
       ethOK = true;
     } else {
@@ -197,47 +234,24 @@ void setup() {
     }
     delay(2000);
   }
-
-#ifdef verbose
+*/
+//#ifdef verbose
   if (ethOK) {
-    /*Serial.println("EthOK");
+    Serial.println("EthOK");
     Serial.print("\nIP:");
     Serial.println(Ethernet.localIP());
-    Serial.print("Mask:");
+    /*Serial.print("Mask:");
     Serial.println(Ethernet.subnetMask());
     Serial.print("Gateway:");
     Serial.println(Ethernet.gatewayIP());
     Serial.print("DNS:");
     Serial.println(Ethernet.dnsServerIP());
-    Serial.println();
+    Serial.println();*/
   } else {
-    Serial.println("No internet!");*/
+    Serial.println("No internet!");
   }
-#endif
- 
-/*  //Serial.println(F("SW inicialization"));
+//#endif
 
-#ifdef Ethernetdef
-//  Serial.print("waiting for net connection...");
-  if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed using DHCP");
-    // DHCP failed, so use a fixed IP address:
-  }
-
-  Serial.println("EthOK");
-  
-  Serial.print("\nIP:");
-  Serial.println(Ethernet.localIP());
-  Serial.print("Mask:");
-  Serial.println(Ethernet.subnetMask());
-  Serial.print("Gateway:");
-  Serial.println(Ethernet.gatewayIP());
-  Serial.print("DNS:");
-  Serial.println(Ethernet.dnsServerIP());
-  Serial.println();
-  
-#endif
-*/
   lastSendTime = dsLastPrintTime = lastMeasTime = millis();
 
   
@@ -261,7 +275,7 @@ void setup() {
 #ifdef RainSensdef
   pinMode(counterPinRain, INPUT);      
   //digitalWrite(counterPinRain, HIGH);
-  attachInterrupt(counterInterruptRain, counterISRRain, RISING);
+  attachInterrupt(counterInterruptRain, counterISRRain, CHANGE);
 #endif
 
 #ifdef BMP085def
@@ -364,6 +378,7 @@ void loop() {
           }
         }
         sensor[i]=tempTemp;
+        Serial.println(sensor[i]);
       } 
       //obcas se vyskytne chyba a vsechna cidla prestanou merit
       //zkusim restartovat sbernici
@@ -374,7 +389,7 @@ void loop() {
         }
       }
       if (reset) {
-        pila=2;
+        status=2;
         dsInit();
       }
     }
@@ -435,201 +450,43 @@ void loop() {
 //-------------------------------------------------------------------------FUNCTIONS------------------------------------------------------------------------------
 #ifdef Ethernetdef
 void sendData() {
-
-  //Serial.println("sending data");
-  
-  //prepare data to send
-#ifdef stringdef
-  dataString1="";
-  char buffer[3];
-#endif
-
-  //temperature from DALLAS
-  //00 01 02 03 04 05 06 07
-  //-----------------------
-  //28 C9 B8 41 04 00 00 97
-
-  
-#ifdef stringdef
-  dataString1 += "V,";
-  dataString1 += versionSW;
-  dataString1 += "\n";
-#else
-  int n; //data length
-  sprintf(dataString,"V,%s\n",versionSW);
-#endif
-  
-#ifdef DALLASdef
-  for(byte i=0;i<numberOfDevices; i++) {
-#ifdef stringdef
-    dataString1 += "T";
-#else
-    sprintf(dataString,"%sT",dataString);
-#endif
-    
-    for (byte j=0; j<8; j++) {
-#ifdef stringdef
-      sprintf (buffer, "%X", tempDeviceAddresses[i][j]);
-#endif
-      if (tempDeviceAddresses[i][j]<16) {
-#ifdef stringdef
-        dataString1 += "0";
-        dataString1 += buffer[0];
-#else
-        sprintf(dataString,"%s0",dataString);
-#endif
-      }
-      else {
-#ifdef stringdef
-        dataString1 += buffer[0];
-        dataString1 += buffer[1];
-#endif
-      }
-#ifndef stringdef
-      sprintf (dataString, "%s%X", dataString, tempDeviceAddresses[i][j]);
-#endif
-    }
-
-    int t = (int)(sensor[i]*10);
-#ifdef stringdef
-    dataString1 += ",";
-#else
-    sprintf(dataString,"%s,",dataString);
-#endif
-
-    if (t<0&&t>-10) {
-#ifdef stringdef
-      dataString1 += "-";
-#else
-      sprintf(dataString,"%s-",dataString);
-#endif
-    }
-#ifdef stringdef
-    dataString1 += t/10;
-    dataString1 += ".";
-    dataString1 += abs(t%10);
-    dataString1 += "\n";
-#else
-    sprintf(dataString,"%s%d.%u\n",dataString,t/10,abs(t%10));
-#endif
-  }
-#endif
-
-#ifdef BMP085def
-#ifdef stringdef
-  //Pressure
-  dataString1 += "Press,";
-  dataString1 += Pressure;
-  //Temperature
-  dataString1 += "\nTemp085,";
-  dataString1 += Temperature/10;
-  dataString1 += ".";
-  dataString1 += abs(Temperature%10);
-#else
-  sprintf(dataString,"%sPress,%ld\n",dataString,Pressure);
-  //sprintf(dataString,"%sTemp085,%d.%u\n",dataString,Temperature/10,abs(Temperature%10));
-  sprintf(dataString,"%sTemp085,%d.%u\n",dataString,(int)(Temperature/10),(int)(abs(Temperature%10)));
-#endif
-#endif
-
-#ifdef DHTdef
-#ifdef stringdef
-  dataString1 += "\nHumidity,";
-  dataString1 += humidity;
-  dataString1 += "\nTempDHT,";
-  dataString1 += tempDHT;
-#else
-  sprintf(dataString,"%sHumidity,%u\nTempDHT,%d\n", dataString,humidity,tempDHT);
-#endif
-#endif
-  
-#ifdef stringdef
-  dataString2 = "";
-#endif
-#ifdef Anemodef
-#ifdef stringdef
-  dataString2 = "\nWindS,";
-  dataString2 += pulseCountAll/numberOfWindSamples;
-  dataString2 += "\nWindSM,";
-  dataString2 += pulseCountMax;
-  dataString2 += "\nWindD,";
-  dataString2 += windDirectionAll/numberOfWindSamples;
-#else
-  sprintf(dataString,"%sWindS,%u\nWindSM,%u\nWindD,%u\n", dataString,pulseCountAll/numberOfWindSamples,pulseCountMax,windDirectionAll/numberOfWindSamples);
-  sprintf(dataString,"%sWindSpeed,%u\nWindSpeedMax,%u", dataString,pulseCountAll/numberOfWindSamples/4,pulseCountMax/4);
-#endif
+  datastreams[0].setFloat(versionSW);  
+  datastreams[1].setInt(status);  
+  if (status==0) status=1; else status=0;
+  datastreams[2].setFloat(sensor[0]);  
+  datastreams[3].setInt(humidity);  
+  datastreams[4].setFloat((float)Pressure);  
+  datastreams[5].setInt(pulseCountRainAll);
+  pulseCountRainAll=0;  
+  datastreams[6].setFloat((float)Temperature/10.0);  
+  datastreams[7].setInt(tempDHT);  
+  datastreams[8].setInt(pulseCountAll/numberOfWindSamples);  
+  datastreams[9].setInt(pulseCountMax);  
+  datastreams[10].setInt(windDirectionAll/numberOfWindSamples);  
+  datastreams[11].setInt(pulseLength);  
+  pulseLength = 0;
   pulseCountAll=0;
   pulseCountMax=0;
   windDirectionAll=0;
   numberOfWindSamples=0;
+
+//#ifdef verbose
+  Serial.println("Uploading data to Xively");
+//#endif
+#ifdef watchdog
+	wdt_disable();
 #endif
 
-#ifdef RainSensdef
-#ifdef stringdef
-  dataString2 += "\nRain,";
-  dataString2 += pulseCountRainAll;
-#else
-  n=sprintf(dataString,"%s\nRain,%u", dataString,pulseCountRainAll);
+  int ret = xivelyclient.put(feed, xivelyKey);
+	
+#ifdef watchdog
+	wdt_enable(WDTO_8S);
 #endif
-  pulseCountRainAll=0;
-#endif
-  
-#ifdef stringdef
-  dataString2 += "\nH,";
-  dataString2 += pila;
-#else
-  n=sprintf(dataString,"%s\nH,%u", dataString,pila);
-#endif
-  if (pila==0) pila=1; else pila=0;
 
-  // if there's a successful connection:
-  if (client.connect(server, 80)) {
-    //Serial.println("connected");
-    // send the HTTP PUT request:
-    client.print("PUT /v2/feeds/");
-    client.print(FEEDID);
-    client.println(".csv HTTP/1.1");
-    client.println("Host: api.cosm.com");
-    client.print("X-ApiKey: ");
-    client.println(APIKEY);
-    client.print("User-Agent: ");
-    client.println(USERAGENT);
-    client.print("Content-Length: ");
-#ifdef stringdef
-    client.println(dataString1.length()+dataString2.length());
-#else
-    client.println(n);
-#endif
-    //client.println(dataString2.length());
-
-    // last pieces of the HTTP PUT request:
-    client.println("Content-Type: text/csv");
-    client.println("Connection: close");
-    client.println();
-
-    // here's the actual content of the PUT request:
-#ifdef stringdef
-    client.print(dataString1);
-    client.print(dataString2);
-#else
-    client.print(dataString);
-#endif
-  } 
-  else {
-    // if you couldn't make a connection:
-    //Serial.println("failed");
-//    Serial.println();
-//    Serial.println("disconnecting.");
-    client.stop();
-  }
- 
-  //Serial.println("\nDATA:");
-#ifdef stringdef
-  //Serial.println(dataString1);
-  //Serial.println(dataString2);
-#else
-  //Serial.println(dataString);
-#endif
+//#ifdef verbose
+  Serial.print("xivelyclient.put returned ");
+  Serial.println(ret);
+//#endif
 }
 #endif
 
@@ -728,6 +585,13 @@ void counterISR() {
 
 #ifdef RainSensdef
 void counterISRRain() { 
-  pulseCountRain=true;
+  if (digitalRead(counterPinRain)==LOW) {
+    startRain=millis();
+  } else {
+    pulseLength = millis()-startRain;
+    if ((pulseLength)>35 && (pulseLength)<80) {
+      pulseCountRain=true;
+    }
+  }
 }
 #endif

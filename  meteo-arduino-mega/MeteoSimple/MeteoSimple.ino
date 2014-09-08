@@ -453,8 +453,8 @@ void sendData() {
   datastreams[0].setFloat(versionSW);  
   datastreams[1].setInt(status);  
   if (status==0) status=1; else status=0;
-  datastreams[2].setFloat(sensor[0]);  
-  datastreams[3].setInt(humidity);  
+  datastreams[2].setFloat((int)(sensor[0]*10.f)/10.f);  
+  datastreams[3].setInt(humidity);
   datastreams[4].setFloat((float)Pressure);  
   datastreams[5].setInt(pulseCountRainAll);
   pulseCountRainAll=0;  

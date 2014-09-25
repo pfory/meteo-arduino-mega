@@ -147,8 +147,7 @@ byte numberOfWindSamples=0;
 //plocha 2,925dm2
 const byte counterPinRain = 2; 
 const byte counterInterruptRain = 0; // = pin D2
-volatile bool pulseCountRain=false;
-byte pulseCountRainAll=0;
+volatile byte pulseCountRainAll=0;
 unsigned long startRain=0;
 unsigned int pulseLength=0;
 #endif
@@ -266,14 +265,6 @@ void loop() {
     }
     pulseCountPrev = pulseCount;
     pulseCount=0;
-  
-#ifdef RainSensdef
-    if (pulseCountRain==true) {
-      pulseCountRainAll++;
-      pulseCountRain=false;
-    }
-#endif
-
   }
 #endif
 
@@ -590,7 +581,7 @@ void counterISRRain() {
   } else {
     pulseLength = millis()-startRain;
     if ((pulseLength)>35 && (pulseLength)<80) {
-      pulseCountRain=true;
+      pulseCountRainAll++;
     }
   }
 }

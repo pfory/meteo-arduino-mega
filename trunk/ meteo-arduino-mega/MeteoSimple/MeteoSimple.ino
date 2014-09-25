@@ -189,8 +189,7 @@ byte numberOfWindSamples=0;
 //plocha 2,925dm2
 const byte counterPinRain = 2; 
 const byte counterInterruptRain = 0; // = pin D2
-volatile bool pulseCountRain=false;
-byte pulseCountRainAll=0;
+volatile byte pulseCountRainAll=0;
 unsigned long startRain=0;
 unsigned int pulseLength=0;
 #endif
@@ -351,14 +350,6 @@ void loop() {
     pulseCountPrev = pulseCount;
     pulseCount=0;
   
-#ifdef RainSensdef
-    if (pulseCountRain==true) {
-      pulseCountRainAll++;
-      //Serial.print(pulseCountRainAll);
-      pulseCountRain=false;
-    }
-#endif
-
   }
 #endif
 
@@ -396,33 +387,6 @@ void loop() {
   }
 #endif
   
-    
-  //if ((dsLastPrintTime = millis()) - dsLastPrintTime >= dsPrintTimeDelay) {
-    //dsLastPrintTime = millis(); 
-
-    /*Serial.println();
-    #ifdef DALLASdef
-    printTemperatureAll();
-#endif
-
-    #ifdef BMP085def
-    Serial.print("Press(Pa):");
-    Serial.println(Pressure);
-    Serial.print("Temp:");
-    Serial.print(Temperature/10);
-    Serial.print(".");
-    Serial.println(abs(Temperature%10));
-#endif
-    #ifdef DHTdef
-    Serial.print("Humidity:");
-    Serial.println(humidity);
-    Serial.print("Temp:");
-    Serial.println(tempDHT);
-#endif
-    
-    Serial.println("");
-    */
-  //}
   
 #ifdef Ethernetdef
   if (sample==2) {
@@ -590,7 +554,7 @@ void counterISRRain() {
   } else {
     pulseLength = millis()-startRain;
     if ((pulseLength)>35 && (pulseLength)<80) {
-      pulseCountRain=true;
+      pulseCountRainAll++;
     }
   }
 }

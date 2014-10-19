@@ -1,3 +1,17 @@
+/*
+--------------------------------------------------------------------------------------------------------------------------
+
+               METEO - meteostation
+
+Petr Fory pfory@seznam.cz
+SVN  - https://meteo-arduino-mega.googlecode.com/svn/trunk/
+
+Version history:
+1.01 - 19.10.2014 change humidity sensor DHT11 -> DHT22 (29034 FLASH, 1742 RAM)
+1.00 - 
+
+
+
 /*PINOUT
 
 D0 Rx
@@ -11,7 +25,7 @@ D11 free
 D12
 D13
 A0 DALLAS temperature
-A1 DHT humidity
+A1 DHT22 humidity
 A2 free
 A3 Anemometer - Wind direction
 A4 SDA for Pressure BMP085
@@ -124,9 +138,9 @@ int sensorReading = INT_MIN;
 unsigned int const dsMeassureInterval=4000; //inteval between meassurements
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-unsigned int sample=0;
+//unsigned int sample=0;
 unsigned int const dsPrintTimeDelay=4000; //interval to show results
-unsigned int const sendTimeDelay=20000; //to send to cosm.com
+unsigned int const sendTimeDelay=30000; //to send to cosm.com
 
 #ifdef BMP085def
 #include <Wire.h>
@@ -155,7 +169,7 @@ long Pressure = 0;//, Altitude = 0;
 
 #ifdef DHTdef
 #include "DHT.h"
-#define DHTTYPE DHT11   // DHT 11 
+#define DHTTYPE DHT22   // DHT 11 
 #define DHTPIN A1    // what pin we're connected to
 
 // Connect pin 1 (on the left) of the sensor to +5V
@@ -197,7 +211,7 @@ unsigned int pulseLength=0;
 byte counter=0;
 byte status=0;
 
-float versionSW=1.0;
+float versionSW=1.1;
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
@@ -307,7 +321,7 @@ void loop() {
   if ((millis()) - lastMeasTime >= dsMeassureInterval) {
     lastMeasTime = millis();
     lastDsMeasStartTime=lastMeasTime;
-    sample++;
+    //sample++;
     //startTimer();
 #ifdef DALLASdef
     dsSensors.requestTemperatures(); 
@@ -389,7 +403,7 @@ void loop() {
   
   
 #ifdef Ethernetdef
-  if (sample==2) {
+  /*if (sample==2) {
     client.stop();
   }
 
@@ -400,13 +414,13 @@ void loop() {
   if (sample==8) {
     checkConfigFlag = false;
   }
+  */
 
-  if(!client.connected() && ((millis()) - lastSendTime >= sendTimeDelay)) {
-    lastSendTime = millis();
+  if (millis() - lastSendTime >= sendTimeDelay) {
     //digitalWrite(ledPin, HIGH);
     sendData();
     //digitalWrite(ledPin, LOW);
-    sample=0;
+    //sample=0;
   }
 #endif
 }
@@ -416,23 +430,16 @@ void loop() {
 void sendData() {
   datastreams[0].setFloat(versionSW);  
   datastreams[1].setInt(status);  
-  if (status==0) status=1; else status=0;
   datastreams[2].setFloat((int)(sensor[0]*10.f)/10.f);  
   datastreams[3].setInt(humidity);
   datastreams[4].setFloat((float)Pressure);  
   datastreams[5].setInt(pulseCountRainAll);
-  pulseCountRainAll=0;  
   datastreams[6].setFloat((float)Temperature/10.0);  
   datastreams[7].setInt(tempDHT);  
   datastreams[8].setInt(pulseCountAll/numberOfWindSamples);  
   datastreams[9].setInt(pulseCountMax);  
   datastreams[10].setInt(windDirectionAll/numberOfWindSamples);  
   datastreams[11].setInt(pulseLength);  
-  pulseLength = 0;
-  pulseCountAll=0;
-  pulseCountMax=0;
-  windDirectionAll=0;
-  numberOfWindSamples=0;
 
 //#ifdef verbose
   Serial.println("Uploading data to Xively");
@@ -442,15 +449,27 @@ void sendData() {
 #endif
 
   int ret = xivelyclient.put(feed, xivelyKey);
-	
+  
+  if (ret==200) {
+    if (status==0) status=1; else status=0;
+    pulseCountRainAll=0;  
+    pulseLength = 0;
+    pulseCountAll=0;
+    pulseCountMax=0;
+    windDirectionAll=0;
+    numberOfWindSamples=0;
+    Serial.print("Xively OK:");
+	} else {
+  //#ifdef verbose
+    Serial.print("Xively err: ");
+  //#endif
+  }
+  Serial.println(ret);
+  
 #ifdef watchdog
 	wdt_enable(WDTO_8S);
 #endif
-
-//#ifdef verbose
-  Serial.print("xivelyclient.put returned ");
-  Serial.println(ret);
-//#endif
+  lastSendTime = millis();
 }
 #endif
 

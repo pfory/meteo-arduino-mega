@@ -7,8 +7,9 @@ Petr Fory pfory@seznam.cz
 SVN  - https://meteo-arduino-mega.googlecode.com/svn/trunk/
 
 Version history:
-1.01 - 19.10.2014 change humidity sensor DHT11 -> DHT22 (29034 FLASH, 1742 RAM)
-1.00 - 
+1.2 - 6.1.2015 odstranen reset cidel DALLAS pri nulove teplote
+1.1 - 19.10.2014 change humidity sensor DHT11 -> DHT22 (29034 FLASH, 1742 RAM)
+1.0 - 
 
 
 
@@ -211,12 +212,13 @@ unsigned int pulseLength=0;
 byte counter=0;
 byte status=0;
 
-float versionSW=1.1;
+float versionSW=1.2;
 char versionSWString[] = "METEO Simple v"; //SW name & version
 
 //byte ledPin=9;
 unsigned int const SERIAL_SPEED=9600;
-////#define verbose
+//
+//#define verbose
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
@@ -385,7 +387,8 @@ void loop() {
         sensor[i]=tempTemp;
         Serial.println(sensor[i]);
       } 
-      //obcas se vyskytne chyba a vsechna cidla prestanou merit
+      /*
+      //obcas se vyskytne chyba a vsechna cidla prestanou merit - 6.1.2015 mam jen jedno cidlo takze nelze
       //zkusim restartovat sbernici
       bool reset=true;
       for (byte i=0; i<numberOfDevices; i++) {
@@ -397,6 +400,7 @@ void loop() {
         status=2;
         dsInit();
       }
+      */
     }
   }
 #endif

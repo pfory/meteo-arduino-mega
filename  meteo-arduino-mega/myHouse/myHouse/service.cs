@@ -7,9 +7,9 @@ namespace myHouse {
 
   class service : IDisposable {
     public HouseData hd;
-    public int downloadIntervalMeteo = 20000; //in ms
-    public int downloadIntervalHouse = 15000; //in ms
-    public int downloadIntervalSolar = 5000; //in ms
+    public int downloadIntervalMeteo = 30000; //in ms
+    public int downloadIntervalHouse = 3660000; //in ms
+    public int downloadIntervalSolar = 20000; //in ms
 
     private String apiURLbase = "https://api.cosm.com/v2/feeds/";
     private long houseFeedID = 740319992;
@@ -32,7 +32,6 @@ namespace myHouse {
       timerSolar = new Timer(downloadIntervalSolar);
       timerSolar.Elapsed += new ElapsedEventHandler(OnTimedEventSolar);
       timerSolar.Enabled = true;
-
     }
 
     private void OnTimedEventMeteo(object source, ElapsedEventArgs e) {
@@ -90,6 +89,8 @@ namespace myHouse {
         return String.Empty;
       }
     }
+
+    
 
     public void parseDataHouse(string data) {
       string[] radka = data.Split(new Char[] { '\n' });
@@ -164,8 +165,11 @@ namespace myHouse {
           if (column[0] == "WindSM") {
             hd.windSpeedMax = (int)Convert.ToDecimal(column[2].Replace(".", ","));
           }
-          if (column[0] == "WindD") {
+          if (column[0] == "WindDir") {
             hd.windDirection = (int)Convert.ToDecimal(column[2].Replace(".", ","));
+          }
+          if (column[0] == "Rain") {
+            hd.rain = (int)Convert.ToInt16(column[2]);
           }
 
           hd.lastUpdateMeteo = getDateTimeFromCosmString(column[1] + column[2]);
@@ -284,7 +288,7 @@ namespace myHouse {
     }
 
     public void showDataMeteo() {
-      hd.statusLEDMeteoColor = Colors.Yellow.ToString();
+      hd.statusLEDMeteoColor = Colors.Red.ToString();
       parseDataMeteo(getDataMeteo());
       hd.statusLEDMeteoColor = Colors.Green.ToString();
     }

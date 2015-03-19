@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Windows.Media;
 using System.Net.Mail;
+using System.Net;
 namespace myHouse {
   /// <summary>
   /// service class
@@ -47,10 +48,13 @@ namespace myHouse {
     private float _temp085;
     private float _tempDHT;
     private float _pressure;
+    private int _rain;
     private int _windSpeed;
     private int _windSpeedMax;
     private int _windDirection;
-    private const int _pulsesPerRevolution = 5;
+    private string _windDirectionCompas; 
+    private float _dewPoint;
+    private const int _pulsesPerRevolution = 4;
     private float _solarINTempDiff;
     private float _solarOUTTempDiff;
     private float _solarROOMTempDiff;
@@ -59,6 +63,7 @@ namespace myHouse {
     private float _energyTotal;
     private float _difON;
     private float _difOFF;
+    private string _infoString;
     private TimeZoneInfo tzi = TimeZoneInfo.Local;
     private TimeSpan _timeSpan;
     public TimeSpan timeSpan {
@@ -104,7 +109,6 @@ namespace myHouse {
     public float bedRoomTempOld { get { return _bedRoomTempOld; } set { _bedRoomTempOld = value; NotifyPropertyChanged("bedRoomTempOld"); } }
     public float bedRoomTempNew { get { return _bedRoomTempNew; } set { _bedRoomTempNew = value; NotifyPropertyChanged("bedRoomTempNew"); } }
     public float bojlerTemp { get { return _bojlerTemp; } set { _bojlerTemp = value; NotifyPropertyChanged("bojlerTemp"); } }
-    public float outdoorTemp { get { return _outdoorTemp; } set { _outdoorTemp = value; NotifyPropertyChanged("outdoorTemp"); } }
 
     private float _solarINTemp = float.MinValue;
     public float solarINTemp {
@@ -306,30 +310,72 @@ namespace myHouse {
     public string statusLEDSolarColor { get { return _statusLEDSolarColor; } set { _statusLEDSolarColor = value; NotifyPropertyChanged("statusLEDSolarColor"); } }
     public string statusLEDMeteoColor { get { return _statusLEDMeteoColor; } set { _statusLEDMeteoColor = value; NotifyPropertyChanged("statusLEDMeteoColor"); } }
 
-    public float humidity { get { return _humidity; } set { _humidity = value; NotifyPropertyChanged("humidity"); } }
-    public float temp085 { get { return _temp085; } set { _temp085 = value; NotifyPropertyChanged("temp085"); } }
-    public float tempDHT { get { return _tempDHT; } set { _tempDHT = value; NotifyPropertyChanged("tempDHT"); } }
+    public float humidity { get { return _humidity; }       
+      set { 
+        _humidity = value;
+        dewPoint = -999;
+        NotifyPropertyChanged("humidity"); 
+      }
+    }
+    public float temp085  { get { return _temp085; }        set { _temp085 = value; NotifyPropertyChanged("temp085"); } }
+    public float tempDHT  { get { return _tempDHT; }        set { _tempDHT = value; NotifyPropertyChanged("tempDHT"); } }
     public float pressure { get { return _pressure / 100; } set { _pressure = value; NotifyPropertyChanged("pressure"); } }
-
-    public int windSpeed {
-      get { return (_windSpeed / _pulsesPerRevolution) * 60; }
-      set { _windSpeed = value; NotifyPropertyChanged("windSpeed"); }
+    public float outdoorTemp { get { return _outdoorTemp; } set { _outdoorTemp = value; NotifyPropertyChanged("outdoorTemp"); } }
+    public int rain {
+      get { return _rain; }
+      set {
+        _rain = value;
+        if (value > 0) {
+          sendEmailRain(value);
+          for (int i=0; i < value; i++) {
+            writeRainPulseToDB();
+          }
+          infoString = "Last rain pulse at " + lastUpdateMeteo.ToString();
+        }
+      }
     }
-    public int windSpeedMax {
-      get { return (_windSpeedMax / _pulsesPerRevolution) * 60; }
-      set { _windSpeedMax = value; NotifyPropertyChanged("windSpeedMax"); }
-    }
-    public int windDirection { get { return _windDirection; } set { _windDirection = value; NotifyPropertyChanged("windDirection"); } }
 
-    public DateTime lastUpdateHouse { get { return _lastUpdateHouse; } set { _lastUpdateHouse = value; NotifyPropertyChanged("lastUpdateHouse"); } }
-    public DateTime lastUpdateMeteo { get { return _lastUpdateMeteo; } set { _lastUpdateMeteo = value; NotifyPropertyChanged("lastUpdateMeteo"); } }
+    public float dewPoint { get { return _dewPoint; } 
+      set {
+        float logEx = 0.66077f + (7.5f * outdoorTemp) / (237.3f + outdoorTemp)+((float)Math.Log10(humidity) - 2.0f);  
+        _dewPoint = (logEx - 0.66077f) * 237.3f / (0.66077f + 7.5f - logEx);  
+        NotifyPropertyChanged("dewPoint"); } 
+    }
+
+    public int windSpeed                { get { return (_windSpeed / _pulsesPerRevolution); }     set { _windSpeed = value; NotifyPropertyChanged("windSpeed"); }}
+    public int windSpeedMax             { get { return (_windSpeedMax / _pulsesPerRevolution); }  set { _windSpeedMax = value; NotifyPropertyChanged("windSpeedMax");}}
+    public int windDirection            { get { return _windDirection; }                          
+      set { 
+        _windDirection = value;
+        windDirectionCompas = "";
+        NotifyPropertyChanged("windDirection");
+      }
+    }
+    public string windDirectionCompas   { get { return _windDirectionCompas; }                    
+      set {
+        _windDirectionCompas = "S";
+        if (windDirection > 22) _windDirectionCompas  = "SV";
+        if (windDirection > 67) _windDirectionCompas  = "V";
+        if (windDirection > 112) _windDirectionCompas = "JV";
+        if (windDirection > 157) _windDirectionCompas = "J";
+        if (windDirection > 202) _windDirectionCompas = "JZ";
+        if (windDirection > 247) _windDirectionCompas = "Z";
+        if (windDirection > 292) _windDirectionCompas = "SZ";
+        if (windDirection > 337) _windDirectionCompas = "S";
+        NotifyPropertyChanged("windDirectionCompas");
+      }
+    }
+
+
+    public DateTime lastUpdateHouse { get { return _lastUpdateHouse; } set { _lastUpdateHouse = value.Add(_timeSpan); NotifyPropertyChanged("lastUpdateHouse"); } }
+    public DateTime lastUpdateMeteo { get { return _lastUpdateMeteo; } set { _lastUpdateMeteo = value.Add(_timeSpan); NotifyPropertyChanged("lastUpdateMeteo"); } }
     public DateTime lastUpdateSolar { get { return _lastUpdateSolar; } set { _lastUpdateSolar = value.Add(_timeSpan); lastUpdateSolarDiff = 0; NotifyPropertyChanged("lastUpdateSolar"); } }
     public int lastUpdateSolarDiff {
       get { return _lastUpdateSolarDiff; }
       set {
         TimeSpan t = lastUpdateSolar - DateTime.Now;
         _lastUpdateSolarDiff = t.Seconds;
-        NotifyPropertyChanged("lastUpdateSolarDiff");
+        //NotifyPropertyChanged("lastUpdateSolarDiff");
         NotifyPropertyChanged("solarTitle");
       }
     }
@@ -350,7 +396,7 @@ namespace myHouse {
       get { if (_statusSolar == 0) { return "OFF"; } else { return "ON"; } }
       set {
         if (_statusSolar != byte.MaxValue && value != _statusSolar.ToString()) {
-          sendEmail(Convert.ToByte(value));
+          sendEmailSolar(Convert.ToByte(value));
         }
         _statusSolar = Convert.ToByte(value);
 
@@ -365,7 +411,30 @@ namespace myHouse {
       }
     }
 
-    public void sendEmail(byte status) {
+    public void sendEmailRain(int value) {
+      MailAddress address = new MailAddress("pfory@seznam.cz");
+      StringBuilder zprava = new StringBuilder();
+      MailMessage msg = new MailMessage();
+      SmtpClient client = new SmtpClient();
+      msg.From = new MailAddress("pfory@seznam.cz");
+      msg.Subject = "Rain pulse";
+      msg.Body = zprava.ToString();
+      msg.To.Add("pfory@seznam.cz");
+      msg.IsBodyHtml = true;
+      msg.Priority = MailPriority.High;
+      zprava.AppendLine("<h3>Rain pulse at " + lastUpdateMeteo + " :</h3>");
+      zprava.AppendFormat("<b>Value:</b> {0:F0} </br>", value);
+      msg.Body = zprava.ToString();
+
+      try {
+        client.Send(msg);
+      } catch (Exception ex) {
+        throw ex;
+      }
+    }
+
+
+    public void sendEmailSolar(byte status) {
       MailAddress address = new MailAddress("pfory@seznam.cz");
       StringBuilder zprava = new StringBuilder();
       MailMessage msg = new MailMessage();
@@ -432,5 +501,22 @@ namespace myHouse {
     public float solarROOMTempHist { get { return _solarROOMTempHist; } set { _solarROOMTempHist = value - _solarROOMTemp; } }
     private float _bojler2TempHist;
     public float bojler2TempHist { get { return _bojler2TempHist; } set { _bojler2TempHist = value - _bojler2Temp; } }
+
+    private void writeRainPulseToDB() {
+      String url = "http://pandatel.php5.cz/rainPulse.php";
+      
+      string htmlCode = String.Empty;
+      try {
+        HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+        WebClient client = new WebClient();
+        client.Credentials = new NetworkCredential("datel", "mrdatel");
+        htmlCode = client.DownloadString(url);
+      } catch (Exception ex) {
+        //return "Error fetch data " + ex.Message;
+      }
+    }
+
+    public string infoString { get { return _infoString; } set { _infoString = value; NotifyPropertyChanged("infoString"); } }
+
   }
 }

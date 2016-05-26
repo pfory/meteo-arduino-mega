@@ -7,6 +7,7 @@ Petr Fory pfory@seznam.cz
 SVN  - https://meteo-arduino-mega.googlecode.com/svn/trunk/
 
 Version history:
+9.6.2015 - HW change - temporary add pullup (?? kOhm) to D2 - maybe can be replaced by internal pullup see #define PULLUPTOD2D3
 1.2 - 6.1.2015 odstranen reset cidel DALLAS pri nulove teplote
 1.1 - 19.10.2014 change humidity sensor DHT11 -> DHT22 (29034 FLASH, 1742 RAM)
 1.0 - 
@@ -32,6 +33,11 @@ A3 Anemometer - Wind direction
 A4 SDA for Pressure BMP085
 A5 SCL fpr Pressure BMP085
 */
+
+
+#define PULLUPTOD2D3 INPUT_PULLUP
+//#define PULLUPTOD2D3 INPUT
+
 
 #define watchdog //enable this only on board with UNO bootloader
 #ifdef watchdog
@@ -282,13 +288,13 @@ void setup() {
 #endif
   
 #ifdef Anemodef 
-  pinMode(counterPin, INPUT);      
+  pinMode(counterPin, PULLUPTOD2D3);      
   digitalWrite(counterPin, HIGH);
   attachInterrupt(counterInterrupt, counterISR, RISING);
 #endif
 
 #ifdef RainSensdef
-  pinMode(counterPinRain, INPUT);      
+  pinMode(counterPinRain, PULLUPTOD2D3);      
   //digitalWrite(counterPinRain, HIGH);
   attachInterrupt(counterInterruptRain, counterISRRain, CHANGE);
 #endif

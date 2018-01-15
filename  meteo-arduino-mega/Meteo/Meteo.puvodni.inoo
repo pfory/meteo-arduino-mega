@@ -18,37 +18,26 @@ A4-SDA for BMP085
 A5-SCL for BMP085
 */
 
+//#define JH
+#define PP
+
 // Contains EEPROM.read() and EEPROM.write()
 #include <EEPROM.h>
 
 #define DALLASdef
 #define BMP085def
 #define DHTdef1
+#ifdef JH
 #define DHTdef2
-//#define UDPdef 
-//#define Ethernetdef 
+#endif
+#define UDPdef 
+#define Ethernetdef 
 #define LCDdef
 #define SDdef 
-#include <TimeLib.h>
 
 #include <limits.h>
 #include <MemoryFree.h>
 #include "Arduino.h"
-
-#define verbose
-#ifdef verbose
- #define DEBUG_PRINT(x)         Serial.print (x)
- #define DEBUG_PRINTDEC(x)      Serial.print (x, DEC)
- #define DEBUG_PRINTLN(x)       Serial.println (x)
- #define DEBUG_PRINTF(x, y)     Serial.printf (x, y)
- #define PORTSPEED 115200
-#else
- #define DEBUG_PRINT(x)
- #define DEBUG_PRINTDEC(x)
- #define DEBUG_PRINTLN(x)
- #define DEBUG_PRINTF(x, y)
-#endif 
-
 
 #ifdef Ethernetdef
 #include <Ethernet.h>
@@ -109,20 +98,12 @@ byte currentTempDevice4Display=0;
 int sensorReading = INT_MIN;
 
 #ifdef BMP085def
-#define SDA_PIN  20
-#define SDA_PORT PORTD
-#define SCL_PIN  21
-#define SCL_PORT PORTD
-#include <SoftI2C_BMP085.h>
-SoftI2C_BMP085 bmp;
-
-
-// #include <Wire.h>
-// #include <BMP085.h> //558 bytes +
-// #include <swI2C_BMP085.h>
-// #include <I2cMaster.h>
-// swI2C_BMP085 bmp;
-
+#include <Wire.h>
+//#include <BMP085.h> //558 bytes +
+#include <swI2C_BMP085.h>
+#include <I2cMaster.h>
+//BMP085 dps = BMP085();      // Digital Pressure Sensor 
+swI2C_BMP085 bmp;
 unsigned long lastDisplayBMPTime;
 unsigned long avgPressure=0;
 unsigned long lastAvgPressure=0;
@@ -134,8 +115,7 @@ unsigned long lastPressureTime=0;
 byte pressureChange=PRESSNOCHANGE;
 #endif
 float Temperature = 0;
-float Pressure = 0;//, Altitude = 0;
-bool                  BMP085Present       = false;
+unsigned long Pressure = 0;//, Altitude = 0;
 
 
 #ifdef DHTdef1
@@ -260,7 +240,12 @@ storage = {
   CONFIG_VERSION,
   // The default values
   0,                  //last configuration stamp
+  #ifdef JH
   53500,              //high_above_sea in cm
+  #endif
+  #ifdef PP
+  29500,              //high_above_sea in cm
+  #endif
   4000,               //measDelay im ms;
   1000,               //displayTempDelay in ms
   5000,               //displayBMPDelay ms
@@ -268,9 +253,16 @@ storage = {
   10000,              //saveInterval in ms
   20000,              //interval between updates to Cosm.com in ms    
   1800000,            //interval for check press trend in ms
+  #ifdef JH
   "HyVsT65CnEPitk6vML664llGUZCSAKx0aXFocmJJVHBUVT0g", //cosm key
   75618,                                              //cosm ID
   "Solar JH"                                          //cosm project name
+  #endif
+  #ifdef PP
+  "T1g2V52CSYmkE-tIAh-tHnK-hDWSAKxneEVkUzVVK2Q0QT0g", //cosm key
+  91158,                                              //cosm ID
+  "Meteo PP"                                          //cosm project name
+  #endif
 };
 
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
@@ -287,7 +279,7 @@ void setup() {
   Serial.print(freeMemory());
   Serial.println(" bytes");
 
-#ifdef LCDdef
+  #ifdef LCDdef
   lcd.createChar(3, save);
   lcd.createChar(2, deg);
   lcd.createChar(1, send);
@@ -303,10 +295,10 @@ void setup() {
   
   lcd.clear();
   lcdPrintVersion();
-#endif
+  #endif
  
   
-#ifdef SDdef
+  #ifdef SDdef
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
   pinMode(53, OUTPUT);
@@ -328,23 +320,23 @@ void setup() {
   }
   else {
     Serial.println("card initialized.");
-#ifdef LCDdef
+    #ifdef LCDdef
     lcd.setCursor(0,1);
     lcd.print("SD card OK");
     delay(1000);
     eraseRow(1);
-#endif
+    #endif
 
     cardInfo();
   }
-#endif
+  #endif
 
-#ifdef Ethernetdef
+  #ifdef Ethernetdef
   Serial.print("waiting for net connection...");
-#ifdef LCDdef
+  #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("waiting for net");
-#endif
+  #endif
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed using DHCP");
     // DHCP failed, so use a fixed IP address:
@@ -352,12 +344,12 @@ void setup() {
   }
   digitalWrite(53,HIGH);
 
-#ifdef LCDdef
+  #ifdef LCDdef
   eraseRow(1);
-#endif
+  #endif
   Serial.println("Ethernet OK");
   
-#ifdef LCDdef
+  #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("IP:");
   lcd.print(Ethernet.localIP());
@@ -373,14 +365,14 @@ void setup() {
   Serial.print("DNS:");
   Serial.println(Ethernet.dnsServerIP());
   Serial.println();
-#endif
+  #endif
 
   if (storage.stamp==0) {
     //load config from web
   }
 
   
-#ifdef UDPdef
+  #ifdef UDPdef
   Udp.begin(localPort);
   Serial.print("waiting 20s for time sync...");
   setSyncProvider(getNtpTime);
@@ -394,15 +386,15 @@ void setup() {
   printDateTime(0);
   Serial.println(" UTC.");
 
-#ifdef LCDdef
+  #ifdef LCDdef
   lcd.setCursor(0,1);
   printDateTime(1);
   delay(2000);
   eraseRow(1);
-#endif
-#endif
+  #endif
+  #endif
 
-#ifdef SDdef
+  #ifdef SDdef
   String fileName = String(year());
   if (month()<10) fileName+="0";
   fileName+=String(month());
@@ -411,51 +403,49 @@ void setup() {
   fileName+=".csv";
   Serial.print("Filename:");
   Serial.println(fileName);
-#endif
+  #endif
   
  
-#ifdef DALLASdef    
+  #ifdef DALLASdef    
   dsInit();
   lastDisplayTempTime = millis();
   dsSensors.setResolution(12);
   dsSensors.setWaitForConversion(false);
-#endif
+  #endif
   
-#ifdef BMP085def
+  #ifdef BMP085def
   bmp085Init();
   lastDisplayBMPTime = millis();
-#endif
+  #endif
 
-#ifdef DHTdef1
+  #ifdef DHTdef1
   dhtInit(1);
   lastDHTMeasTime=millis();
-  //dht1.startMeas();
-  dht1.begin();
+  dht1.startMeas();
   lastDisplayDHTTime = millis();
-#else
+  #else
   Serial.println("DHT1 N/A");
-#endif
+  #endif
 
-#ifdef DHTdef2
+  #ifdef DHTdef2
   dhtInit(2);
-  //dht2.startMeas();
-  dht2.begin();
+  dht2.startMeas();
   #else
   Serial.println("DHT2 N/A");
-#endif
+  #endif
 
   
-#ifdef Ethernetdef
+  #ifdef Ethernetdef
   Serial.print("Sending interval [ms]:");
   Serial.println(storage.sendInterval);
   lastSendTime = millis();
-#endif
+  #endif
   
-#ifdef SDdef
+  #ifdef SDdef
   Serial.print("Saving interval [ms]:");
   Serial.println(storage.saveInterval);
   lastSaveTime = millis();
-#endif
+  #endif
 
   dsLastPrintTime = millis();
   lastMeasTime = millis();
@@ -463,9 +453,9 @@ void setup() {
   
   Serial.println("End of SW initialization phase, I am starting measuring.");
 
-#ifdef LCDdef
+  #ifdef LCDdef
   lcd.clear();
-#endif
+  #endif
 }
 
 //-------------------------------------------------------------------------LOOP------------------------------------------------------------------------------
@@ -483,51 +473,42 @@ void loop() {
   if (millis() - lastMeasTime > storage.measDelay) {
     sample++;
     lastMeasTime = millis();
-#ifdef DALLASdef    
+    #ifdef DALLASdef    
     dsSensors.requestTemperatures(); 
     lastDsMeasStartTime=millis();
     dsMeasStarted=true;
-#endif
+    #endif
     
    
-#ifdef DHTdef1
+    #ifdef DHTdef1
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
     humidity1 = dht1.readHumidity();
     tempDHT1 = dht1.readTemperature();
-#endif
+    #endif
 
-#ifdef DHTdef2
+    #ifdef DHTdef2
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
     humidity2 = dht2.readHumidity();
     tempDHT2 = dht2.readTemperature();
-#else
+    #else
       humidity2 = humidity1;
       tempDHT2 = tempDHT1;
-#endif
+    #endif
     
+
     
-#ifdef BMP085def
-    if (BMP085Present) {
-      DEBUG_PRINT("Temperature BMP085: ");
-      Temperature = bmp.readTemperature();
-      Pressure = bmp.readSealevelPressure(535.0);
-      DEBUG_PRINT(temperature085);
-      DEBUG_PRINTLN(" *C");
-      DEBUG_PRINT("Pressure: ");
-      DEBUG_PRINT(pressure);
-      DEBUG_PRINTLN(" Pa");
-    } else {
-      Temperature = 77.7;  //dummy
-      Pressure = 123456;     //Pa - dummy
-    }
-#else
+    #ifdef BMP085def
+    Pressure = bmp.readPressure();
+    Pressure = getRealPressure(Pressure, storage.high_above_sea);
+    Temperature = bmp.readTemperature();
+    #else
     Pressure=101325;
     Temperature=0;
-#endif
+    #endif
    
   }
   
-#ifdef DALLASdef  
+  #ifdef DALLASdef  
   if (dsMeasStarted) {
     if (millis() - lastDsMeasStartTime>750) {
       dsMeasStarted=false;
@@ -547,16 +528,15 @@ void loop() {
   #endif
   
  
-#ifdef LCDdef
+  #ifdef LCDdef
   lcd.setCursor(hourC, hourR);
-#ifdef Ethernetdef
   printDigits(hour(),1);
   if((millis()/1000)%2)
     lcd.print(TIME_DELIMITER);
   else
     lcd.print(" ");
   printDigits(minute(),1);
-#endif    
+    
   if (millis() - lastDisplayTempTime > storage.displayTempDelay) {
     lastDisplayTempTime = millis();
     lcd.setCursor(tempC, tempR);
@@ -624,6 +604,8 @@ void loop() {
       numberOfSamples=0;
     }
     
+    
+
     if (pressureChange==PRESSNOCHANGE) { //no press change
       lcd.print(" ");
     }
@@ -635,7 +617,10 @@ void loop() {
     }
     
     if (Pressure>0) {
-      lcd.print(Pressure/100);
+      lcd.print((int)(Pressure/100));
+      lcd.print(".");
+      if (Pressure%100<10) lcd.print("0");
+      lcd.print((int)(Pressure%100));
       lcd.print("hPa");
     }
   }
@@ -662,14 +647,12 @@ void loop() {
     lcd.print(tempHum);
     lcd.print("%");
   }
-#endif
+  #endif
 
   if (millis() - dsLastPrintTime > 1000) {
 
     Serial.println();
-#ifdef Ethernetdef
     printDateTime(0);
-#endif
     Serial.println();
     printTemperatureAll();
   
@@ -908,9 +891,7 @@ void saveDataToSD(bool rep) {
   fileName+=".csv";
 
   Serial.println();
-#ifdef Ethernetdef
   printDateTime(0);
-#endif
   Serial.print("\nSaving data to file:");
   Serial.print(fileName);
   Serial.print("...");
@@ -921,7 +902,6 @@ void saveDataToSD(bool rep) {
 
   // if the file is available, write to it:
   if (dataFile) {
-#ifdef Ethernetdef    
     dataFile.print(day());
     dataFile.print(DATE_DELIMITER);
     dataFile.print(month());
@@ -939,8 +919,8 @@ void saveDataToSD(bool rep) {
     if(second() < 10)
       dataFile.print('0');
     dataFile.print(second());
-#endif
-#ifdef DALLASdef
+
+    #ifdef DALLASdef
     dataFile.print(";");
     //temperature from DALLAS
     for(byte i=0;i<numberOfDevices; i++) {
@@ -953,17 +933,17 @@ void saveDataToSD(bool rep) {
       dataFile.print(abs(t%10));
       dataFile.print(";");
     }
-#endif
+    #endif
     
-#ifdef BMP085def
-#ifndef DALLASdef
+    #ifdef BMP085def
+    #ifndef DALLASdef
     dataFile.print(";");
-#endif
+    #endif
     //Pressure
     dataFile.print(Pressure);
-#endif
+    #endif
     
-#ifdef DHTdef1
+    #ifdef DHTdef1
     //DHT1
     //Humidity from DHT
     dataFile.print(";");
@@ -1073,7 +1053,6 @@ unsigned long getNtpTime(void) {
  
 }
 
-#ifdef Ethernetdef
 // send an NTP request to the time server at the given address 
 void sendNTPpacket(IPAddress& address)
 {
@@ -1097,11 +1076,10 @@ void sendNTPpacket(IPAddress& address)
   Udp.write(packetBuffer,NTP_PACKET_SIZE);
   Udp.endPacket(); 
 }
-#endif
 
 void printDateTime(byte toLCD) {
   if (toLCD==1) {
-#ifdef LCDdef
+    #ifdef LCDdef
     lcd.print(day());
     lcd.print(DATE_DELIMITER);
     lcd.print(month());
@@ -1113,7 +1091,7 @@ void printDateTime(byte toLCD) {
     printDigits(minute(),toLCD);
     //lcd.print(TIME_DELIMITER);
     //printDigits(second(),toLCD);
-#endif
+    #endif
   }
   else {
     Serial.print(day());
@@ -1157,6 +1135,7 @@ void printDigits(int digits, byte toLCD){
 }
 
 #endif
+
 
 float calcDewPoint (int humidity, int temperature)  
 {  
@@ -1271,17 +1250,15 @@ void dsInit(void) {
 
 #ifdef BMP085def
 void bmp085Init() {
-  DEBUG_PRINT("Probe BMP085: ");
-  if (!bmp.begin()) {
-    DEBUG_PRINTLN("Sensor missing!!!");
-  } else {
-    BMP085Present = true;
-    DEBUG_PRINTLN("Sensor found.");
-    Serial.print("Temperature: ");
-    Serial.println(bmp.ReadTemperature());
-  }
-  DEBUG_PRINTLN("BMP software on PIN A4,A5 OK");
-#ifdef LCDdef
+  Serial.println("\nBMP085 setup");
+  Serial.print("High above sea level:");
+  Serial.print(storage.high_above_sea/100);
+  Serial.print(".");
+  Serial.print(storage.high_above_sea%100);
+  Serial.println(" m");
+  bmp.begin();
+  Serial.println("BMP software on PIN A4,A5 OK");
+  #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("High:");
   lcd.print(storage.high_above_sea/100);
@@ -1290,12 +1267,12 @@ void bmp085Init() {
   lcd.print(" masl");
   delay(1000);
   eraseRow(1);
-#endif
+  #endif
 }
 
-// long getRealPressure(long TruePressure, long _param_centimeters) {
-  // return TruePressure / pow((1 - (float)_param_centimeters / 4433000), 5.255); // + 101325;
-// }
+long getRealPressure(long TruePressure, long _param_centimeters) {
+  return TruePressure / pow((1 - (float)_param_centimeters / 4433000), 5.255); // + 101325;
+}
 #endif
 
 #if defined DHTdef1 || defined DHTdef2

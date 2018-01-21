@@ -66,8 +66,7 @@ unsigned long lastSendTime;
 #ifdef UDPdef
 EthernetUDP Udp;
 unsigned int localPort = 8888;      // local port to listen for UDP packets
-//IPAddress timeServer(192, 43, 244, 18); // time.nist.gov NTP server
-IPAddress timeServer(130,149,17,21); // time.nist.gov NTP server
+IPAddress timeServer(195, 113, 144, 201); // tik.cesnet.cz
 const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
 byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets 
 #include <Time.h>

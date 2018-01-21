@@ -20,13 +20,12 @@ A5-SCL for BMP085
 
 // Contains EEPROM.read() and EEPROM.write()
 #include <EEPROM.h>
-
 #define DALLASdef
-#define BMP085def
 #define DHTdef1
 #define DHTdef2
-//#define UDPdef 
-//#define Ethernetdef 
+#define UDPdef 
+#define Ethernetdef 
+#define BMP085def
 #define LCDdef
 #define SDdef 
 #include <TimeLib.h>
@@ -52,16 +51,14 @@ A5-SCL for BMP085
 
 #ifdef Ethernetdef
 #include <Ethernet.h>
+#include "Adafruit_MQTT.h"
+#include "Adafruit_MQTT_Client.h"
 // assign a MAC address for the ethernet controller.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 // fill in your address here:
 byte mac[] = { 0x00, 0xE0, 0x07D, 0xCE, 0xC6, 0x6F};
 // initialize the library instance:
 EthernetClient client;
-//EthernetClient clientConfig;
-char server[] = "api.cosm.com";   // name address for cosm API
-char serverConfig[] = "datel.asp2.cz"; //config server
-//bool checkConfigFlag = false;
 char dataString[400];
 
 unsigned long lastSendTime;
@@ -80,6 +77,37 @@ byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing pack
 #define DATE_TIME_DELIMITER " "
 
 #endif
+
+#define AIO_SERVER      "192.168.1.56"
+#define AIO_SERVERPORT  1883
+#define AIO_USERNAME    "datel"
+#define AIO_KEY         "hanka12"
+
+
+Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
+
+/****************************** Feeds ***************************************/
+Adafruit_MQTT_Publish _temperature1            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature1");
+Adafruit_MQTT_Publish _temperature2            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature2");
+Adafruit_MQTT_Publish _temperature3            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature3");
+// Adafruit_MQTT_Publish _temperature4            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature4");
+// Adafruit_MQTT_Publish _temperature5            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature5");
+// Adafruit_MQTT_Publish _temperature6            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature6");
+// Adafruit_MQTT_Publish _temperature7            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature7");
+// Adafruit_MQTT_Publish _temperature8            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature8");
+// Adafruit_MQTT_Publish _temperature9            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature9");
+// Adafruit_MQTT_Publish _temperature10           = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature10");
+Adafruit_MQTT_Publish _pressure                = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Press");
+Adafruit_MQTT_Publish _temperature085          = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temp085");
+Adafruit_MQTT_Publish _temperatureDHT1         = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/TempDHT1");
+Adafruit_MQTT_Publish _temperatureDHT2         = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/TempDHT2");
+Adafruit_MQTT_Publish _humidity1               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/Humidity1");
+Adafruit_MQTT_Publish _humidity2               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/Humidity2");
+Adafruit_MQTT_Publish _dewpoint1               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/DewPoint1");
+Adafruit_MQTT_Publish _dewpoint2               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/DewPoint2");
+Adafruit_MQTT_Publish _versionSW               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/VersionSW");
+
+
 #endif
 
 #ifdef DALLASdef
@@ -109,20 +137,8 @@ byte currentTempDevice4Display=0;
 int sensorReading = INT_MIN;
 
 #ifdef BMP085def
-#define SDA_PIN  20
-#define SDA_PORT PORTD
-#define SCL_PIN  21
-#define SCL_PORT PORTD
-#include <SoftI2C_BMP085.h>
-SoftI2C_BMP085 bmp;
-
-
-// #include <Wire.h>
-// #include <BMP085.h> //558 bytes +
-// #include <swI2C_BMP085.h>
-// #include <I2cMaster.h>
-// swI2C_BMP085 bmp;
-
+#include <Adafruit_BMP085.h>
+Adafruit_BMP085 bmp;
 unsigned long lastDisplayBMPTime;
 unsigned long avgPressure=0;
 unsigned long lastAvgPressure=0;
@@ -163,9 +179,9 @@ DHT dht2(DHTPIN2, DHTTYPE2);
 #endif
 
 
-int humidity1 = 0;
+float humidity1 = 0;
 int tempDHT1 = 0;
-int humidity2 = 0;
+float humidity2 = 0;
 int tempDHT2 = 0;
 byte lastDHTShows=0;
 
@@ -230,7 +246,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-char versionSW[]="0.98";
+float versionSW=1.0;
 char versionSWString[] = "METEO v"; //SW name
 
 // ID of the settings block
@@ -276,16 +292,16 @@ storage = {
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
   // start serial port:
-  Serial.begin(115200);
-  Serial.print(versionSWString);
-  Serial.println(versionSW);
+  Serial.begin(PORTSPEED);
+  DEBUG_PRINT(versionSWString);
+  DEBUG_PRINTLN(versionSW);
 
   loadConfig(); //load values from EEPROM
   
-  Serial.println("SW inicialization");
-  Serial.print("Free mem: ");
-  Serial.print(freeMemory());
-  Serial.println(" bytes");
+  DEBUG_PRINTLN("SW inicialization");
+  DEBUG_PRINT("Free mem: ");
+  DEBUG_PRINT(freeMemory());
+  DEBUG_PRINTLN(" bytes");
 
 #ifdef LCDdef
   lcd.createChar(3, save);
@@ -312,12 +328,12 @@ void setup() {
   pinMode(53, OUTPUT);
   digitalWrite(53,HIGH);
 
-  Serial.print("Initializing SD card...");
+  DEBUG_PRINT("Initializing SD card...");
 
   bCardOK = true;
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
-    Serial.println("card failed, or not present");
+    DEBUG_PRINTLN("card failed, or not present");
     bCardOK = false;
     #ifdef LCDdef
     lcd.setCursor(0,1);
@@ -327,7 +343,7 @@ void setup() {
     #endif
   }
   else {
-    Serial.println("card initialized.");
+    DEBUG_PRINTLN("card initialized.");
 #ifdef LCDdef
     lcd.setCursor(0,1);
     lcd.print("SD card OK");
@@ -340,13 +356,13 @@ void setup() {
 #endif
 
 #ifdef Ethernetdef
-  Serial.print("waiting for net connection...");
+  DEBUG_PRINT("waiting for net connection...");
 #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("waiting for net");
 #endif
   if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed using DHCP");
+    DEBUG_PRINTLN("Failed using DHCP");
     // DHCP failed, so use a fixed IP address:
     //Ethernet.begin(mac, ip);
   }
@@ -355,7 +371,7 @@ void setup() {
 #ifdef LCDdef
   eraseRow(1);
 #endif
-  Serial.println("Ethernet OK");
+  DEBUG_PRINTLN("Ethernet OK");
   
 #ifdef LCDdef
   lcd.setCursor(0,1);
@@ -364,15 +380,15 @@ void setup() {
   delay(2000);
   eraseRow(1);
   #endif
-  Serial.print("\nIP:");
-  Serial.println(Ethernet.localIP());
-  Serial.print("Mask:");
-  Serial.println(Ethernet.subnetMask());
-  Serial.print("Gateway:");
-  Serial.println(Ethernet.gatewayIP());
-  Serial.print("DNS:");
-  Serial.println(Ethernet.dnsServerIP());
-  Serial.println();
+  DEBUG_PRINT("\nIP:");
+  DEBUG_PRINTLN(Ethernet.localIP());
+  DEBUG_PRINT("Mask:");
+  DEBUG_PRINTLN(Ethernet.subnetMask());
+  DEBUG_PRINT("Gateway:");
+  DEBUG_PRINTLN(Ethernet.gatewayIP());
+  DEBUG_PRINT("DNS:");
+  DEBUG_PRINTLN(Ethernet.dnsServerIP());
+  DEBUG_PRINTLN();
 #endif
 
   if (storage.stamp==0) {
@@ -382,17 +398,17 @@ void setup() {
   
 #ifdef UDPdef
   Udp.begin(localPort);
-  Serial.print("waiting 20s for time sync...");
+  DEBUG_PRINT("waiting 20s for time sync...");
   setSyncProvider(getNtpTime);
 
   lastMeasTime=millis();
   while(timeStatus()==timeNotSet && millis()<lastMeasTime+20000); // wait until the time is set by the sync provider, timeout 20sec
-  Serial.println("Time sync interval is set to 3600 second.");
+  DEBUG_PRINTLN("Time sync interval is set to 3600 second.");
   setSyncInterval(3600); //sync each 1 hour
   
-  Serial.print("Now is ");
+  DEBUG_PRINT("Now is ");
   printDateTime(0);
-  Serial.println(" UTC.");
+  DEBUG_PRINTLN(" UTC.");
 
 #ifdef LCDdef
   lcd.setCursor(0,1);
@@ -409,8 +425,8 @@ void setup() {
   if (day()<10) fileName+="0";
   fileName+=String(day());
   fileName+=".csv";
-  Serial.print("Filename:");
-  Serial.println(fileName);
+  DEBUG_PRINT("Filename:");
+  DEBUG_PRINTLN(fileName);
 #endif
   
  
@@ -433,7 +449,7 @@ void setup() {
   dht1.begin();
   lastDisplayDHTTime = millis();
 #else
-  Serial.println("DHT1 N/A");
+  DEBUG_PRINTLN("DHT1 N/A");
 #endif
 
 #ifdef DHTdef2
@@ -441,19 +457,19 @@ void setup() {
   //dht2.startMeas();
   dht2.begin();
   #else
-  Serial.println("DHT2 N/A");
+  DEBUG_PRINTLN("DHT2 N/A");
 #endif
 
   
 #ifdef Ethernetdef
-  Serial.print("Sending interval [ms]:");
-  Serial.println(storage.sendInterval);
+  DEBUG_PRINT("Sending interval [ms]:");
+  DEBUG_PRINTLN(storage.sendInterval);
   lastSendTime = millis();
 #endif
   
 #ifdef SDdef
-  Serial.print("Saving interval [ms]:");
-  Serial.println(storage.saveInterval);
+  DEBUG_PRINT("Saving interval [ms]:");
+  DEBUG_PRINTLN(storage.saveInterval);
   lastSaveTime = millis();
 #endif
 
@@ -461,7 +477,7 @@ void setup() {
   lastMeasTime = millis();
   dsSensors.requestTemperatures(); 
   
-  Serial.println("End of SW initialization phase, I am starting measuring.");
+  DEBUG_PRINTLN("End of SW initialization phase, I am starting measuring.");
 
 #ifdef LCDdef
   lcd.clear();
@@ -592,8 +608,8 @@ void loop() {
     if (Pressure>0) {
       numberOfSamples++;
       avgPressure+=Pressure;
-      Serial.print("Average pressure ");
-      Serial.println(avgPressure/numberOfSamples);
+      DEBUG_PRINT("Average pressure ");
+      DEBUG_PRINTLN(avgPressure/numberOfSamples);
     }
     
     if (millis() - lastPressureTime > storage.BMPPressInterval) {
@@ -601,21 +617,21 @@ void loop() {
     
       avgPressure=avgPressure/numberOfSamples;
 
-      Serial.print("Last average pressure=");
-      Serial.println(lastAvgPressure);
+      DEBUG_PRINT("Last average pressure=");
+      DEBUG_PRINTLN(lastAvgPressure);
       
       if (lastAvgPressure>0) {
         if (avgPressure>lastAvgPressure) {
           pressureChange=PRESSUP;
-          Serial.println("Pressure change UP.");
+          DEBUG_PRINTLN("Pressure change UP.");
         }
         else if (avgPressure<lastAvgPressure) {
           pressureChange=PRESSDOWN;
-          Serial.println("Pressure change DOWN.");
+          DEBUG_PRINTLN("Pressure change DOWN.");
         }
         else {
           pressureChange=PRESSNOCHANGE;
-          Serial.println("No pressure change.");
+          DEBUG_PRINTLN("No pressure change.");
         }
       }
       
@@ -666,54 +682,54 @@ void loop() {
 
   if (millis() - dsLastPrintTime > 1000) {
 
-    Serial.println();
+    DEBUG_PRINTLN();
 #ifdef Ethernetdef
     printDateTime(0);
 #endif
-    Serial.println();
+    DEBUG_PRINTLN();
     printTemperatureAll();
   
-    Serial.print("Press(Pa):");
-    Serial.print(Pressure);
+    DEBUG_PRINT("Press(Pa):");
+    DEBUG_PRINT(Pressure);
 
-    Serial.print(" Temperature BMP085(C):");
-    Serial.print(Temperature);
+    DEBUG_PRINT(" Temperature BMP085(C):");
+    DEBUG_PRINT(Temperature);
 
     #ifdef DHTdef1
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(tempDHT1) || isnan(humidity1)) {
-      Serial.println("DHT1 fail.");
+      DEBUG_PRINTLN("DHT1 fail.");
     } else {
-      Serial.print(" Humidity DHT1(%): "); 
-      Serial.print(humidity1);
-      Serial.print(" Temp DHT1(C): "); 
-      Serial.print(tempDHT1);
+      DEBUG_PRINT(" Humidity DHT1(%): "); 
+      DEBUG_PRINT(humidity1);
+      DEBUG_PRINT(" Temp DHT1(C): "); 
+      DEBUG_PRINT(tempDHT1);
     }
     #endif
 
     #ifdef DHTdef2
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(tempDHT2) || isnan(humidity2)) {
-      Serial.println("DHT2 fail.");
+      DEBUG_PRINTLN("DHT2 fail.");
     } else {
-      Serial.print(" Humidity DHT2(%): "); 
-      Serial.print(humidity2);
-      Serial.print(" Temp DHT2(C): "); 
-      Serial.print(tempDHT2);
+      DEBUG_PRINT(" Humidity DHT2(%): "); 
+      DEBUG_PRINT(humidity2);
+      DEBUG_PRINT(" Temp DHT2(C): "); 
+      DEBUG_PRINT(tempDHT2);
     }
     #endif
     
     #ifdef DHTdef1
-    Serial.print(" Dew point DHT1: "); 
-    Serial.print(calcDewPoint(humidity1, tempDHT1));
+    DEBUG_PRINT(" Dew point DHT1: "); 
+    DEBUG_PRINT(calcDewPoint(humidity1, tempDHT1));
     #endif
     
     #ifdef DHTdef2
-    Serial.print(" Dew point DHT2: "); 
-    Serial.print(calcDewPoint(humidity2, tempDHT2));
+    DEBUG_PRINT(" Dew point DHT2: "); 
+    DEBUG_PRINT(calcDewPoint(humidity2, tempDHT2));
     #endif
    
-    Serial.println("");
+    DEBUG_PRINTLN("");
     dsLastPrintTime = millis(); 
   }
   
@@ -754,119 +770,112 @@ void loop() {
 #ifdef Ethernetdef
 void sendData() {
 
-  int n; //data length
-
   #ifdef LCDdef
   lcd.setCursor(15, 1);
   lcd.write(1);
   #endif
   
-  //prepare data to send
-  char buffer[3];
-  //temperature from DALLAS
-
-  sprintf(dataString,"Version,%s\n",versionSW);
-  
-  #ifdef DALLASdef
-  for(byte i=0;i<numberOfDevices; i++) {
-    sprintf(dataString,"%sT",dataString);
-
-    for (byte j = 0; j < 8; j++) {
-      if (tempDeviceAddresses[i][j] < 16) {
-        sprintf(dataString,"%s0",dataString);
-      }
-      sprintf (dataString, "%s%X", dataString, tempDeviceAddresses[i][j]);
-    }
-
-    sprintf(dataString,"%s,",dataString);
-    int t = (int)(sensor[i]*10);
-    
-    if (t<0&&t>-10) {
-      sprintf(dataString,"%s-",dataString);
-    }
-    //sprintf(dataString,"%s%u.%u\n",dataString,t/10,abs(t%10));
-    sprintf(dataString,"%s%d.%d\n",dataString,t/10,abs(t%10));
-  }
-  #endif
-
-  #ifdef BMP085def
-  //Pressure
-  sprintf(dataString,"%sPress,%ld\n",dataString,Pressure);
-
-  //Temperature
-  int temp1 = (Temperature - (int)Temperature) * 100;
-  sprintf(dataString,"%sTemp085,%0d.%d\n",dataString,(int)Temperature,temp1);
-  #endif
-
-  #ifdef DHTdef1
-  //DHT1
-  //Humidity and temp
-  sprintf(dataString,"%sHumidity1,%u\nTempDHT1,%u\n", dataString,humidity1,tempDHT1);
-  //Dew Point
-  n=sprintf(dataString,"%sDewPoint1,%u\n", dataString,(int)calcDewPoint(humidity1, tempDHT1));
-  #endif
-
-  #ifdef DHTdef2
-  //DHT2
-  //Humidity and temp
-  sprintf(dataString,"%sHumidity2,%u\nTempDHT2,%u\n", dataString,humidity2,tempDHT2);
-  //Dew Point
-  n=sprintf(dataString,"%sDewPoint2,%u", dataString,(int)calcDewPoint(humidity2, tempDHT2));
-  #endif
-    
-  // if there's a successful connection:
-  if (client.connect(server, 80)) {
-    Serial.println();
-    printDateTime(0);
-    Serial.print(" connecting to COSM [FEEDID=");
-    Serial.print(storage.feedId);
-    Serial.println("]");
-    // send the HTTP PUT request:
-    client.print("PUT /v2/feeds/");
-    client.print(storage.feedId);
-    client.println(".csv HTTP/1.1");
-    client.println("Host: api.cosm.com");
-    client.print("X-ApiKey: ");
-    client.println(storage.apiKey);
-    client.print("User-Agent: ");
-    client.println(storage.userAgent);
-    client.print("Content-Length: ");
-    client.println(n);
-
-    // last pieces of the HTTP PUT request:
-    client.println("Content-Type: text/csv");
-    client.println("Connection: close");
-    client.println();
-
-    // here's the actual content of the PUT request:
-    client.print(dataString);
-  } 
-  else {
-    // if you couldn't make a connection:
-    Serial.println("failed");
-    Serial.println();
-    Serial.println("disconnecting.");
-    client.stop();
-  }
-  
+  printSystemTime();
+  DEBUG_PRINTLN(" I am sending data from Meteo unit to HomeAssistant");
+  MQTT_connect();
+  if (! _temperature1.publish(sensor[0])) {
+    DEBUG_PRINTLN("Temperature1 failed");
+  } else {
+    DEBUG_PRINTLN("Temperature1 OK!");
+  }  
+  if (! _temperature2.publish(sensor[1])) {
+    DEBUG_PRINTLN("Temperature2 failed");
+  } else {
+    DEBUG_PRINTLN("Temperature2 OK!");
+  }  
+  if (! _temperature3.publish(sensor[2])) {
+    DEBUG_PRINTLN("Temperature3 failed");
+  } else {
+    DEBUG_PRINTLN("Temperature3 OK!");
+  }  
+  if (! _pressure.publish(Pressure)) {
+    DEBUG_PRINTLN("Pressure failed");
+  } else {
+    DEBUG_PRINTLN("Pressure OK!");
+  }  
+  if (! _temperature085.publish(Temperature)) {
+    DEBUG_PRINTLN("Temperature085 failed");
+  } else {
+    DEBUG_PRINTLN("Temperature085 OK!");
+  }  
+  if (! _humidity1.publish(humidity1)) {
+    DEBUG_PRINTLN("Humidity1 failed");
+  } else {
+    DEBUG_PRINTLN("Humidity1 OK!");
+  }  
+  if (! _humidity2.publish(humidity2)) {
+    DEBUG_PRINTLN("Humidity2 failed");
+  } else {
+    DEBUG_PRINTLN("Humidity2 OK!");
+  }  
+  if (! _dewpoint1.publish(calcDewPoint(humidity1, tempDHT1))) {
+    DEBUG_PRINTLN("DewPoint1 failed");
+  } else {
+    DEBUG_PRINTLN("DewPoint1 OK!");
+  }  
+  if (! _dewpoint2.publish(calcDewPoint(humidity2, tempDHT1))) {
+    DEBUG_PRINTLN("DewPoint2 failed");
+  } else {
+    DEBUG_PRINTLN("DewPoint2 OK!");
+  }  
+  if (! _versionSW.publish(versionSW)) {
+    DEBUG_PRINTLN("Version SW failed");
+  } else {
+    DEBUG_PRINTLN("Version SW OK!");
+  }    
   #ifdef LCDdef
   lcd.setCursor(15, 1);
   lcd.print(" ");
   #endif
   
-  Serial.println("\nDATA:");
-  Serial.println(dataString);
+}
 
-  Serial.print("\nDATA sentence length=");
-  Serial.println(n);
-  
-  // note the time that the connection was made or attempted:
+void printSystemTime(){
+  DEBUG_PRINT(day());
+  DEBUG_PRINT(".");
+  DEBUG_PRINT(month());
+  DEBUG_PRINT(".");
+  DEBUG_PRINT(year());
+  DEBUG_PRINT(" ");
+  DEBUG_PRINT(hour());
+  printDigits(minute(), 0);
+  printDigits(second(), 0);
+}
+
+void MQTT_connect() {
+  int8_t ret;
+
+  // Stop if already connected.
+  if (mqtt.connected()) {
+    return;
+  }
+
+  DEBUG_PRINT("Connecting to MQTT... ");
+
+uint8_t retries = 3;
+while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
+     DEBUG_PRINTLN(mqtt.connectErrorString(ret));
+     DEBUG_PRINTLN("Retrying MQTT connection in 5 seconds...");
+     mqtt.disconnect();
+     delay(5000);  // wait 5 seconds
+     retries--;
+     if (retries == 0) {
+       // basically die and wait for WDT to reset me
+       while (1);
+     }
+}
+  DEBUG_PRINTLN("MQTT Connected!");
 }
 
 /*void checkConfig() {
   checkConfigFlag = true;
   if (clientConfig.connect(serverConfig, 80)) {
-    Serial.println("Connected to config server.");
+    DEBUG_PRINTLN("Connected to config server.");
     // Make a HTTP request:
     clientConfig.println("GET /getConfigData.aspx HTTP/1.0");
     clientConfig.println();
@@ -874,7 +883,7 @@ void sendData() {
   else
   {
     // if you didn't get a connection to the server:
-    Serial.println("Connection to config server failed.");
+    DEBUG_PRINTLN("Connection to config server failed.");
   }
 }
 */
@@ -907,13 +916,13 @@ void saveDataToSD(bool rep) {
   fileName+=String(day());
   fileName+=".csv";
 
-  Serial.println();
+  DEBUG_PRINTLN();
 #ifdef Ethernetdef
   printDateTime(0);
 #endif
-  Serial.print("\nSaving data to file:");
-  Serial.print(fileName);
-  Serial.print("...");
+  DEBUG_PRINT("\nSaving data to file:");
+  DEBUG_PRINT(fileName);
+  DEBUG_PRINT("...");
   
   char cFileName[13];
   fileName.toCharArray(cFileName, 13);    
@@ -1000,13 +1009,13 @@ void saveDataToSD(bool rep) {
     dataFile.print("\n");
       
     dataFile.close();
-    Serial.println("data saved.");
+    DEBUG_PRINTLN("data saved.");
   }  
   // if the file isn't open, pop up an error:
   else {
-    Serial.print("error opening ");
-    Serial.println(fileName);
-    Serial.println("Try SD card reinit.");
+    DEBUG_PRINT("error opening ");
+    DEBUG_PRINTLN(fileName);
+    DEBUG_PRINTLN("Try SD card reinit.");
     SD.begin(chipSelect);
     if (!rep) {
       saveDataToSD(true);
@@ -1039,34 +1048,34 @@ unsigned long getNtpTime(void) {
     // combine the four bytes (two words) into a long integer
     // this is NTP time (seconds since Jan 1 1900):
     unsigned long secsSince1900 = highWord << 16 | lowWord;  
-//    Serial.print("Seconds since Jan 1 1900 = " );
-//    Serial.println(secsSince1900);               
+//    DEBUG_PRINT("Seconds since Jan 1 1900 = " );
+//    DEBUG_PRINTLN(secsSince1900);               
 
     // now convert NTP time into everyday time:
-//    Serial.print("Unix time = ");
+//    DEBUG_PRINT("Unix time = ");
     // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
     const unsigned long seventyYears = 2208988800UL;     
     // subtract seventy years:
     unsigned long epoch = secsSince1900 - seventyYears;  
     // print Unix time:
-    //Serial.println(epoch);                               
+    //DEBUG_PRINTLN(epoch);                               
 
 
     // print the hour, minute and second:
-    Serial.print("UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
-    Serial.print((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
-    Serial.print(':');  
+    DEBUG_PRINT("UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
+    DEBUG_PRINT((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
+    DEBUG_PRINT(':');  
     if ( ((epoch % 3600) / 60) < 10 ) {
       // In the first 10 minutes of each hour, we'll want a leading '0'
-      Serial.print('0');
+      DEBUG_PRINT('0');
     }
-    Serial.print((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
-    Serial.print(':'); 
+    DEBUG_PRINT((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
+    DEBUG_PRINT(':'); 
     if ( (epoch % 60) < 10 ) {
       // In the first 10 seconds of each minute, we'll want a leading '0'
-      Serial.print('0');
+      DEBUG_PRINT('0');
     }
-    Serial.println(epoch %60); // print the second
+    DEBUG_PRINTLN(epoch %60); // print the second
     return epoch;
   }
   return 0;
@@ -1116,16 +1125,16 @@ void printDateTime(byte toLCD) {
 #endif
   }
   else {
-    Serial.print(day());
-    Serial.print(DATE_DELIMITER);
-    Serial.print(month());
-    Serial.print(DATE_DELIMITER);
-    Serial.print(year());
-    Serial.print(DATE_TIME_DELIMITER);
+    DEBUG_PRINT(day());
+    DEBUG_PRINT(DATE_DELIMITER);
+    DEBUG_PRINT(month());
+    DEBUG_PRINT(DATE_DELIMITER);
+    DEBUG_PRINT(year());
+    DEBUG_PRINT(DATE_TIME_DELIMITER);
     printDigits(hour(),toLCD);
-    Serial.print(TIME_DELIMITER);
+    DEBUG_PRINT(TIME_DELIMITER);
     printDigits(minute(),toLCD);
-    Serial.print(TIME_DELIMITER);
+    DEBUG_PRINT(TIME_DELIMITER);
     printDigits(second(),toLCD);
   }
 }
@@ -1139,7 +1148,7 @@ void printDigits(int digits, byte toLCD){
     }
     else {
     //#endif
-      Serial.print('0');
+      DEBUG_PRINT('0');
     //#ifdef LCDdef
     }
     //#endif
@@ -1150,7 +1159,7 @@ void printDigits(int digits, byte toLCD){
   }
   else {
   //#endif
-    Serial.print(digits);
+    DEBUG_PRINT(digits);
   //#ifdef LCDdef
   }
   //#endif
@@ -1188,17 +1197,17 @@ void printTemperatureAll() {
   // Loop through each device, print out temperature data
   for(byte i=0;i<numberOfDevices; i++) {
     // Search the wire for address
-      Serial.print("T");
-      Serial.print(i, DEC);
-      Serial.print("[");
+      DEBUG_PRINT("T");
+      DEBUG_PRINT(i, DEC);
+      DEBUG_PRINT("[");
       for (byte j = 0; j < 8; j++) {
-        if (tempDeviceAddresses[i][j] < 16) Serial.print("0");
-        Serial.print(tempDeviceAddresses[i][j], HEX);
+        if (tempDeviceAddresses[i][j] < 16) DEBUG_PRINT("0");
+        DEBUG_PRINT(tempDeviceAddresses[i][j], HEX);
       }
-      Serial.print("]");
+      DEBUG_PRINT("]");
 
-      Serial.print(sensor[i]);
-      Serial.println(" C ");
+      DEBUG_PRINT(sensor[i]);
+      DEBUG_PRINTLN(" C ");
   }
 }
 
@@ -1206,51 +1215,54 @@ void printTemperatureAll() {
 
 void dsInit(void) {
   dsSensors.begin();
-  Serial.println();
-  Serial.print("DALLAS Library version:");
-  Serial.println(DALLASTEMPLIBVERSION);
+  DEBUG_PRINTLN();
+  DEBUG_PRINT("DALLAS Library version:");
+  DEBUG_PRINTLN(DALLASTEMPLIBVERSION);
   // Grab a count of devices on the wire
   numberOfDevices = dsSensors.getDeviceCount();
 
   // locate devices on the bus
-  Serial.print("Locating devices...");
+  DEBUG_PRINT("Locating devices...");
   
-  Serial.print("Found ");
-  Serial.print(numberOfDevices, DEC);
-  Serial.println(" devices.");
+  DEBUG_PRINT("Found ");
+  DEBUG_PRINT(numberOfDevices, DEC);
+  DEBUG_PRINTLN(" devices.");
 
   // report parasite power requirements
-  Serial.print("Parasite power is: "); 
-  if (dsSensors.isParasitePowerMode()) Serial.println("ON");
-  else Serial.println("OFF");
+  DEBUG_PRINT("Parasite power is: "); 
+  if (dsSensors.isParasitePowerMode()) {
+    DEBUG_PRINTLN("ON");
+  } else {
+    DEBUG_PRINTLN("OFF");
+  }
   
   // Loop through each device, print out address
   for(byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
     if(dsSensors.getAddress(tempDeviceAddress, i)) {
-      Serial.print("Found device ");
-      Serial.print(i, DEC);
-      Serial.print(" with address: ");
+      DEBUG_PRINT("Found device ");
+      DEBUG_PRINT(i, DEC);
+      DEBUG_PRINT(" with address: ");
       for (byte j=0; j<8;j++) {
-        if (tempDeviceAddress[j] < 16) Serial.print("0");
-        Serial.print(tempDeviceAddress[j], HEX);
+        if (tempDeviceAddress[j] < 16) DEBUG_PRINT("0");
+        DEBUG_PRINT(tempDeviceAddress[j], HEX);
       }
       memcpy(tempDeviceAddresses[i],tempDeviceAddress,8);
-      Serial.println();
+      DEBUG_PRINTLN();
       
-      Serial.print("Setting resolution to ");
-      Serial.println(TEMPERATURE_PRECISION, DEC);
+      DEBUG_PRINT("Setting resolution to ");
+      DEBUG_PRINTLN(TEMPERATURE_PRECISION, DEC);
       
       // set the resolution to TEMPERATURE_PRECISION bit (Each Dallas/Maxim device is capable of several different resolutions)
       dsSensors.setResolution(tempDeviceAddress, TEMPERATURE_PRECISION);
       
-       Serial.print("Resolution actually set to: ");
-      Serial.print(dsSensors.getResolution(tempDeviceAddress), DEC); 
-      Serial.println();
+       DEBUG_PRINT("Resolution actually set to: ");
+      DEBUG_PRINT(dsSensors.getResolution(tempDeviceAddress), DEC); 
+      DEBUG_PRINTLN();
     } else {
-      Serial.print("Found ghost device at ");
-      Serial.print(i, DEC);
-      Serial.print(" but could not detect address. Check power and cabling");
+      DEBUG_PRINT("Found ghost device at ");
+      DEBUG_PRINT(i, DEC);
+      DEBUG_PRINT(" but could not detect address. Check power and cabling");
     }
   }
 
@@ -1263,9 +1275,9 @@ void dsInit(void) {
   #endif
 
   
-  Serial.print("DALLAS on pin D");
-  Serial.print(ONE_WIRE_BUS);
-  Serial.println(" OK");
+  DEBUG_PRINT("DALLAS on pin D");
+  DEBUG_PRINT(ONE_WIRE_BUS);
+  DEBUG_PRINTLN(" OK");
 }
 #endif
 
@@ -1277,8 +1289,8 @@ void bmp085Init() {
   } else {
     BMP085Present = true;
     DEBUG_PRINTLN("Sensor found.");
-    Serial.print("Temperature: ");
-    Serial.println(bmp.ReadTemperature());
+    DEBUG_PRINT("Temperature: ");
+    DEBUG_PRINTLN(bmp.readTemperature());
   }
   DEBUG_PRINTLN("BMP software on PIN A4,A5 OK");
 #ifdef LCDdef
@@ -1300,12 +1312,12 @@ void bmp085Init() {
 
 #if defined DHTdef1 || defined DHTdef2
 void dhtInit(byte sensor) {
-  Serial.println("\nDHT setup");
+  DEBUG_PRINTLN("\nDHT setup");
   if (sensor==1) {
     dht1.begin();
-    Serial.print("DHT1 software on PIN D");
-    Serial.print(DHTPIN1);
-    Serial.println(" OK");
+    DEBUG_PRINT("DHT1 software on PIN D");
+    DEBUG_PRINT(DHTPIN1);
+    DEBUG_PRINTLN(" OK");
     #ifdef LCDdef
     lcd.setCursor(0,1);
     lcd.print("DHT1");
@@ -1317,9 +1329,9 @@ void dhtInit(byte sensor) {
   else if (sensor==2) {
     #ifdef DHTdef2
     dht2.begin();
-    Serial.print("DHT2 software on PIN D");
-    Serial.print(DHTPIN2);
-    Serial.println(" OK");
+    DEBUG_PRINT("DHT2 software on PIN D");
+    DEBUG_PRINT(DHTPIN2);
+    DEBUG_PRINTLN(" OK");
     #ifdef LCDdef
     lcd.setCursor(0,1);
     lcd.print("DHT2");
@@ -1336,64 +1348,64 @@ void cardInfo() {
   // we'll use the initialization code from the utility libraries
   // since we're just testing if the card is working!
   if (!card.init(SPI_HALF_SPEED, chipSelect)) {
-    Serial.println("initialization failed. Things to check:");
-    Serial.println("* is a card is inserted?");
-    Serial.println("* Is your wiring correct?");
-    Serial.println("* did you change the chipSelect pin to match your shield or module?");
+    DEBUG_PRINTLN("initialization failed. Things to check:");
+    DEBUG_PRINTLN("* is a card is inserted?");
+    DEBUG_PRINTLN("* Is your wiring correct?");
+    DEBUG_PRINTLN("* did you change the chipSelect pin to match your shield or module?");
     return;
   } else {
-   Serial.println("Wiring is correct and a card is present."); 
+   DEBUG_PRINTLN("Wiring is correct and a card is present."); 
   }
 
   // print the type of card
-  Serial.print("\nCard type: ");
+  DEBUG_PRINT("\nCard type: ");
   switch(card.type()) {
     case SD_CARD_TYPE_SD1:
-      Serial.println("SD1");
+      DEBUG_PRINTLN("SD1");
       break;
     case SD_CARD_TYPE_SD2:
-      Serial.println("SD2");
+      DEBUG_PRINTLN("SD2");
       break;
     case SD_CARD_TYPE_SDHC:
-      Serial.println("SDHC");
+      DEBUG_PRINTLN("SDHC");
       break;
     default:
-      Serial.println("Unknown");
+      DEBUG_PRINTLN("Unknown");
   }
 
   // Now we will try to open the 'volume'/'partition' - it should be FAT16 or FAT32
   if (!volume.init(card)) {
-    Serial.println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
+    DEBUG_PRINTLN("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
     return;
   }
 
 
   // print the type and size of the first FAT-type volume
   uint32_t volumesize;
-  Serial.print("\nVolume type is FAT");
-  Serial.println(volume.fatType(), DEC);
-  Serial.println();
+  DEBUG_PRINT("\nVolume type is FAT");
+  DEBUG_PRINTLN(volume.fatType(), DEC);
+  DEBUG_PRINTLN();
   
   volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
   volumesize *= volume.clusterCount();       // we'll have a lot of clusters
   volumesize *= 512;                            // SD card blocks are always 512 bytes
-  Serial.print("Volume size (bytes): ");
-  Serial.println(volumesize);
-  Serial.print("Volume size (Kbytes): ");
+  DEBUG_PRINT("Volume size (bytes): ");
+  DEBUG_PRINTLN(volumesize);
+  DEBUG_PRINT("Volume size (Kbytes): ");
   volumesize /= 1024;
-  Serial.println(volumesize);
-  Serial.print("Volume size (Mbytes): ");
+  DEBUG_PRINTLN(volumesize);
+  DEBUG_PRINT("Volume size (Mbytes): ");
   volumesize /= 1024;
-  Serial.println(volumesize);
+  DEBUG_PRINTLN(volumesize);
 
   
-  Serial.println("\nFiles found on the card (name, date and size in bytes): ");
+  DEBUG_PRINTLN("\nFiles found on the card (name, date and size in bytes): ");
   root.openRoot(volume);
   
   // list all files in the card with date and size
   root.ls(LS_R | LS_DATE | LS_SIZE);
-  Serial.println();
-  Serial.println();
+  DEBUG_PRINTLN();
+  DEBUG_PRINTLN();
 }
 
 
@@ -1408,9 +1420,9 @@ void stopTimer() {
 }
 
 void printTimer(char* message) {
-  Serial.print(message);
-  Serial.print(stop-start);
-  Serial.println(" ms");
+  DEBUG_PRINT(message);
+  DEBUG_PRINT(stop-start);
+  DEBUG_PRINTLN(" ms");
 }
 
 ///////EEPROM functions

@@ -101,11 +101,11 @@ Adafruit_MQTT_Publish _pressure                = Adafruit_MQTT_Publish(&mqtt, "/
 Adafruit_MQTT_Publish _temperature085          = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temp085");
 Adafruit_MQTT_Publish _temperatureDHT1         = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/TempDHT1");
 Adafruit_MQTT_Publish _temperatureDHT2         = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/TempDHT2");
-Adafruit_MQTT_Publish _humidity1               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/Humidity1");
-Adafruit_MQTT_Publish _humidity2               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/Humidity2");
-Adafruit_MQTT_Publish _dewpoint1               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/DewPoint1");
-Adafruit_MQTT_Publish _dewpoint2               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/DewPoint2");
-Adafruit_MQTT_Publish _versionSW               = Adafruit_MQTT_Publish(&mqtt, "/home/Meteo/VersionSW");
+Adafruit_MQTT_Publish _humidity1               = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Humidity1");
+Adafruit_MQTT_Publish _humidity2               = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Humidity2");
+Adafruit_MQTT_Publish _dewpoint1               = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/DewPoint1");
+Adafruit_MQTT_Publish _dewpoint2               = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/DewPoint2");
+Adafruit_MQTT_Publish _versionSW               = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/VersionSW");
 
 
 #endif

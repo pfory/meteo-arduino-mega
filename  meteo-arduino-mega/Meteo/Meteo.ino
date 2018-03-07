@@ -77,7 +77,7 @@ byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing pack
 
 #endif
 
-#define AIO_SERVER      "192.168.1.56"
+#define AIO_SERVER      "178.77.238.20"
 #define AIO_SERVERPORT  1883
 #define AIO_USERNAME    "datel"
 #define AIO_KEY         "hanka12"
@@ -89,8 +89,8 @@ Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO
 Adafruit_MQTT_Publish _temperature1            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature1");
 Adafruit_MQTT_Publish _temperature2            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature2");
 Adafruit_MQTT_Publish _temperature3            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature3");
-// Adafruit_MQTT_Publish _temperature4            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature4");
-// Adafruit_MQTT_Publish _temperature5            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature5");
+Adafruit_MQTT_Publish _temperature4            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature4");
+Adafruit_MQTT_Publish _temperature5            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature5");
 // Adafruit_MQTT_Publish _temperature6            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature6");
 // Adafruit_MQTT_Publish _temperature7            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature7");
 // Adafruit_MQTT_Publish _temperature8            = Adafruit_MQTT_Publish(&mqtt, "/holcik/Meteo/Temperature8");
@@ -112,7 +112,7 @@ Adafruit_MQTT_Publish _versionSW               = Adafruit_MQTT_Publish(&mqtt, "/
 #ifdef DALLASdef
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#define ONE_WIRE_BUS 3
+#define ONE_WIRE_BUS 5
 #define TEMPERATURE_PRECISION 12
 OneWire onewire(ONE_WIRE_BUS); // pin for onewire DALLAS bus
 DallasTemperature dsSensors(&onewire);
@@ -245,7 +245,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-float versionSW=1.0;
+float versionSW=1.1;
 char versionSWString[] = "METEO v"; //SW name
 
 // ID of the settings block
@@ -792,6 +792,18 @@ void sendData() {
   } else {
     DEBUG_PRINTLN("Temperature3 OK!");
   }  
+  if (! _temperature4.publish(sensor[3])) {
+    DEBUG_PRINTLN("Temperature4 failed");
+  } else {
+    DEBUG_PRINTLN("Temperature4 OK!");
+  }  
+  if (! _temperature5.publish(sensor[4])) {
+    DEBUG_PRINTLN("Temperature5 failed");
+  } else {
+    DEBUG_PRINTLN("Temperature5 OK!");
+  }  
+
+
   if (! _pressure.publish(Pressure)) {
     DEBUG_PRINTLN("Pressure failed");
   } else {

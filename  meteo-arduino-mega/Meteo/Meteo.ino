@@ -38,13 +38,17 @@ A5-SCL for BMP085
 #ifdef verbose
  #define DEBUG_PRINT(x)         Serial.print (x)
  #define DEBUG_PRINTDEC(x)      Serial.print (x, DEC)
+ #define DEBUG_PRINTHEX(x)      Serial.print (x, HEX)
  #define DEBUG_PRINTLN(x)       Serial.println (x)
+ #define DEBUG_PRINTLNDEC(x)    Serial.println (x, DEC)
  #define DEBUG_PRINTF(x, y)     Serial.printf (x, y)
  #define PORTSPEED 115200
 #else
  #define DEBUG_PRINT(x)
  #define DEBUG_PRINTDEC(x)
+ #define DEBUG_PRINTHEX(x)
  #define DEBUG_PRINTLN(x)
+ #define DEBUG_PRINTLNDEC(x)
  #define DEBUG_PRINTF(x, y)
 #endif 
 
@@ -245,7 +249,7 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-float versionSW=1.1;
+float versionSW=1.2;
 char versionSWString[] = "METEO v"; //SW name
 
 // ID of the settings block
@@ -291,7 +295,10 @@ storage = {
 //-------------------------------------------------------------------------SETUP------------------------------------------------------------------------------
 void setup() {
   // start serial port:
+#ifdef verbose  
   Serial.begin(PORTSPEED);
+#endif
+  Serial.println("START");
   DEBUG_PRINT(versionSWString);
   DEBUG_PRINTLN(versionSW);
 
@@ -526,10 +533,10 @@ void loop() {
       DEBUG_PRINT("Temperature BMP085: ");
       Temperature = bmp.readTemperature();
       Pressure = bmp.readSealevelPressure(535.0);
-      DEBUG_PRINT(temperature085);
+      DEBUG_PRINT(Temperature);
       DEBUG_PRINTLN(" *C");
       DEBUG_PRINT("Pressure: ");
-      DEBUG_PRINT(pressure);
+      DEBUG_PRINT(Pressure);
       DEBUG_PRINTLN(" Pa");
     } else {
       Temperature = 77.7;  //dummy
@@ -1209,11 +1216,11 @@ void printTemperatureAll() {
   for(byte i=0;i<numberOfDevices; i++) {
     // Search the wire for address
       DEBUG_PRINT("T");
-      DEBUG_PRINT(i, DEC);
+      DEBUG_PRINTDEC(i);
       DEBUG_PRINT("[");
       for (byte j = 0; j < 8; j++) {
         if (tempDeviceAddresses[i][j] < 16) DEBUG_PRINT("0");
-        DEBUG_PRINT(tempDeviceAddresses[i][j], HEX);
+        DEBUG_PRINTHEX(tempDeviceAddresses[i][j]);
       }
       DEBUG_PRINT("]");
 
@@ -1236,7 +1243,7 @@ void dsInit(void) {
   DEBUG_PRINT("Locating devices...");
   
   DEBUG_PRINT("Found ");
-  DEBUG_PRINT(numberOfDevices, DEC);
+  DEBUG_PRINTDEC(numberOfDevices);
   DEBUG_PRINTLN(" devices.");
 
   // report parasite power requirements
@@ -1252,27 +1259,27 @@ void dsInit(void) {
       // Search the wire for address
     if(dsSensors.getAddress(tempDeviceAddress, i)) {
       DEBUG_PRINT("Found device ");
-      DEBUG_PRINT(i, DEC);
+      DEBUG_PRINTDEC(i);
       DEBUG_PRINT(" with address: ");
       for (byte j=0; j<8;j++) {
         if (tempDeviceAddress[j] < 16) DEBUG_PRINT("0");
-        DEBUG_PRINT(tempDeviceAddress[j], HEX);
+        DEBUG_PRINTHEX(tempDeviceAddress[j]);
       }
       memcpy(tempDeviceAddresses[i],tempDeviceAddress,8);
       DEBUG_PRINTLN();
       
       DEBUG_PRINT("Setting resolution to ");
-      DEBUG_PRINTLN(TEMPERATURE_PRECISION, DEC);
+      DEBUG_PRINTLNDEC(TEMPERATURE_PRECISION);
       
       // set the resolution to TEMPERATURE_PRECISION bit (Each Dallas/Maxim device is capable of several different resolutions)
       dsSensors.setResolution(tempDeviceAddress, TEMPERATURE_PRECISION);
       
-       DEBUG_PRINT("Resolution actually set to: ");
-      DEBUG_PRINT(dsSensors.getResolution(tempDeviceAddress), DEC); 
+      DEBUG_PRINT("Resolution actually set to: ");
+      DEBUG_PRINTDEC(dsSensors.getResolution(tempDeviceAddress)); 
       DEBUG_PRINTLN();
     } else {
       DEBUG_PRINT("Found ghost device at ");
-      DEBUG_PRINT(i, DEC);
+      DEBUG_PRINTDEC(i);
       DEBUG_PRINT(" but could not detect address. Check power and cabling");
     }
   }
@@ -1394,7 +1401,7 @@ void cardInfo() {
   // print the type and size of the first FAT-type volume
   uint32_t volumesize;
   DEBUG_PRINT("\nVolume type is FAT");
-  DEBUG_PRINTLN(volume.fatType(), DEC);
+  DEBUG_PRINTLNDEC(volume.fatType());
   DEBUG_PRINTLN();
   
   volumesize = volume.blocksPerCluster();    // clusters are collections of blocks

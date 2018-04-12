@@ -82,6 +82,7 @@ byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing pack
 #endif
 
 #define AIO_SERVER      "178.77.238.20"
+//#define AIO_SERVER      "192.168.1.56"
 #define AIO_SERVERPORT  1883
 #define AIO_USERNAME    "datel"
 #define AIO_KEY         "hanka12"
@@ -116,7 +117,7 @@ Adafruit_MQTT_Publish _versionSW               = Adafruit_MQTT_Publish(&mqtt, "/
 #ifdef DALLASdef
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#define ONE_WIRE_BUS 5
+#define ONE_WIRE_BUS 3
 #define TEMPERATURE_PRECISION 12
 OneWire onewire(ONE_WIRE_BUS); // pin for onewire DALLAS bus
 DallasTemperature dsSensors(&onewire);
@@ -787,7 +788,7 @@ void sendData() {
   #endif
   
   printSystemTime();
-  D_PRINTLN(F(" I am sending data from Meteo unit to HomeAssistant"));
+  D_PRINTLN(F(" I am sending MQTT data from Meteo unit..."));
   MQTT_connect();
 #ifdef DALLASdef
   if (! _temperature1.publish(sensor[0])) {
@@ -881,19 +882,18 @@ void MQTT_connect() {
 
   D_PRINT(F("Connecting to MQTT... "));
 
-uint8_t retries = 3;
-while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-     D_PRINTLN(mqtt.connectErrorString(ret));
-     D_PRINTLN(F("Retrying MQTT connection in 5 seconds..."));
-     mqtt.disconnect();
-     delay(5000);  // wait 5 seconds
-     retries--;
-     if (retries == 0) {
-       // basically die and wait for WDT to reset me
-       while (1);
-     }
-}
-  D_PRINTLN(F("MQTT Connected!"));
+  uint8_t retries = 2;
+  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
+    D_PRINTLN(mqtt.connectErrorString(ret));
+    D_PRINTLN(F("Retrying MQTT connection in 2 seconds..."));
+    mqtt.disconnect();
+    delay(2000);  // wait 2 seconds
+    retries--;
+    if (retries == 0) {
+     break;
+    }
+  }
+    D_PRINTLN(F("MQTT Connected!"));
 }
 
 /*void checkConfig() {
@@ -1293,37 +1293,22 @@ void dsInit(void) {
 
   
 #ifdef LCDdef
-D_PRINTLN("1");
-delay(5000);
   lcd.clear();
   lcd.setCursor(0,1);
-D_PRINTLN("2");
-delay(5000);
   lcd.print(F("DALLAS sens:"));
-D_PRINTLN("3");
-delay(5000);
   lcd.print(numberOfDevices);
-D_PRINTLN("4");
-delay(5000);
   delay(1000);
   eraseRow(1);
 #endif
 
-D_PRINTLN("5");
-delay(5000);
-
- 
   D_PRINT(F("DALLAS on pin D"));
   D_PRINT(ONE_WIRE_BUS);
   D_PRINTLN(F(" OK"));
 
-D_PRINTLN("6");
-delay(5000);
-
   D_PRINT(F("Free mem: "));
   D_PRINT(freeMemory());
   D_PRINTLN(F(" bytes"));
-  
+ 
 }
 #endif
 

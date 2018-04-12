@@ -315,9 +315,9 @@ void setup() {
   lcd.begin(16, 2);              // start the library
   lcdPrintVersion();
   lcd.setCursor(0,1);
-  lcd.print("Free:");
+  lcd.print(F("Free:"));
   lcd.print(freeMemory());
-  lcd.print(" bytes");
+  lcd.print(F(" bytes"));
   analogWrite(12,DISPLAY_BACKLIGHT);
   
   delay(2000);
@@ -342,7 +342,7 @@ void setup() {
     bCardOK = false;
     #ifdef LCDdef
     lcd.setCursor(0,1);
-    lcd.print("SD card failed");
+    lcd.print(F("SD card failed"));
     delay(1000);
     eraseRow(1);
     #endif
@@ -351,7 +351,7 @@ void setup() {
     D_PRINTLN(F("card initialized."));
 #ifdef LCDdef
     lcd.setCursor(0,1);
-    lcd.print("SD card OK");
+    lcd.print(F("SD card OK"));
     delay(1000);
     eraseRow(1);
 #endif
@@ -364,7 +364,7 @@ void setup() {
   D_PRINT(F("waiting for net connection..."));
 #ifdef LCDdef
   lcd.setCursor(0,1);
-  lcd.print("waiting for net");
+  lcd.print(F("waiting for net"));
 #endif
   if (Ethernet.begin(mac) == 0) {
     D_PRINTLN(F("Failed using DHCP"));
@@ -380,7 +380,7 @@ void setup() {
   
 #ifdef LCDdef
   lcd.setCursor(0,1);
-  lcd.print("IP:");
+  lcd.print(F("IP:"));
   lcd.print(Ethernet.localIP());
   delay(2000);
   eraseRow(1);
@@ -441,7 +441,8 @@ void setup() {
   dsSensors.setResolution(12);
   dsSensors.setWaitForConversion(false);
 #endif
-  
+
+
 #ifdef BMP085def
   bmp085Init();
   lastDisplayBMPTime = millis();
@@ -480,7 +481,9 @@ void setup() {
 
   dsLastPrintTime = millis();
   lastMeasTime = millis();
+#ifdef DALLASdef
   dsSensors.requestTemperatures(); 
+#endif
   
   D_PRINTLN(F("End of SW initialization phase, I am starting measuring."));
 
@@ -575,40 +578,42 @@ void loop() {
   if((millis()/1000)%2)
     lcd.print(TIME_DELIMITER);
   else
-    lcd.print(" ");
+    lcd.print(F(" "));
   printDigits(minute(),1);
-#endif    
+#endif   
+#ifdef DALLASdef 
   if (millis() - lastDisplayTempTime > storage.displayTempDelay) {
     lastDisplayTempTime = millis();
     lcd.setCursor(tempC, tempR);
     for (byte i=0; i<tempLen; i++) {
-      lcd.print(" ");
+      lcd.print(F(" "));
     }
     lcd.setCursor(tempC, tempR);
-    if (currentTempDevice4Display<10) lcd.print(" ");
+    if (currentTempDevice4Display<10) lcd.print(F(" "));
     lcd.print(currentTempDevice4Display+1);
-    lcd.print(":");
-    lcd.print(" ");
-    if (abs(sensor[currentTempDevice4Display]<10)) lcd.print(" ");
+    lcd.print(F(":"));
+    lcd.print(F(" "));
+    if (abs(sensor[currentTempDevice4Display]<10)) lcd.print(F(" "));
     lcd.print(sensor[currentTempDevice4Display],1);
     lcd.write(2);
-    lcd.print("C");
+    lcd.print(F("C"));
     
     currentTempDevice4Display++;
     if (currentTempDevice4Display >= numberOfDevices)
       currentTempDevice4Display = 0;
   }
+#endif
 
   if (millis() - lastDisplayBMPTime > storage.displayBMPDelay) {
     lastDisplayBMPTime = millis();
     lcd.setCursor(pressPosC, pressPosR);
     for (byte i=0; i<pressLen; i++) {
-      lcd.print(" ");
+      lcd.print(F(" "));
     }
     lcd.setCursor(pressPosC, pressPosR);
     
     
-    if (Pressure<100000) lcd.print(" ");
+    if (Pressure<100000) lcd.print(F(" "));
 
     if (Pressure>0) {
       numberOfSamples++;
@@ -646,7 +651,7 @@ void loop() {
     }
     
     if (pressureChange==PRESSNOCHANGE) { //no press change
-      lcd.print(" ");
+      lcd.print(F(" "));
     }
     else if (pressureChange==PRESSUP) {  //press increasing
       lcd.write(1);
@@ -657,7 +662,7 @@ void loop() {
     
     if (Pressure>0) {
       lcd.print(Pressure/100);
-      lcd.print("hPa");
+      lcd.print(F("hPa"));
     }
   }
 
@@ -665,7 +670,7 @@ void loop() {
     lastDisplayDHTTime = millis();
     lcd.setCursor(humidityPosC, humidityPosR);
     for (byte i=0; i<humidityLen; i++) {
-      lcd.print(" ");
+      lcd.print(F(" "));
     }
     
     byte tempHum;
@@ -679,9 +684,9 @@ void loop() {
       lastDHTShows=0;
     }
    
-    if (tempHum<10) lcd.print(" ");
+    if (tempHum<10) lcd.print(F(" "));
     lcd.print(tempHum);
-    lcd.print("%");
+    lcd.print(F("%"));
   }
 #endif
 
@@ -691,9 +696,10 @@ void loop() {
 #ifdef Ethernetdef
     printDateTime(0);
 #endif
+#ifdef DALLASdef
     D_PRINTLN();
     printTemperatureAll();
-  
+#endif
     D_PRINT(F("Press(Pa):"));
     D_PRINT(Pressure);
 
@@ -783,6 +789,7 @@ void sendData() {
   printSystemTime();
   D_PRINTLN(F(" I am sending data from Meteo unit to HomeAssistant"));
   MQTT_connect();
+#ifdef DALLASdef
   if (! _temperature1.publish(sensor[0])) {
     D_PRINTLN(F("Temperature1 failed"));
   } else {
@@ -808,7 +815,7 @@ void sendData() {
   } else {
     D_PRINTLN(F("Temperature5 OK!"));
   }  
-
+#endif
 
   if (! _pressure.publish(Pressure)) {
     D_PRINTLN(F("Pressure failed"));
@@ -847,7 +854,7 @@ void sendData() {
   }    
   #ifdef LCDdef
   lcd.setCursor(15, 1);
-  lcd.print(" ");
+  lcd.print(F(" "));
   #endif
   
 }
@@ -1041,7 +1048,7 @@ void saveDataToSD(bool rep) {
 
   #ifdef LCDdef
   lcd.setCursor(15, 1);
-  lcd.print(" ");
+  lcd.print(F(" "));
   #endif
 }
 #endif
@@ -1202,7 +1209,7 @@ void lcdPrintVersion() {
 void eraseRow(byte r) {
   lcd.setCursor(0, r);
   for (byte i=0; i<16; i++) {
-    lcd.print(" ");
+    lcd.print(F(" "));
   }
   lcd.setCursor(0, r);
 }
@@ -1252,7 +1259,8 @@ void dsInit(void) {
   } else {
     D_PRINTLN(F("OFF"));
   }
-  
+
+ 
   // Loop through each device, print out address
   for(byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
@@ -1283,18 +1291,39 @@ void dsInit(void) {
     }
   }
 
-  #ifdef LCDdef
+  
+#ifdef LCDdef
+D_PRINTLN("1");
+delay(5000);
+  lcd.clear();
   lcd.setCursor(0,1);
-  lcd.print("#DALLAS sens:");
-  lcd.print(numberOfDevices, DEC);
+D_PRINTLN("2");
+delay(5000);
+  lcd.print(F("DALLAS sens:"));
+D_PRINTLN("3");
+delay(5000);
+  lcd.print(numberOfDevices);
+D_PRINTLN("4");
+delay(5000);
   delay(1000);
   eraseRow(1);
-  #endif
+#endif
 
-  
+D_PRINTLN("5");
+delay(5000);
+
+ 
   D_PRINT(F("DALLAS on pin D"));
   D_PRINT(ONE_WIRE_BUS);
   D_PRINTLN(F(" OK"));
+
+D_PRINTLN("6");
+delay(5000);
+
+  D_PRINT(F("Free mem: "));
+  D_PRINT(freeMemory());
+  D_PRINTLN(F(" bytes"));
+  
 }
 #endif
 
@@ -1312,11 +1341,11 @@ void bmp085Init() {
   D_PRINTLN(F("BMP software on PIN A4,A5 OK"));
 #ifdef LCDdef
   lcd.setCursor(0,1);
-  lcd.print("High:");
+  lcd.print(F("High:"));
   lcd.print(storage.high_above_sea/100);
-  lcd.print(".");
+  lcd.print(F("."));
   lcd.print(storage.high_above_sea%100);
-  lcd.print(" masl");
+  lcd.print(F(" masl"));
   delay(1000);
   eraseRow(1);
 #endif
@@ -1337,7 +1366,7 @@ void dhtInit(byte sensor) {
     D_PRINTLN(F(" OK"));
     #ifdef LCDdef
     lcd.setCursor(0,1);
-    lcd.print("DHT1");
+    lcd.print(F("DHT1"));
     delay(1000);
     eraseRow(1);
     #endif
@@ -1351,7 +1380,7 @@ void dhtInit(byte sensor) {
     D_PRINTLN(F(" OK"));
     #ifdef LCDdef
     lcd.setCursor(0,1);
-    lcd.print("DHT2");
+    lcd.print(F("DHT2"));
     delay(1000);
     eraseRow(1);
     #endif

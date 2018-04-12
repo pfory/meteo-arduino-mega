@@ -36,20 +36,20 @@ A5-SCL for BMP085
 
 #define verbose
 #ifdef verbose
- #define DEBUG_PRINT(x)         Serial.print (x)
- #define DEBUG_PRINTDEC(x)      Serial.print (x, DEC)
- #define DEBUG_PRINTHEX(x)      Serial.print (x, HEX)
- #define DEBUG_PRINTLN(x)       Serial.println (x)
- #define DEBUG_PRINTLNDEC(x)    Serial.println (x, DEC)
- #define DEBUG_PRINTF(x, y)     Serial.printf (x, y)
+ #define D_PRINT(x)         Serial.print(x)
+ #define D_PRINTDEC(x)      Serial.print(x, DEC)
+ #define D_PRINTHEX(x)      Serial.print(x, HEX)
+ #define D_PRINTLN(x)       Serial.println(x)
+ #define D_PRINTLNDEC(x)    Serial.println(x, DEC)
+ //#define D_PRINTF(x, y)     Serial.printf(x, y)
  #define PORTSPEED 115200
 #else
- #define DEBUG_PRINT(x)
- #define DEBUG_PRINTDEC(x)
- #define DEBUG_PRINTHEX(x)
- #define DEBUG_PRINTLN(x)
- #define DEBUG_PRINTLNDEC(x)
- #define DEBUG_PRINTF(x, y)
+ #define D_PRINT(x)
+ #define D_PRINTDEC(x)
+ #define D_PRINTHEX(x)
+ #define D_PRINTLN(x)
+ #define D_PRINTLNDEC(x)
+ //#define D_PRINTF(x, y)
 #endif 
 
 
@@ -249,8 +249,8 @@ unsigned int sample=0;
 
 unsigned long lastMeasTime;
 unsigned long dsLastPrintTime;
-float versionSW=1.2;
-char versionSWString[] = "METEO v"; //SW name
+const float versionSW=1.2;
+const char versionSWString[] = "METEO v"; //SW name
 
 // ID of the settings block
 #define CONFIG_VERSION "ls3"
@@ -298,16 +298,15 @@ void setup() {
 #ifdef verbose  
   Serial.begin(PORTSPEED);
 #endif
-  Serial.println("START");
-  DEBUG_PRINT(versionSWString);
-  DEBUG_PRINTLN(versionSW);
+  D_PRINT(versionSWString);
+  D_PRINTLN(versionSW);
 
   loadConfig(); //load values from EEPROM
   
-  DEBUG_PRINTLN("SW inicialization");
-  DEBUG_PRINT("Free mem: ");
-  DEBUG_PRINT(freeMemory());
-  DEBUG_PRINTLN(" bytes");
+  D_PRINTLN(F("SW inicialization"));
+  D_PRINT(F("Free mem: "));
+  D_PRINT(freeMemory());
+  D_PRINTLN(F(" bytes"));
 
 #ifdef LCDdef
   lcd.createChar(3, save);
@@ -334,12 +333,12 @@ void setup() {
   pinMode(53, OUTPUT);
   digitalWrite(53,HIGH);
 
-  DEBUG_PRINT("Initializing SD card...");
+  D_PRINT(F("Initializing SD card..."));
 
   bCardOK = true;
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
-    DEBUG_PRINTLN("card failed, or not present");
+    D_PRINTLN(F("card failed, or not present"));
     bCardOK = false;
     #ifdef LCDdef
     lcd.setCursor(0,1);
@@ -349,7 +348,7 @@ void setup() {
     #endif
   }
   else {
-    DEBUG_PRINTLN("card initialized.");
+    D_PRINTLN(F("card initialized."));
 #ifdef LCDdef
     lcd.setCursor(0,1);
     lcd.print("SD card OK");
@@ -362,13 +361,13 @@ void setup() {
 #endif
 
 #ifdef Ethernetdef
-  DEBUG_PRINT("waiting for net connection...");
+  D_PRINT(F("waiting for net connection..."));
 #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("waiting for net");
 #endif
   if (Ethernet.begin(mac) == 0) {
-    DEBUG_PRINTLN("Failed using DHCP");
+    D_PRINTLN(F("Failed using DHCP"));
     // DHCP failed, so use a fixed IP address:
     //Ethernet.begin(mac, ip);
   }
@@ -377,7 +376,7 @@ void setup() {
 #ifdef LCDdef
   eraseRow(1);
 #endif
-  DEBUG_PRINTLN("Ethernet OK");
+  D_PRINTLN(F("Ethernet OK"));
   
 #ifdef LCDdef
   lcd.setCursor(0,1);
@@ -386,15 +385,15 @@ void setup() {
   delay(2000);
   eraseRow(1);
   #endif
-  DEBUG_PRINT("\nIP:");
-  DEBUG_PRINTLN(Ethernet.localIP());
-  DEBUG_PRINT("Mask:");
-  DEBUG_PRINTLN(Ethernet.subnetMask());
-  DEBUG_PRINT("Gateway:");
-  DEBUG_PRINTLN(Ethernet.gatewayIP());
-  DEBUG_PRINT("DNS:");
-  DEBUG_PRINTLN(Ethernet.dnsServerIP());
-  DEBUG_PRINTLN();
+  D_PRINT(F("\nIP:"));
+  D_PRINTLN(Ethernet.localIP());
+  D_PRINT(F("Mask:"));
+  D_PRINTLN(Ethernet.subnetMask());
+  D_PRINT(F("Gateway:"));
+  D_PRINTLN(Ethernet.gatewayIP());
+  D_PRINT(F("DNS:"));
+  D_PRINTLN(Ethernet.dnsServerIP());
+  D_PRINTLN();
 #endif
 
   if (storage.stamp==0) {
@@ -404,17 +403,17 @@ void setup() {
   
 #ifdef UDPdef
   Udp.begin(localPort);
-  DEBUG_PRINT("waiting 20s for time sync...");
+  D_PRINT(F("waiting 20s for time sync..."));
   setSyncProvider(getNtpTime);
 
   lastMeasTime=millis();
   while(timeStatus()==timeNotSet && millis()<lastMeasTime+20000); // wait until the time is set by the sync provider, timeout 20sec
-  DEBUG_PRINTLN("Time sync interval is set to 3600 second.");
+  D_PRINTLN(F("Time sync interval is set to 3600 second."));
   setSyncInterval(3600); //sync each 1 hour
   
-  DEBUG_PRINT("Now is ");
+  D_PRINT(F("Now is "));
   printDateTime(0);
-  DEBUG_PRINTLN(" UTC.");
+  D_PRINTLN(F(" UTC."));
 
 #ifdef LCDdef
   lcd.setCursor(0,1);
@@ -431,8 +430,8 @@ void setup() {
   if (day()<10) fileName+="0";
   fileName+=String(day());
   fileName+=".csv";
-  DEBUG_PRINT("Filename:");
-  DEBUG_PRINTLN(fileName);
+  D_PRINT(F("Filename:"));
+  D_PRINTLN(fileName);
 #endif
   
  
@@ -455,7 +454,7 @@ void setup() {
   dht1.begin();
   lastDisplayDHTTime = millis();
 #else
-  DEBUG_PRINTLN("DHT1 N/A");
+  D_PRINTLN(F("DHT1 N/A"));
 #endif
 
 #ifdef DHTdef2
@@ -463,19 +462,19 @@ void setup() {
   //dht2.startMeas();
   dht2.begin();
   #else
-  DEBUG_PRINTLN("DHT2 N/A");
+  D_PRINTLN(F("DHT2 N/A"));
 #endif
 
   
 #ifdef Ethernetdef
-  DEBUG_PRINT("Sending interval [ms]:");
-  DEBUG_PRINTLN(storage.sendInterval);
+  D_PRINT(F("Sending interval [ms]:"));
+  D_PRINTLN(storage.sendInterval);
   lastSendTime = millis();
 #endif
   
 #ifdef SDdef
-  DEBUG_PRINT("Saving interval [ms]:");
-  DEBUG_PRINTLN(storage.saveInterval);
+  D_PRINT(F("Saving interval [ms]:"));
+  D_PRINTLN(storage.saveInterval);
   lastSaveTime = millis();
 #endif
 
@@ -483,7 +482,7 @@ void setup() {
   lastMeasTime = millis();
   dsSensors.requestTemperatures(); 
   
-  DEBUG_PRINTLN("End of SW initialization phase, I am starting measuring.");
+  D_PRINTLN(F("End of SW initialization phase, I am starting measuring."));
 
 #ifdef LCDdef
   lcd.clear();
@@ -530,14 +529,14 @@ void loop() {
     
 #ifdef BMP085def
     if (BMP085Present) {
-      DEBUG_PRINT("Temperature BMP085: ");
+      D_PRINT(F("Temperature BMP085: "));
       Temperature = bmp.readTemperature();
       Pressure = bmp.readSealevelPressure(535.0);
-      DEBUG_PRINT(Temperature);
-      DEBUG_PRINTLN(" *C");
-      DEBUG_PRINT("Pressure: ");
-      DEBUG_PRINT(Pressure);
-      DEBUG_PRINTLN(" Pa");
+      D_PRINT(Temperature);
+      D_PRINTLN(F(" *C"));
+      D_PRINT(F("Pressure: "));
+      D_PRINT(Pressure);
+      D_PRINTLN(F(" Pa"));
     } else {
       Temperature = 77.7;  //dummy
       Pressure = 123456;     //Pa - dummy
@@ -614,8 +613,8 @@ void loop() {
     if (Pressure>0) {
       numberOfSamples++;
       avgPressure+=Pressure;
-      DEBUG_PRINT("Average pressure ");
-      DEBUG_PRINTLN(avgPressure/numberOfSamples);
+      D_PRINT(F("Average pressure "));
+      D_PRINTLN(avgPressure/numberOfSamples);
     }
     
     if (millis() - lastPressureTime > storage.BMPPressInterval) {
@@ -623,21 +622,21 @@ void loop() {
     
       avgPressure=avgPressure/numberOfSamples;
 
-      DEBUG_PRINT("Last average pressure=");
-      DEBUG_PRINTLN(lastAvgPressure);
+      D_PRINT(F("Last average pressure="));
+      D_PRINTLN(lastAvgPressure);
       
       if (lastAvgPressure>0) {
         if (avgPressure>lastAvgPressure) {
           pressureChange=PRESSUP;
-          DEBUG_PRINTLN("Pressure change UP.");
+          D_PRINTLN(F("Pressure change UP."));
         }
         else if (avgPressure<lastAvgPressure) {
           pressureChange=PRESSDOWN;
-          DEBUG_PRINTLN("Pressure change DOWN.");
+          D_PRINTLN(F("Pressure change DOWN."));
         }
         else {
           pressureChange=PRESSNOCHANGE;
-          DEBUG_PRINTLN("No pressure change.");
+          D_PRINTLN(F("No pressure change."));
         }
       }
       
@@ -688,54 +687,54 @@ void loop() {
 
   if (millis() - dsLastPrintTime > 1000) {
 
-    DEBUG_PRINTLN();
+    D_PRINTLN();
 #ifdef Ethernetdef
     printDateTime(0);
 #endif
-    DEBUG_PRINTLN();
+    D_PRINTLN();
     printTemperatureAll();
   
-    DEBUG_PRINT("Press(Pa):");
-    DEBUG_PRINT(Pressure);
+    D_PRINT(F("Press(Pa):"));
+    D_PRINT(Pressure);
 
-    DEBUG_PRINT(" Temperature BMP085(C):");
-    DEBUG_PRINT(Temperature);
+    D_PRINT(F(" Temperature BMP085(C):"));
+    D_PRINT(Temperature);
 
     #ifdef DHTdef1
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(tempDHT1) || isnan(humidity1)) {
-      DEBUG_PRINTLN("DHT1 fail.");
+      D_PRINTLN(F("DHT1 fail."));
     } else {
-      DEBUG_PRINT(" Humidity DHT1(%): "); 
-      DEBUG_PRINT(humidity1);
-      DEBUG_PRINT(" Temp DHT1(C): "); 
-      DEBUG_PRINT(tempDHT1);
+      D_PRINT(F(" Humidity DHT1(%): ")); 
+      D_PRINT(humidity1);
+      D_PRINT(F(" Temp DHT1(C): ")); 
+      D_PRINT(tempDHT1);
     }
     #endif
 
     #ifdef DHTdef2
     // check if returns are valid, if they are NaN (not a number) then something went wrong!
     if (isnan(tempDHT2) || isnan(humidity2)) {
-      DEBUG_PRINTLN("DHT2 fail.");
+      D_PRINTLN(F("DHT2 fail."));
     } else {
-      DEBUG_PRINT(" Humidity DHT2(%): "); 
-      DEBUG_PRINT(humidity2);
-      DEBUG_PRINT(" Temp DHT2(C): "); 
-      DEBUG_PRINT(tempDHT2);
+      D_PRINT(F(" Humidity DHT2(%): ")); 
+      D_PRINT(humidity2);
+      D_PRINT(F(" Temp DHT2(C): ")); 
+      D_PRINT(tempDHT2);
     }
     #endif
     
     #ifdef DHTdef1
-    DEBUG_PRINT(" Dew point DHT1: "); 
-    DEBUG_PRINT(calcDewPoint(humidity1, tempDHT1));
+    D_PRINT(F(" Dew point DHT1: ")); 
+    D_PRINT(calcDewPoint(humidity1, tempDHT1));
     #endif
     
     #ifdef DHTdef2
-    DEBUG_PRINT(" Dew point DHT2: "); 
-    DEBUG_PRINT(calcDewPoint(humidity2, tempDHT2));
+    D_PRINT(F(" Dew point DHT2: ")); 
+    D_PRINT(calcDewPoint(humidity2, tempDHT2));
     #endif
    
-    DEBUG_PRINTLN("");
+    D_PRINTLN(F(""));
     dsLastPrintTime = millis(); 
   }
   
@@ -782,69 +781,69 @@ void sendData() {
   #endif
   
   printSystemTime();
-  DEBUG_PRINTLN(" I am sending data from Meteo unit to HomeAssistant");
+  D_PRINTLN(F(" I am sending data from Meteo unit to HomeAssistant"));
   MQTT_connect();
   if (! _temperature1.publish(sensor[0])) {
-    DEBUG_PRINTLN("Temperature1 failed");
+    D_PRINTLN(F("Temperature1 failed"));
   } else {
-    DEBUG_PRINTLN("Temperature1 OK!");
+    D_PRINTLN(F("Temperature1 OK!"));
   }  
   if (! _temperature2.publish(sensor[1])) {
-    DEBUG_PRINTLN("Temperature2 failed");
+    D_PRINTLN(F("Temperature2 failed"));
   } else {
-    DEBUG_PRINTLN("Temperature2 OK!");
+    D_PRINTLN(F("Temperature2 OK!"));
   }  
   if (! _temperature3.publish(sensor[2])) {
-    DEBUG_PRINTLN("Temperature3 failed");
+    D_PRINTLN(F("Temperature3 failed"));
   } else {
-    DEBUG_PRINTLN("Temperature3 OK!");
+    D_PRINTLN(F("Temperature3 OK!"));
   }  
   if (! _temperature4.publish(sensor[3])) {
-    DEBUG_PRINTLN("Temperature4 failed");
+    D_PRINTLN(F("Temperature4 failed"));
   } else {
-    DEBUG_PRINTLN("Temperature4 OK!");
+    D_PRINTLN(F("Temperature4 OK!"));
   }  
   if (! _temperature5.publish(sensor[4])) {
-    DEBUG_PRINTLN("Temperature5 failed");
+    D_PRINTLN(F("Temperature5 failed"));
   } else {
-    DEBUG_PRINTLN("Temperature5 OK!");
+    D_PRINTLN(F("Temperature5 OK!"));
   }  
 
 
   if (! _pressure.publish(Pressure)) {
-    DEBUG_PRINTLN("Pressure failed");
+    D_PRINTLN(F("Pressure failed"));
   } else {
-    DEBUG_PRINTLN("Pressure OK!");
+    D_PRINTLN(F("Pressure OK!"));
   }  
   if (! _temperature085.publish(Temperature)) {
-    DEBUG_PRINTLN("Temperature085 failed");
+    D_PRINTLN(F("Temperature085 failed"));
   } else {
-    DEBUG_PRINTLN("Temperature085 OK!");
+    D_PRINTLN(F("Temperature085 OK!"));
   }  
   if (! _humidity1.publish(humidity1)) {
-    DEBUG_PRINTLN("Humidity1 failed");
+    D_PRINTLN(F("Humidity1 failed"));
   } else {
-    DEBUG_PRINTLN("Humidity1 OK!");
+    D_PRINTLN(F("Humidity1 OK!"));
   }  
   if (! _humidity2.publish(humidity2)) {
-    DEBUG_PRINTLN("Humidity2 failed");
+    D_PRINTLN(F("Humidity2 failed"));
   } else {
-    DEBUG_PRINTLN("Humidity2 OK!");
+    D_PRINTLN(F("Humidity2 OK!"));
   }  
   if (! _dewpoint1.publish(calcDewPoint(humidity1, tempDHT1))) {
-    DEBUG_PRINTLN("DewPoint1 failed");
+    D_PRINTLN(F("DewPoint1 failed"));
   } else {
-    DEBUG_PRINTLN("DewPoint1 OK!");
+    D_PRINTLN(F("DewPoint1 OK!"));
   }  
   if (! _dewpoint2.publish(calcDewPoint(humidity2, tempDHT1))) {
-    DEBUG_PRINTLN("DewPoint2 failed");
+    D_PRINTLN(F("DewPoint2 failed"));
   } else {
-    DEBUG_PRINTLN("DewPoint2 OK!");
+    D_PRINTLN(F("DewPoint2 OK!"));
   }  
   if (! _versionSW.publish(versionSW)) {
-    DEBUG_PRINTLN("Version SW failed");
+    D_PRINTLN(F("Version SW failed"));
   } else {
-    DEBUG_PRINTLN("Version SW OK!");
+    D_PRINTLN(F("Version SW OK!"));
   }    
   #ifdef LCDdef
   lcd.setCursor(15, 1);
@@ -854,13 +853,13 @@ void sendData() {
 }
 
 void printSystemTime(){
-  DEBUG_PRINT(day());
-  DEBUG_PRINT(".");
-  DEBUG_PRINT(month());
-  DEBUG_PRINT(".");
-  DEBUG_PRINT(year());
-  DEBUG_PRINT(" ");
-  DEBUG_PRINT(hour());
+  D_PRINT(day());
+  D_PRINT(F("."));
+  D_PRINT(month());
+  D_PRINT(F("."));
+  D_PRINT(year());
+  D_PRINT(F(" "));
+  D_PRINT(hour());
   printDigits(minute(), 0);
   printDigits(second(), 0);
 }
@@ -873,12 +872,12 @@ void MQTT_connect() {
     return;
   }
 
-  DEBUG_PRINT("Connecting to MQTT... ");
+  D_PRINT(F("Connecting to MQTT... "));
 
 uint8_t retries = 3;
 while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-     DEBUG_PRINTLN(mqtt.connectErrorString(ret));
-     DEBUG_PRINTLN("Retrying MQTT connection in 5 seconds...");
+     D_PRINTLN(mqtt.connectErrorString(ret));
+     D_PRINTLN(F("Retrying MQTT connection in 5 seconds..."));
      mqtt.disconnect();
      delay(5000);  // wait 5 seconds
      retries--;
@@ -887,13 +886,13 @@ while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
        while (1);
      }
 }
-  DEBUG_PRINTLN("MQTT Connected!");
+  D_PRINTLN(F("MQTT Connected!"));
 }
 
 /*void checkConfig() {
   checkConfigFlag = true;
   if (clientConfig.connect(serverConfig, 80)) {
-    DEBUG_PRINTLN("Connected to config server.");
+    D_PRINTLN(F("Connected to config server."));
     // Make a HTTP request:
     clientConfig.println("GET /getConfigData.aspx HTTP/1.0");
     clientConfig.println();
@@ -901,7 +900,7 @@ while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
   else
   {
     // if you didn't get a connection to the server:
-    DEBUG_PRINTLN("Connection to config server failed.");
+    D_PRINTLN(F("Connection to config server failed."));
   }
 }
 */
@@ -934,13 +933,13 @@ void saveDataToSD(bool rep) {
   fileName+=String(day());
   fileName+=".csv";
 
-  DEBUG_PRINTLN();
+  D_PRINTLN();
 #ifdef Ethernetdef
   printDateTime(0);
 #endif
-  DEBUG_PRINT("\nSaving data to file:");
-  DEBUG_PRINT(fileName);
-  DEBUG_PRINT("...");
+  D_PRINT(F("\nSaving data to file:"));
+  D_PRINT(fileName);
+  D_PRINT(F("..."));
   
   char cFileName[13];
   fileName.toCharArray(cFileName, 13);    
@@ -1027,13 +1026,13 @@ void saveDataToSD(bool rep) {
     dataFile.print("\n");
       
     dataFile.close();
-    DEBUG_PRINTLN("data saved.");
+    D_PRINTLN(F("data saved."));
   }  
   // if the file isn't open, pop up an error:
   else {
-    DEBUG_PRINT("error opening ");
-    DEBUG_PRINTLN(fileName);
-    DEBUG_PRINTLN("Try SD card reinit.");
+    D_PRINT(F("error opening "));
+    D_PRINTLN(fileName);
+    D_PRINTLN(F("Try SD card reinit."));
     SD.begin(chipSelect);
     if (!rep) {
       saveDataToSD(true);
@@ -1066,34 +1065,34 @@ unsigned long getNtpTime(void) {
     // combine the four bytes (two words) into a long integer
     // this is NTP time (seconds since Jan 1 1900):
     unsigned long secsSince1900 = highWord << 16 | lowWord;  
-//    DEBUG_PRINT("Seconds since Jan 1 1900 = " );
-//    DEBUG_PRINTLN(secsSince1900);               
+//    D_PRINT("Seconds since Jan 1 1900 = " );
+//    D_PRINTLN(secsSince1900);               
 
     // now convert NTP time into everyday time:
-//    DEBUG_PRINT("Unix time = ");
+//    D_PRINT(F("Unix time = "));
     // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
     const unsigned long seventyYears = 2208988800UL;     
     // subtract seventy years:
     unsigned long epoch = secsSince1900 - seventyYears;  
     // print Unix time:
-    //DEBUG_PRINTLN(epoch);                               
+    //D_PRINTLN(epoch);                               
 
 
     // print the hour, minute and second:
-    DEBUG_PRINT("UTC time is ");       // UTC is the time at Greenwich Meridian (GMT)
-    DEBUG_PRINT((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
-    DEBUG_PRINT(':');  
+    D_PRINT(F("UTC time is "));       // UTC is the time at Greenwich Meridian (GMT)
+    D_PRINT((epoch  % 86400L) / 3600); // print the hour (86400 equals secs per day)
+    D_PRINT(':');  
     if ( ((epoch % 3600) / 60) < 10 ) {
       // In the first 10 minutes of each hour, we'll want a leading '0'
-      DEBUG_PRINT('0');
+      D_PRINT('0');
     }
-    DEBUG_PRINT((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
-    DEBUG_PRINT(':'); 
+    D_PRINT((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
+    D_PRINT(':'); 
     if ( (epoch % 60) < 10 ) {
       // In the first 10 seconds of each minute, we'll want a leading '0'
-      DEBUG_PRINT('0');
+      D_PRINT('0');
     }
-    DEBUG_PRINTLN(epoch %60); // print the second
+    D_PRINTLN(epoch %60); // print the second
     return epoch;
   }
   return 0;
@@ -1143,16 +1142,16 @@ void printDateTime(byte toLCD) {
 #endif
   }
   else {
-    DEBUG_PRINT(day());
-    DEBUG_PRINT(DATE_DELIMITER);
-    DEBUG_PRINT(month());
-    DEBUG_PRINT(DATE_DELIMITER);
-    DEBUG_PRINT(year());
-    DEBUG_PRINT(DATE_TIME_DELIMITER);
+    D_PRINT(day());
+    D_PRINT(DATE_DELIMITER);
+    D_PRINT(month());
+    D_PRINT(DATE_DELIMITER);
+    D_PRINT(year());
+    D_PRINT(DATE_TIME_DELIMITER);
     printDigits(hour(),toLCD);
-    DEBUG_PRINT(TIME_DELIMITER);
+    D_PRINT(TIME_DELIMITER);
     printDigits(minute(),toLCD);
-    DEBUG_PRINT(TIME_DELIMITER);
+    D_PRINT(TIME_DELIMITER);
     printDigits(second(),toLCD);
   }
 }
@@ -1166,7 +1165,7 @@ void printDigits(int digits, byte toLCD){
     }
     else {
     //#endif
-      DEBUG_PRINT('0');
+      D_PRINT('0');
     //#ifdef LCDdef
     }
     //#endif
@@ -1177,7 +1176,7 @@ void printDigits(int digits, byte toLCD){
   }
   else {
   //#endif
-    DEBUG_PRINT(digits);
+    D_PRINT(digits);
   //#ifdef LCDdef
   }
   //#endif
@@ -1215,17 +1214,17 @@ void printTemperatureAll() {
   // Loop through each device, print out temperature data
   for(byte i=0;i<numberOfDevices; i++) {
     // Search the wire for address
-      DEBUG_PRINT("T");
-      DEBUG_PRINTDEC(i);
-      DEBUG_PRINT("[");
+      D_PRINT(F("T"));
+      D_PRINTDEC(i);
+      D_PRINT(F("["));
       for (byte j = 0; j < 8; j++) {
-        if (tempDeviceAddresses[i][j] < 16) DEBUG_PRINT("0");
-        DEBUG_PRINTHEX(tempDeviceAddresses[i][j]);
+        if (tempDeviceAddresses[i][j] < 16) D_PRINT(F("0"));
+        D_PRINTHEX(tempDeviceAddresses[i][j]);
       }
-      DEBUG_PRINT("]");
+      D_PRINT(F("]"));
 
-      DEBUG_PRINT(sensor[i]);
-      DEBUG_PRINTLN(" C ");
+      D_PRINT(sensor[i]);
+      D_PRINTLN(F(" C "));
   }
 }
 
@@ -1233,54 +1232,54 @@ void printTemperatureAll() {
 
 void dsInit(void) {
   dsSensors.begin();
-  DEBUG_PRINTLN();
-  DEBUG_PRINT("DALLAS Library version:");
-  DEBUG_PRINTLN(DALLASTEMPLIBVERSION);
+  D_PRINTLN();
+  D_PRINT(F("DALLAS Library version:"));
+  D_PRINTLN(DALLASTEMPLIBVERSION);
   // Grab a count of devices on the wire
   numberOfDevices = dsSensors.getDeviceCount();
 
   // locate devices on the bus
-  DEBUG_PRINT("Locating devices...");
+  D_PRINT(F("Locating devices..."));
   
-  DEBUG_PRINT("Found ");
-  DEBUG_PRINTDEC(numberOfDevices);
-  DEBUG_PRINTLN(" devices.");
+  D_PRINT(F("Found "));
+  D_PRINTDEC(numberOfDevices);
+  D_PRINTLN(F(" devices."));
 
   // report parasite power requirements
-  DEBUG_PRINT("Parasite power is: "); 
+  D_PRINT(F("Parasite power is: ")); 
   if (dsSensors.isParasitePowerMode()) {
-    DEBUG_PRINTLN("ON");
+    D_PRINTLN(F("ON"));
   } else {
-    DEBUG_PRINTLN("OFF");
+    D_PRINTLN(F("OFF"));
   }
   
   // Loop through each device, print out address
   for(byte i=0;i<numberOfDevices; i++) {
       // Search the wire for address
     if(dsSensors.getAddress(tempDeviceAddress, i)) {
-      DEBUG_PRINT("Found device ");
-      DEBUG_PRINTDEC(i);
-      DEBUG_PRINT(" with address: ");
+      D_PRINT(F("Found device "));
+      D_PRINTDEC(i);
+      D_PRINT(F(" with address: "));
       for (byte j=0; j<8;j++) {
-        if (tempDeviceAddress[j] < 16) DEBUG_PRINT("0");
-        DEBUG_PRINTHEX(tempDeviceAddress[j]);
+        if (tempDeviceAddress[j] < 16) D_PRINT(F("0"));
+        D_PRINTHEX(tempDeviceAddress[j]);
       }
       memcpy(tempDeviceAddresses[i],tempDeviceAddress,8);
-      DEBUG_PRINTLN();
+      D_PRINTLN();
       
-      DEBUG_PRINT("Setting resolution to ");
-      DEBUG_PRINTLNDEC(TEMPERATURE_PRECISION);
+      D_PRINT(F("Setting resolution to "));
+      D_PRINTLNDEC(TEMPERATURE_PRECISION);
       
       // set the resolution to TEMPERATURE_PRECISION bit (Each Dallas/Maxim device is capable of several different resolutions)
       dsSensors.setResolution(tempDeviceAddress, TEMPERATURE_PRECISION);
       
-      DEBUG_PRINT("Resolution actually set to: ");
-      DEBUG_PRINTDEC(dsSensors.getResolution(tempDeviceAddress)); 
-      DEBUG_PRINTLN();
+      D_PRINT(F("Resolution actually set to: "));
+      D_PRINTDEC(dsSensors.getResolution(tempDeviceAddress)); 
+      D_PRINTLN();
     } else {
-      DEBUG_PRINT("Found ghost device at ");
-      DEBUG_PRINTDEC(i);
-      DEBUG_PRINT(" but could not detect address. Check power and cabling");
+      D_PRINT(F("Found ghost device at "));
+      D_PRINTDEC(i);
+      D_PRINT(F(" but could not detect address. Check power and cabling"));
     }
   }
 
@@ -1293,24 +1292,24 @@ void dsInit(void) {
   #endif
 
   
-  DEBUG_PRINT("DALLAS on pin D");
-  DEBUG_PRINT(ONE_WIRE_BUS);
-  DEBUG_PRINTLN(" OK");
+  D_PRINT(F("DALLAS on pin D"));
+  D_PRINT(ONE_WIRE_BUS);
+  D_PRINTLN(F(" OK"));
 }
 #endif
 
 #ifdef BMP085def
 void bmp085Init() {
-  DEBUG_PRINT("Probe BMP085: ");
+  D_PRINT(F("Probe BMP085: "));
   if (!bmp.begin()) {
-    DEBUG_PRINTLN("Sensor missing!!!");
+    D_PRINTLN(F("Sensor missing!!!"));
   } else {
     BMP085Present = true;
-    DEBUG_PRINTLN("Sensor found.");
-    DEBUG_PRINT("Temperature: ");
-    DEBUG_PRINTLN(bmp.readTemperature());
+    D_PRINTLN(F("Sensor found."));
+    D_PRINT(F("Temperature: "));
+    D_PRINTLN(bmp.readTemperature());
   }
-  DEBUG_PRINTLN("BMP software on PIN A4,A5 OK");
+  D_PRINTLN(F("BMP software on PIN A4,A5 OK"));
 #ifdef LCDdef
   lcd.setCursor(0,1);
   lcd.print("High:");
@@ -1330,12 +1329,12 @@ void bmp085Init() {
 
 #if defined DHTdef1 || defined DHTdef2
 void dhtInit(byte sensor) {
-  DEBUG_PRINTLN("\nDHT setup");
+  D_PRINTLN(F("\nDHT setup"));
   if (sensor==1) {
     dht1.begin();
-    DEBUG_PRINT("DHT1 software on PIN D");
-    DEBUG_PRINT(DHTPIN1);
-    DEBUG_PRINTLN(" OK");
+    D_PRINT(F("DHT1 software on PIN D"));
+    D_PRINT(DHTPIN1);
+    D_PRINTLN(F(" OK"));
     #ifdef LCDdef
     lcd.setCursor(0,1);
     lcd.print("DHT1");
@@ -1347,9 +1346,9 @@ void dhtInit(byte sensor) {
   else if (sensor==2) {
     #ifdef DHTdef2
     dht2.begin();
-    DEBUG_PRINT("DHT2 software on PIN D");
-    DEBUG_PRINT(DHTPIN2);
-    DEBUG_PRINTLN(" OK");
+    D_PRINT(F("DHT2 software on PIN D"));
+    D_PRINT(DHTPIN2);
+    D_PRINTLN(F(" OK"));
     #ifdef LCDdef
     lcd.setCursor(0,1);
     lcd.print("DHT2");
@@ -1366,64 +1365,64 @@ void cardInfo() {
   // we'll use the initialization code from the utility libraries
   // since we're just testing if the card is working!
   if (!card.init(SPI_HALF_SPEED, chipSelect)) {
-    DEBUG_PRINTLN("initialization failed. Things to check:");
-    DEBUG_PRINTLN("* is a card is inserted?");
-    DEBUG_PRINTLN("* Is your wiring correct?");
-    DEBUG_PRINTLN("* did you change the chipSelect pin to match your shield or module?");
+    D_PRINTLN(F("initialization failed. Things to check:"));
+    D_PRINTLN(F("* is a card is inserted?"));
+    D_PRINTLN(F("* Is your wiring correct?"));
+    D_PRINTLN(F("* did you change the chipSelect pin to match your shield or module?"));
     return;
   } else {
-   DEBUG_PRINTLN("Wiring is correct and a card is present."); 
+   D_PRINTLN(F("Wiring is correct and a card is present.")); 
   }
 
   // print the type of card
-  DEBUG_PRINT("\nCard type: ");
+  D_PRINT(F("\nCard type: "));
   switch(card.type()) {
     case SD_CARD_TYPE_SD1:
-      DEBUG_PRINTLN("SD1");
+      D_PRINTLN(F("SD1"));
       break;
     case SD_CARD_TYPE_SD2:
-      DEBUG_PRINTLN("SD2");
+      D_PRINTLN(F("SD2"));
       break;
     case SD_CARD_TYPE_SDHC:
-      DEBUG_PRINTLN("SDHC");
+      D_PRINTLN(F("SDHC"));
       break;
     default:
-      DEBUG_PRINTLN("Unknown");
+      D_PRINTLN(F("Unknown"));
   }
 
   // Now we will try to open the 'volume'/'partition' - it should be FAT16 or FAT32
   if (!volume.init(card)) {
-    DEBUG_PRINTLN("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
+    D_PRINTLN(F("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card"));
     return;
   }
 
 
   // print the type and size of the first FAT-type volume
   uint32_t volumesize;
-  DEBUG_PRINT("\nVolume type is FAT");
-  DEBUG_PRINTLNDEC(volume.fatType());
-  DEBUG_PRINTLN();
+  D_PRINT(F("\nVolume type is FAT"));
+  D_PRINTLNDEC(volume.fatType());
+  D_PRINTLN();
   
   volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
   volumesize *= volume.clusterCount();       // we'll have a lot of clusters
   volumesize *= 512;                            // SD card blocks are always 512 bytes
-  DEBUG_PRINT("Volume size (bytes): ");
-  DEBUG_PRINTLN(volumesize);
-  DEBUG_PRINT("Volume size (Kbytes): ");
+  D_PRINT(F("Volume size (bytes): "));
+  D_PRINTLN(volumesize);
+  D_PRINT(F("Volume size (Kbytes): "));
   volumesize /= 1024;
-  DEBUG_PRINTLN(volumesize);
-  DEBUG_PRINT("Volume size (Mbytes): ");
+  D_PRINTLN(volumesize);
+  D_PRINT(F("Volume size (Mbytes): "));
   volumesize /= 1024;
-  DEBUG_PRINTLN(volumesize);
+  D_PRINTLN(volumesize);
 
   
-  DEBUG_PRINTLN("\nFiles found on the card (name, date and size in bytes): ");
+  D_PRINTLN(F("\nFiles found on the card (name, date and size in bytes): "));
   root.openRoot(volume);
   
   // list all files in the card with date and size
   root.ls(LS_R | LS_DATE | LS_SIZE);
-  DEBUG_PRINTLN();
-  DEBUG_PRINTLN();
+  D_PRINTLN();
+  D_PRINTLN();
 }
 
 
@@ -1438,9 +1437,9 @@ void stopTimer() {
 }
 
 void printTimer(char* message) {
-  DEBUG_PRINT(message);
-  DEBUG_PRINT(stop-start);
-  DEBUG_PRINTLN(" ms");
+  D_PRINT(message);
+  D_PRINT(stop-start);
+  D_PRINTLN(F(" ms"));
 }
 
 ///////EEPROM functions
